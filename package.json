@@ -22,5 +22,17 @@
 		"typescript": "^5.0.0",
 		"vite": "^4.4.2"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"@supabase/supabase-js": "^2.26.0",
+		"huggingface": "^1.4.0",
+		"langchain": "^0.0.110",
+		"openai": "^3.3.0",
+		"re": "^0.1.4",
+		"requests": "^0.3.0",
+		"tempfile": "^5.0.0",
+		"tiktoken": "^1.0.10",
+		"tmp": "^0.2.1",
+		"unicodedata": "^0.1.1"
+	}
 }
