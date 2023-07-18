@@ -6,7 +6,7 @@
 //     return process_file(vector_store, file, TextLoader, ".txt")
 //js code
 import { processFile } from "./common";
-import { TextLoader } from "langchain/document_loaders";
+import { TextLoader } from "langchain/document_loaders/fs/text";
 
 export function processTxt(vectorStore, file) {
   return processFile(vectorStore, file, TextLoader, ".txt");

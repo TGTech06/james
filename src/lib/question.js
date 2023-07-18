@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import { ConversationalRetrievalQAChain } from "langchain/chains";
 import { ConversationSummaryMemory } from "langchain/memory";
-import { OpenAI } from "langchain/llms";
+// import { OpenAI } from "langchain/llms";
 import { HuggingFaceInference } from "langchain/llms/hf";
 
 const maxTokens = 2000;
@@ -71,7 +71,6 @@ export async function chatWithDoc(
       apiKey: huggingfacehubApiToken,
       model: model,
     });
-
     const qa = ConversationalRetrievalQAChain.fromLLM(
       llm,
       vectorStore.asRetriever()
@@ -80,7 +79,6 @@ export async function chatWithDoc(
       question: questionValue,
       chat_history: [],
     });
-
     console.log(result.answer);
   }
 }

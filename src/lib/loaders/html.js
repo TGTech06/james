@@ -132,7 +132,7 @@
 // }
 
 import { processFile } from "./common";
-import { UnstructuredLoader } from "langchain/document_loaders";
+import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 import axios from "axios";
 import fs from "fs";
 

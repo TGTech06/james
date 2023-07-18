@@ -14,6 +14,7 @@
   import { writable } from "svelte/store";
 
   // Create the session state variables
+  let mode;
   let model = writable("tiiuae/falcon-7b-instruct");
   let temperature = writable(0.2);
   let chunkSize = writable(500);
@@ -76,7 +77,7 @@
     <div class="action-selection">
       <input
         type="radio"
-        bind:group={model}
+        bind:group={mode}
         value="Add Knowledge"
         id="add-knowledge"
       />
@@ -84,17 +85,17 @@
 
       <input
         type="radio"
-        bind:group={model}
+        bind:group={mode}
         value="Chat with your Brain"
         id="chat-with-brain"
       />
       <label for="chat-with-brain">Chat with your Brain</label>
 
-      <input type="radio" bind:group={model} value="Forget" id="forget" />
+      <input type="radio" bind:group={mode} value="Forget" id="forget" />
       <label for="forget">Forget</label>
     </div>
 
-    {#if $model === "Add Knowledge"}
+    {#if mode === "Add Knowledge"}
       <!-- Display the configuration sidebar for adding knowledge -->
       <div class="sidebar">
         <h2>Configuration</h2>
@@ -150,7 +151,7 @@
           {url_uploader(supabase, openai_api_key, vectorStore)}
         </div> -->
       </div>
-    {:else if $model === "Chat with your Brain"}
+    {:else if mode === "Chat with your Brain"}
       <!-- Display the configuration sidebar for asking questions -->
       <div class="sidebar">
         <h2>Configuration</h2>
@@ -184,7 +185,7 @@
       <div class="content">
         {chatWithDoc(huggingfacehub_api_token, vectorStore, model, temperature)}
       </div>
-    {:else if $model === "Forget"}
+    {:else if mode === "Forget"}
       <!-- Display the configuration sidebar for forgetting knowledge -->
       <div class="sidebar">
         <h2>Configuration</h2>

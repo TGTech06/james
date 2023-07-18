@@ -1,9 +1,3 @@
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const crypto = require("crypto");
-const { RecursiveCharacterTextSplitter } = require("langchain/text_splitter");
-
 class Document {
   constructor(pageContent, metadata) {
     this.page_content = pageContent;
@@ -24,50 +18,49 @@ export async function processFile(
   const fileSize = file.size;
   const dateShort = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 
-  const tmpFile = fs.mkdtempSync(`${os.tmpdir()}${path.sep}`);
-  const tmpFilePath = `${tmpFile}${path.sep}${fileSuffix}`;
-  fs.writeFileSync(tmpFilePath, file);
+  const reader = new FileReader();
 
-  const loader = new loaderClass(tmpFilePath);
-  const documents = await loader.load();
-  fileSha = await computeSHA1FromFile(tmpFilePath);
+  reader.onload = async (event) => {
+    const buffer = event.target.result;
 
-  const textSplitter = new RecursiveCharacterTextSplitter(chunkSize);
-  const splitDocumentsPromise = textSplitter.splitDocuments(documents);
-  const splitDocuments = await splitDocumentsPromise;
+    // Compute SHA-1 hash
+    const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    fileSha = hashArray
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
 
-  const docsWithMetadata = splitDocuments.map((doc) => {
-    const metadata = {
-      file_sha1: fileSha,
-      file_size: fileSize,
-      file_name: fileName,
-      chunk_size: chunkSize,
-      chunk_overlap: chunkOverlap,
-      date: dateShort,
-    };
-    return new Document(doc.pageContent, metadata);
-  });
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    const tmpFilePath = URL.createObjectURL(blob);
 
-  vectorStore.addDocuments(docsWithMetadata);
-  return;
-}
+    const loader = new loaderClass(tmpFilePath);
+    const documents = await loader.load();
 
-function computeSHA1FromFile(filePath) {
-  const hash = crypto.createHash("sha1");
-  const input = fs.createReadStream(filePath);
+    const textSplitter = new RecursiveCharacterTextSplitter(chunkSize);
+    const splitDocumentsPromise = textSplitter.splitDocuments(documents);
+    const splitDocuments = await splitDocumentsPromise;
 
-  return new Promise((resolve, reject) => {
-    input.on("readable", () => {
-      const data = input.read();
-      if (data) {
-        hash.update(data);
-      } else {
-        resolve(hash.digest("hex"));
-      }
+    const docsWithMetadata = splitDocuments.map((doc) => {
+      const metadata = {
+        file_sha1: fileSha,
+        file_size: fileSize,
+        file_name: fileName,
+        chunk_size: chunkSize,
+        chunk_overlap: chunkOverlap,
+        date: dateShort,
+      };
+      return new Document(doc.pageContent, metadata);
     });
 
-    input.on("error", (error) => {
-      reject(error);
-    });
-  });
+    vectorStore.addDocuments(docsWithMetadata);
+
+    // Clean up the temporary file URL
+    URL.revokeObjectURL(tmpFilePath);
+  };
+
+  reader.onerror = (event) => {
+    console.error("Error reading file:", event.target.error);
+  };
+
+  reader.readAsArrayBuffer(file);
 }
