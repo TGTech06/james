@@ -24,6 +24,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@huggingface/inference": "^1.8.0",
 		"@supabase/supabase-js": "^2.26.0",
 		"huggingface": "^1.4.0",
 		"langchain": "^0.0.110",

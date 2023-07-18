@@ -22,6 +22,7 @@
 
   let files;
   let url;
+  let question = "";
 
   // Initialize the Supabase client and other variables
   const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
@@ -34,15 +35,25 @@
    * @type {null}
    */
   let supabase;
-  let vectorStore;
+  let vector;
   let embeddings;
 
   onMount(() => {
     // Initialize the Supabase client
     // @ts-ignore
-    supabase = createClient(supabase_url, supabase_key);
+    //   supabase = createClient(supabase_url, supabase_key);
+    //   embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    //   vector = new SupabaseVectorStore(embeddings,  {
+    //   supabase,
+    //   tableName: "documents",
+    // });
+
+    const client = createClient(supabase_url, supabase_key);
+
     embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    vectorStore = new vectorStore.SupabaseVectorStore(supabase, embeddings, {
+
+    vector = new SupabaseVectorStore(embeddings, {
+      client,
       tableName: "documents",
     });
   });
@@ -183,7 +194,17 @@
 
       <!-- Display the chat with brain functionality -->
       <div class="content">
-        {chatWithDoc(huggingfacehub_api_token, vectorStore, model, temperature)}
+        <textarea bind:value={question} />
+        <button
+          on:click={() =>
+            chatWithDoc(
+              huggingfacehub_api_token,
+              vector,
+              model,
+              temperature,
+              question
+            )}>Add the URL to the database</button
+        >
       </div>
     {:else if mode === "Forget"}
       <!-- Display the configuration sidebar for forgetting knowledge -->

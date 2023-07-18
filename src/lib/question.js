@@ -48,9 +48,6 @@ class TruncateChatHistoryMemory extends ConversationSummaryMemory {
   }
 }
 
-const question = writable("");
-const buttonClicked = writable(false);
-
 /**
  * @param {any} huggingfacehubApiToken
  * @param {{ asRetriever: () => any; }} vectorStore
@@ -61,24 +58,23 @@ export async function chatWithDoc(
   huggingfacehubApiToken,
   vectorStore,
   model,
-  temperature
+  temperature,
+  question
 ) {
   const questionValue = question;
-  const buttonClickedValue = buttonClicked;
 
-  if (buttonClickedValue) {
-    const llm = new HuggingFaceInference({
-      apiKey: huggingfacehubApiToken,
-      model: model,
-    });
-    const qa = ConversationalRetrievalQAChain.fromLLM(
-      llm,
-      vectorStore.asRetriever()
-    );
-    const result = await qa.call({
-      question: questionValue,
-      chat_history: [],
-    });
-    console.log(result.answer);
-  }
+  const llm = new HuggingFaceInference({
+    apiKey: huggingfacehubApiToken,
+    model: "tiiuae/falcon-7b-instruct",
+  });
+
+  const qa = ConversationalRetrievalQAChain.fromLLM(
+    llm,
+    vectorStore.asRetriever()
+  );
+  const result = await qa.call({
+    question: questionValue,
+    chat_history: [],
+  });
+  console.log(result.text);
 }
