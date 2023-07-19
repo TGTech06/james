@@ -41,7 +41,7 @@
   onMount(() => {
     // Initialize the Supabase client
     // @ts-ignore
-    //   supabase = createClient(supabase_url, supabase_key);
+    supabase = createClient(supabase_url, supabase_key);
     //   embeddings = new OpenAIEmbeddings({ openAIApiKey });
     //   vector = new SupabaseVectorStore(embeddings,  {
     //   supabase,
@@ -143,15 +143,14 @@
           <input type="file" multiple on:change={upload} />
           <button
             on:click={() =>
-              file_uploader(supabase, openai_api_key, vectorStore, files)}
+              file_uploader(supabase, openai_api_key, vector, files)}
             >Upload Files</button
           >
         </div>
         <div class="url-uploader">
           <textarea bind:value={url} />
           <button
-            on:click={() =>
-              url_uploader(supabase, openai_api_key, vectorStore, url)}
+            on:click={() => url_uploader(supabase, openai_api_key, vector, url)}
             >Add the URL to the database</button
           >
         </div>

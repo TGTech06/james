@@ -131,13 +131,13 @@
 //     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
 // }
 
-import { processFile } from "./common";
+import { process_file } from "./common";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 import axios from "axios";
 import fs from "fs";
 
 export async function processHtml(vector_store, file) {
-  return processFile(vector_store, file, UnstructuredLoader, ".html");
+  return process_file(vector_store, file, UnstructuredLoader, ".html");
 }
 
 export async function getHtml(url) {

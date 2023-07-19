@@ -127,16 +127,12 @@
 
 import { processTxt } from "./loaders/txt";
 import { processHtml } from "./loaders/html";
-import { computeSha1FromContent } from "./utils";
+import { computeSHA1FromContent } from "./utils";
 import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html";
+import { createClient } from "@supabase/supabase-js";
+import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import axios from "axios";
-import FormData from "form-data";
-import {
-  files,
-  addToDatabaseButtonClicked,
-  url,
-  buttonClicked,
-} from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/stores.js";
 
 const file_processors = {
   ".txt": processTxt,
@@ -158,22 +154,35 @@ export async function file_uploader(supabase, openai_key, vector_store, files) {
   // Svelte implementation for file uploading
   // const files = $files;/* Get uploaded files */
   //const addToDatabaseButtonClicked = /* Check if "Add to Database" button is clicked */
+  if (!Array.isArray(files)) {
+    // Handle a single file
+    files = [files];
+  }
 
-  if (addToDatabaseButtonClicked && files) {
-    for (const file of files) {
-      await filter_file(file, supabase, vector_store);
-    }
+  console.log(files);
+  for (const file of files) {
+    await filter_file(file, supabase, vector_store);
   }
 }
 
 async function file_already_exists(supabase, file) {
-  const file_sha1 = computeSha1FromContent(file); // Assuming compute_sha1_from_content is implemented separately
-  const response = await supabase
-    .table("documents")
+  const file_sha1 = computeSHA1FromContent(file);
+  // Assuming compute_sha1_from_content is implemented separately
+  let supa = createClient(
+    "https://jqfandcxceztebtpwzxd.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4"
+  );
+  const { data, error } = await supa
+    .from("documents")
     .select("id")
-    .eq("metadata->>file_sha1", file_sha1)
-    .execute();
-  return response.data.length > 0;
+    .eq("metadata->>file_sha1", file_sha1);
+
+  if (error) {
+    console.log(`Error retrieving data: ${error.message}`);
+    return false;
+  }
+
+  return data.length > 0;
 }
 
 async function filter_file(file, supabase, vector_store) {
@@ -187,7 +196,18 @@ async function filter_file(file, supabase, vector_store) {
     const file_extension = `.${file.name.split(".").pop()}`;
     console.log(file.name, file_extension);
     if (file_extension in file_processors) {
-      await file_processors[file_extension](vector_store, file);
+      const openAIApiKey =
+        "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";
+      let client = createClient(
+        "https://jqfandcxceztebtpwzxd.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4"
+      );
+      let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+      let vector = new SupabaseVectorStore(embeddings, {
+        client,
+        tableName: "documents",
+      });
+      await file_processors[file_extension](vector, file);
       console.log(`✅ ${file.name}`);
       return true;
     } else {
