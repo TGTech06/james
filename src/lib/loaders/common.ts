@@ -570,11 +570,11 @@ export async function process_file(
   const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
   const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
   const client = createClient(supabase_url, supabase_key);
- const openAIApiKey = "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"; 
-  // const embeddings = new HuggingFaceInferenceEmbeddings({
-  //   apiKey: "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", // In Node.js defaults to process.env.HUGGINGFACEHUB_API_KEY
-  // });
-  let embeddings = new OpenAIEmbeddings({ openAIApiKey }); // Replace with your actual OpenAI API key
+// const openAIApiKey = "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"; 
+  const embeddings = new HuggingFaceInferenceEmbeddings({
+    apiKey: "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", 
+  });
+ // let embeddings = new OpenAIEmbeddings({ openAIApiKey }); // Replace with your actual OpenAI API key
 
   let vector = new SupabaseVectorStore(embeddings, {
     client,

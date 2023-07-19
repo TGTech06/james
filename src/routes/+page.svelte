@@ -12,7 +12,7 @@
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
   import { writable } from "svelte/store";
-
+  import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
   // Create the session state variables
   let mode;
   let model = writable("tiiuae/falcon-7b-instruct");
@@ -50,8 +50,10 @@
 
     const client = createClient(supabase_url, supabase_key);
 
-    embeddings = new OpenAIEmbeddings({ openAIApiKey });
-
+    //embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    embeddings = new HuggingFaceInferenceEmbeddings({
+      apiKey: "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",
+    });
     vector = new SupabaseVectorStore(embeddings, {
       client,
       tableName: "documents",

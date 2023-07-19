@@ -66,15 +66,18 @@ export async function chatWithDoc(
   const llm = new HuggingFaceInference({
     apiKey: huggingfacehubApiToken,
     model: "tiiuae/falcon-7b-instruct",
+    maxTokens: 5000,
   });
 
   const qa = ConversationalRetrievalQAChain.fromLLM(
     llm,
-    vectorStore.asRetriever()
+    vectorStore.asRetriever(),
+    { returnSourceDocuments: true }
   );
   const result = await qa.call({
     question: questionValue,
     chat_history: [],
   });
+  console.log("result", result);
   console.log(result.text);
 }
