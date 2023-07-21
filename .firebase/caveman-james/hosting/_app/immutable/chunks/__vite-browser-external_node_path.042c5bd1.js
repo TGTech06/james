@@ -1,0 +1,1 @@
+const o=new Proxy({},{get(t,e){throw new Error(`Module "node:path" has been externalized for browser compatibility. Cannot access "node:path.${e}" in client code.  See http://vitejs.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.`)}});export{o as default};

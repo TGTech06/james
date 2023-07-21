@@ -110,14 +110,14 @@ function create_ssr_component(fn) {
   };
 }
 export {
-  setContext as a,
-  validate_store as b,
+  validate_store as a,
+  subscribe as b,
   create_ssr_component as c,
-  subscribe as d,
+  safe_not_equal as d,
   escape as e,
   getContext as g,
   missing_component as m,
   noop as n,
-  safe_not_equal as s,
+  setContext as s,
   validate_component as v
 };

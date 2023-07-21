@@ -13,7 +13,7 @@
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
   import { writable } from "svelte/store";
   import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
-  // Create the session state variables
+
   let mode;
   let model = writable("tiiuae/falcon-7b-instruct");
   let temperature = writable(0.2);
@@ -38,6 +38,32 @@
   let vector;
   let embeddings;
 
+  let retrievedText = "";
+
+  async function fetchRandomValue() {
+    const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
+    const queryParams = new URLSearchParams({ url });
+    const apiUrl = `/api?${queryParams.toString()}`;
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+
+    retrievedText = await response.text();
+
+    // Get the container element where you want to display the text
+    var displayTextContainer = document.getElementById("displayTextContainer");
+
+    // Set the innerHTML of the container to the value of the retrievedText variable
+    displayTextContainer.innerHTML = retrievedText;
+
+    return response;
+  }
+
+  // const response = await fetch(
+  //   "https://en.wikipedia.org/wiki/GitHub_Copilot"
+  // );
+  // const data = await response.json();
+
   onMount(() => {
     // Initialize the Supabase client
     // @ts-ignore
@@ -58,6 +84,7 @@
       client,
       tableName: "documents",
     });
+    console.log(fetchRandomValue());
   });
 
   //   // Call the file uploader function
@@ -84,6 +111,10 @@
       (Please let me know if I have to discipline him. He's still learning, and
       any feedback is welcome!)
     </p>
+    <p>retrievedText</p>
+  </div>
+  <div id="displayTextContainer">
+    <!-- The content of the retrievedText variable will be displayed here -->
   </div>
   <div class="app-content">
     <!-- Display the action selection radio buttons -->

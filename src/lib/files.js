@@ -128,7 +128,7 @@
 import { processTxt } from "./loaders/txt";
 import { processHtml } from "./loaders/html";
 import { computeSHA1FromContent } from "./utils";
-import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html";
+import { getHtml } from "./loaders/html";
 import { createClient } from "@supabase/supabase-js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -220,15 +220,18 @@ async function filter_file(file, supabase, vector_store) {
 export async function url_uploader(supabase, openai_key, vector_store, url) {
   // const url = "https://en.wikipedia.org/wiki/Google_AI";/* Get the URL from the text area */
   // const buttonClicked = true;/* Check if the button is clicked */
+  const html = await getHtml(url);
+  console.log(html);
+  // const response = await axios.get(url);
 
-  const response = await axios.get(url);
-  if (response.status === 200) {
-    console.log(`Getting content... ${url}`);
-    const html = response.data;
-    const { uploaded_file, temp_file_path } = createHtmlFile(url, html);
-    const ret = await filter_file(uploaded_file, supabase, vector_store);
-    deleteTempFile(temp_file_path, url, ret);
-  } else {
-    console.log(`❌ Failed to access ${url}.`);
-  }
+  // if (response.status === 200) {
+  //   console.log("All good");
+  //   // console.log(`Getting content... ${url}`);
+  //   // const html = response.data;
+  //   // const { uploaded_file, temp_file_path } = createHtmlFile(url, html);
+  //   // const ret = await filter_file(uploaded_file, supabase, vector_store);
+  //   // deleteTempFile(temp_file_path, url, ret);
+  // } else {
+  //   console.log(`❌ Failed to access ${url}.`);
+  // }
 }
