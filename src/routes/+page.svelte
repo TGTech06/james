@@ -13,7 +13,12 @@
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
   import { writable } from "svelte/store";
   import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
-
+  import {
+    PUBLIC_SUPABASE_KEY,
+    PUBLIC_SUPABASE_URL,
+    PUBLIC_HUGGINGFACE_API_KEY,
+    PUBLIC_OPENAI_API_KEY,
+  } from "$env/static/public";
   let mode;
   let model = writable("tiiuae/falcon-7b-instruct");
   let temperature = writable(0.2);
@@ -25,12 +30,12 @@
   let question = "";
 
   // Initialize the Supabase client and other variables
-  const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
-  const supabase_key =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
-  const openai_api_key = "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";
-  const openAIApiKey = "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";
-  const huggingfacehub_api_token = "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";
+  // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
+  // const supabase_key =
+  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
+  // const openai_api_key = "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";
+  // const openAIApiKey = "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";
+  // const huggingfacehub_api_token = "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";
   /**
    * @type {null}
    */
@@ -40,45 +45,21 @@
 
   let retrievedText = "";
 
-  // async function fetchRandomValue() {
-  //   const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
-  //   const queryParams = new URLSearchParams({ url });
-  //   const apiUrl = `/api?${queryParams.toString()}`;
-  //   const response = await fetch(apiUrl, {
-  //     method: "GET",
-  //   });
-
-  //   retrievedText = await response.text();
-
-  //   // Get the container element where you want to display the text
-  //   var displayTextContainer = document.getElementById("displayTextContainer");
-
-  //   // Set the innerHTML of the container to the value of the retrievedText variable
-  //   displayTextContainer.innerHTML = retrievedText;
-
-  //   return response;
-  // }
-
-  // const response = await fetch(
-  //   "https://en.wikipedia.org/wiki/GitHub_Copilot"
-  // );
-  // const data = await response.json();
-
   onMount(() => {
     // Initialize the Supabase client
     // @ts-ignore
-    supabase = createClient(supabase_url, supabase_key);
+    supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     //   embeddings = new OpenAIEmbeddings({ openAIApiKey });
     //   vector = new SupabaseVectorStore(embeddings,  {
     //   supabase,
     //   tableName: "documents",
     // });
 
-    const client = createClient(supabase_url, supabase_key);
+    const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
     //embeddings = new OpenAIEmbeddings({ openAIApiKey });
     embeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: "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",
+      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
     });
     vector = new SupabaseVectorStore(embeddings, {
       client,
@@ -86,21 +67,9 @@
     });
     // console.log(fetchRandomValue());
   });
-
-  //   // Call the file uploader function
-  //   file_uploader(supabase, openai_api_key, vectorStore);
-
-  //   // Call the URL uploader function
-  //   url_uploader(supabase, openai_api_key, vectorStore);
-
   async function upload(e: any) {
     files = e.target.files[0];
   }
-
-  // Set the theme
-  // You can customize the theme using CSS classes and styles
-  // to match the Streamlit app's appearance
-  // Example: <div class="app-title">🧠🧠 James 🧠🧠</div>
 </script>
 
 <div class="app-container">
@@ -176,14 +145,15 @@
           <input type="file" multiple on:change={upload} />
           <button
             on:click={() =>
-              file_uploader(supabase, openai_api_key, vector, files)}
+              file_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, files)}
             >Upload Files</button
           >
         </div>
         <div class="url-uploader">
           <textarea bind:value={url} />
           <button
-            on:click={() => url_uploader(supabase, openai_api_key, vector, url)}
+            on:click={() =>
+              url_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, url)}
             >Add the URL to the database</button
           >
         </div>
@@ -230,7 +200,7 @@
         <button
           on:click={() =>
             chatWithDoc(
-              huggingfacehub_api_token,
+              PUBLIC_HUGGINGFACE_API_KEY,
               vector,
               model,
               temperature,

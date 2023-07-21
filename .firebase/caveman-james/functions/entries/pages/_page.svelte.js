@@ -5,7 +5,6 @@ import "langchain/vectorstores/supabase";
 import "langchain/embeddings/openai";
 import "langchain/document_loaders/fs/text";
 import "langchain/document_loaders/fs/unstructured";
-import "axios";
 import "fs";
 import { w as writable } from "../../chunks/index.js";
 import "langchain/chains";
@@ -34,7 +33,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   $$unsubscribe_temperature();
   return `<div class="app-container"><div class="app-header"><h1 data-svelte-h="svelte-la326">🧠🧠 James 🧠🧠</h1> <p data-svelte-h="svelte-1esjus8">He will remember everything you tell him and answer your questions.
       (Please let me know if I have to discipline him. He&#39;s still learning, and
-      any feedback is welcome!)</p></div> <div class="app-content"> <div class="action-selection"><input type="radio" value="Add Knowledge" id="add-knowledge"${""}> <label for="add-knowledge" data-svelte-h="svelte-112aynz">Add Knowledge</label> <input type="radio" value="Chat with your Brain" id="chat-with-brain"${""}> <label for="chat-with-brain" data-svelte-h="svelte-41acxd">Chat with your Brain</label> <input type="radio" value="Forget" id="forget"${""}> <label for="forget" data-svelte-h="svelte-1h6y6ie">Forget</label></div> ${`${`${``}`}`}</div> </div>`;
+      any feedback is welcome!)</p> <p data-svelte-h="svelte-ndpfvj">retrievedText</p></div> <div id="displayTextContainer" data-svelte-h="svelte-vwek72"></div> <div class="app-content"> <div class="action-selection"><input type="radio" value="Add Knowledge" id="add-knowledge"${""}> <label for="add-knowledge" data-svelte-h="svelte-112aynz">Add Knowledge</label> <input type="radio" value="Chat with your Brain" id="chat-with-brain"${""}> <label for="chat-with-brain" data-svelte-h="svelte-41acxd">Chat with your Brain</label> <input type="radio" value="Forget" id="forget"${""}> <label for="forget" data-svelte-h="svelte-1h6y6ie">Forget</label></div> ${`${`${``}`}`}</div> </div>`;
 });
 export {
   Page as default
