@@ -40,24 +40,24 @@
 
   let retrievedText = "";
 
-  async function fetchRandomValue() {
-    const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
-    const queryParams = new URLSearchParams({ url });
-    const apiUrl = `/api?${queryParams.toString()}`;
-    const response = await fetch(apiUrl, {
-      method: "GET",
-    });
+  // async function fetchRandomValue() {
+  //   const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
+  //   const queryParams = new URLSearchParams({ url });
+  //   const apiUrl = `/api?${queryParams.toString()}`;
+  //   const response = await fetch(apiUrl, {
+  //     method: "GET",
+  //   });
 
-    retrievedText = await response.text();
+  //   retrievedText = await response.text();
 
-    // Get the container element where you want to display the text
-    var displayTextContainer = document.getElementById("displayTextContainer");
+  //   // Get the container element where you want to display the text
+  //   var displayTextContainer = document.getElementById("displayTextContainer");
 
-    // Set the innerHTML of the container to the value of the retrievedText variable
-    displayTextContainer.innerHTML = retrievedText;
+  //   // Set the innerHTML of the container to the value of the retrievedText variable
+  //   displayTextContainer.innerHTML = retrievedText;
 
-    return response;
-  }
+  //   return response;
+  // }
 
   // const response = await fetch(
   //   "https://en.wikipedia.org/wiki/GitHub_Copilot"
@@ -84,7 +84,7 @@
       client,
       tableName: "documents",
     });
-    console.log(fetchRandomValue());
+    // console.log(fetchRandomValue());
   });
 
   //   // Call the file uploader function

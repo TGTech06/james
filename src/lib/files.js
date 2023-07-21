@@ -128,11 +128,12 @@
 import { processTxt } from "./loaders/txt";
 import { processHtml } from "./loaders/html";
 import { computeSHA1FromContent } from "./utils";
-import { getHtml } from "./loaders/html";
+import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html";
 import { createClient } from "@supabase/supabase-js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import axios from "axios";
+import { process_file } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/loaders/common.ts";
+import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 
 const file_processors = {
   ".txt": processTxt,
@@ -222,6 +223,33 @@ export async function url_uploader(supabase, openai_key, vector_store, url) {
   // const buttonClicked = true;/* Check if the button is clicked */
   const html = await getHtml(url);
   console.log(html);
+  // const { uploaded_file, temp_file_path } = createHtmlFile(url, html);
+  // const ret = await filter_file(uploaded_file, supabase, vector_store);
+  const file = createHtmlFile(url, html);
+
+  console.log(file);
+  // Create a FileReader instance
+
+  // const file = new File([html], "example.html", { type: "text/html" });
+
+  // await filter_file(file, supabase, vector_store);
+  // vectorStore,
+  // file,
+  // loaderClass,
+  // fileSuffix,
+  // chunkSize,
+  // chunkOverlap,
+  // isUrl
+  await process_file(
+    vector_store,
+    file,
+    UnstructuredLoader,
+    ".html",
+    500,
+    0,
+    true
+  );
+  // deleteTempFile(temp_file_path, url, ret);
   // const response = await axios.get(url);
 
   // if (response.status === 200) {

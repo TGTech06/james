@@ -468,6 +468,7 @@ import { v4 as uuidv4 } from 'uuid';
 //   constructor(public id: string | null, public pageContent: T, public metadata: U) {}
 // }
 
+
 // Function to process the file
 export async function process_file(
   vectorStore,
@@ -475,19 +476,14 @@ export async function process_file(
   loaderClass,
   fileSuffix,
   chunkSize,
-  chunkOverlap
+  chunkOverlap, 
+  isUrl
 ) {
   const documents = [];
   const fileName = file.name;
   const fileSize = file.size;
   const dateShort = new Date();
-
-  
-  const tmpFile = new File([file], fileName, { type: file.type });
-  const fileSha1 = await computeSHA1FromFile(tmpFile);
-
-  const loader = new loaderClass(tmpFile);
-  const loadedDocuments = await loader.load();
+  let fileSha1;
 
   const chunkSizeValue = chunkSize;
   const chunkOverlapValue = chunkOverlap;
@@ -496,8 +492,88 @@ export async function process_file(
     chunkSize: chunkSizeValue,
     chunkOverlap: chunkOverlapValue,
   });
+  let splittedDocuments;
+  console.log("isUrl", isUrl)
+  if (isUrl === true) {
+    console.log("isUrl", isUrl)
+    // const loadedContent = [await file.data()]; 
+    const reader = new FileReader();
 
-  const splittedDocuments = await textSplitter.splitDocuments(loadedDocuments);
+    // Set up an event listener to handle when the file content is loaded
+    reader.onload = async function (event) {
+      const fileContent = event.target.result; // This will contain the content of the file
+      console.log("fileContent", fileContent);
+
+      const documentObject = {
+        pageContent: fileContent.toString(),
+        metadata: {
+          file_sha1: fileSha1,
+          file_size: fileSize,
+          file_name: fileName,
+          chunk_size: chunkSize,
+          chunk_overlap: chunkOverlap,
+          date: dateShort,
+        },
+      };
+    
+      splittedDocuments = await textSplitter.splitDocuments([documentObject]);
+      console.log("splittedDocuments", splittedDocuments)
+      fileSha1 = await computeSHA1FromContent(fileContent);// You can use the file content here
+      const docsWithMetadata = [];
+  for (const doc of splittedDocuments) {
+    const documentObject = {
+      pageContent: doc.pageContent,
+      metadata: {
+        file_sha1: fileSha1,
+        file_size: fileSize,
+        file_name: fileName,
+        chunk_size: chunkSize,
+        chunk_overlap: chunkOverlap,
+        date: dateShort,
+      },
+    };
+    docsWithMetadata.push(documentObject);
+  }
+  const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
+  const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
+  const client = createClient(supabase_url, supabase_key);
+// const openAIApiKey = "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"; 
+  const embeddings = new HuggingFaceInferenceEmbeddings({
+    apiKey: "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", 
+  });
+      
+  let vector = new SupabaseVectorStore(embeddings, {
+    client,
+    tableName: "documents",
+  });
+
+  console.log(docsWithMetadata);
+  
+  // // Convert the resolvedDocsWithMetadata into a plain array of objects
+  // const documentsToInsert = resolvedDocsWithMetadata.map((doc) => ({
+  //   id: doc.id,
+  //   pageContent: doc.pageContent,
+  //   metadata: doc.metadata,
+  // }));
+
+  vector.addDocuments(docsWithMetadata);
+
+      
+    };
+  
+    await reader.readAsText(file);
+    
+    
+  } else {
+    const tmpFile = new File([file], fileName, { type: file.type });
+    fileSha1 = await computeSHA1FromFile(tmpFile);
+
+  const loader = new loaderClass(tmpFile);
+    const loadedDocuments = await loader.load();
+    splittedDocuments = await textSplitter.splitDocuments(loadedDocuments);
+  }
+
+  
 
   // Modify the code to match your desired text splitting logic
   const splitter = {

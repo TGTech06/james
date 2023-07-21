@@ -131,60 +131,60 @@
 //     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('utf-8')
 // }
 
-import { process_file } from "./common";
-import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
-import { CheerioWebBaseLoader } from "langchain/document_loaders/web/cheerio";
-//import { PuppeteerWebBaseLoader } from "langchain/document_loaders/web/puppeteer";
+// import { process_file } from "./common";
+// import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
+// import { CheerioWebBaseLoader } from "langchain/document_loaders/web/cheerio";
+// //import { PuppeteerWebBaseLoader } from "langchain/document_loaders/web/puppeteer";
 
-import slugify from "slugify";
-// import { GET } from "../server/+server";
-// import puppeteer from "puppeteer";
-// import { browser } from "$app/env";
-export async function processHtml(vector_store, file) {
-  return process_file(vector_store, file, UnstructuredLoader, ".html");
-}
+// import slugify from "slugify";
+// // import { GET } from "../server/+server";
+// // import puppeteer from "puppeteer";
+// // import { browser } from "$app/env";
+// export async function processHtml(vector_store, file) {
+//   return process_file(vector_store, file, UnstructuredLoader, ".html");
+// }
 
-export async function getHtml(url) {
-  try {
-    // let content = GET("https://www.tabnews.com.br/");
-    // console.log("content retrieved : ", content);
-    // const loader = new PuppeteerWebBaseLoader("https://www.tabnews.com.br/");
-    // const docs = await loader.load();
-    // console.log(docs);
-    // const response = await axios.get(url);
-    // console.log(response);
-    // if (response.status === 200) {
-    //   return response.data;
-    // } else {
-    //   return null;
-    // }
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-}
+// export async function getHtml(url) {
+//   try {
+//     // let content = GET("https://www.tabnews.com.br/");
+//     // console.log("content retrieved : ", content);
+//     // const loader = new PuppeteerWebBaseLoader("https://www.tabnews.com.br/");
+//     // const docs = await loader.load();
+//     // console.log(docs);
+//     // const response = await axios.get(url);
+//     // console.log(response);
+//     // if (response.status === 200) {
+//     //   return response.data;
+//     // } else {
+//     //   return null;
+//     // }
+//   } catch (error) {
+//     console.log(error);
+//     return null;
+//   }
+// }
 
-export function create_html_file(url, content) {
-  const file_name = slugify(url) + ".html";
-  const temp_file_path = `/${file_name}`; // Use a temporary path for the browser
+// export function create_html_file(url, content) {
+//   const file_name = slugify(url) + ".html";
+//   const temp_file_path = `/${file_name}`; // Use a temporary path for the browser
 
-  const uploaded_file = {
-    id: null,
-    name: file_name,
-    type: "text/html",
-    data: new Blob([content], { type: "text/html" }),
-  };
+//   const uploaded_file = {
+//     id: null,
+//     name: file_name,
+//     type: "text/html",
+//     data: new Blob([content], { type: "text/html" }),
+//   };
 
-  return { uploaded_file, temp_file_path };
-}
+//   return { uploaded_file, temp_file_path };
+// }
 
-export async function delete_tempfile(temp_file_path, url, ret) {
-  // Since we are in a browser, we can't directly delete the file
-  // However, we can inform the user that the content has been saved or there was an error
-  if (ret) {
-    console.log(`✅ Content saved... ${url}`);
-  }
-}
+// export async function delete_tempfile(temp_file_path, url, ret) {
+//   // Since we are in a browser, we can't directly delete the file
+//   // However, we can inform the user that the content has been saved or there was an error
+//   if (ret) {
+//     console.log(`✅ Content saved... ${url}`);
+//   }
+// }
 
 // export async function getHtml(url) {
 //   try {
@@ -253,3 +253,97 @@ export async function delete_tempfile(temp_file_path, url, ret) {
 //   text = text.replace(/[-\s]+/g, "-");
 //   return text;
 // }
+import { process_file } from "./common";
+import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
+// import axios from "axios";
+import fs from "fs";
+
+export async function processHtml(vector_store, file) {
+  return process_file(vector_store, file, UnstructuredLoader, ".html");
+}
+
+export async function getHtml(url) {
+  try {
+    // const response = await axios.get(url);
+    // const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
+    const queryParams = new URLSearchParams({ url });
+    const apiUrl = `/api?${queryParams.toString()}`;
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+    if (response.status === 200) {
+      let retrievedText = await response.text();
+      return retrievedText;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    return null;
+  }
+}
+
+class CustomFile extends Blob {
+  constructor(parts, properties) {
+    super(parts, properties);
+    this.name = properties.name;
+    this.lastModifiedDate = new Date();
+  }
+}
+
+export function createHtmlFile(url, content) {
+  const file_name = slugify(url) + ".html";
+  const uploaded_file = new CustomFile([content], {
+    type: "text/html",
+    name: file_name,
+  });
+
+  return uploaded_file;
+}
+
+// export function createHtmlFile(url, content) {
+//   const file_name = slugify(url) + ".html";
+//   const uploaded_file = {
+//     id: null,
+//     name: file_name,
+//     type: "text/html",
+//     data: new Blob([content], { type: "text/html" }),
+//   };
+
+//   return { uploaded_file };
+// }
+
+// export function createHtmlFile(url, content) {
+//   const file_name = slugify(url) + ".html";
+//   const temp_file_path = fs.mkdtempSync("/tmp/") + file_name;
+//   fs.writeFileSync(temp_file_path, content);
+
+//   const uploaded_file = {
+//     id: null,
+//     name: file_name,
+//     type: "text/html",
+//     data: fs.readFileSync(temp_file_path),
+//   };
+
+//   return { uploaded_file, temp_file_path };
+// }
+
+export function deleteTempFile(temp_file_path, url, ret) {
+  try {
+    fs.unlinkSync(temp_file_path);
+    if (ret) {
+      console.log(`✅ Content saved... ${url}`);
+    }
+  } catch (error) {
+    console.log(`❌ Error while saving content... ${url}`);
+  }
+}
+
+function slugify(text) {
+  text = text.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  text = text
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .toLowerCase();
+  text = text.replace(/[-\s]+/g, "-");
+  return text;
+}
