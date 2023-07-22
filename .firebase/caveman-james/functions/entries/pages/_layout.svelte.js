@@ -1,4 +1,5 @@
 import { c as create_ssr_component } from "../../chunks/ssr.js";
+import "../../chunks/supabase.js";
 const app = "";
 const Layout = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   let { data } = $$props;

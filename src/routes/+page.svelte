@@ -69,6 +69,23 @@
     }
   }
 
+  async function getAIResponse() {
+    let response = await chatWithDoc(
+      PUBLIC_HUGGINGFACE_API_KEY,
+      vector,
+      model,
+      temperature,
+      question
+    );
+
+    const displayTextContainer = document.getElementById(
+      "displayTextContainer"
+    );
+
+    // Set the content of the div element to the retrieved text
+    displayTextContainer.textContent = response;
+  }
+
   onMount(() => {
     // if (data.session) {
     //   console.log(data.session.data.session);
@@ -111,11 +128,8 @@
         (Please let me know if I have to discipline him. He's still learning,
         and any feedback is welcome!)
       </p>
-      <p>retrievedText</p>
     </div>
-    <div id="displayTextContainer">
-      <!-- The content of the retrievedText variable will be displayed here -->
-    </div>
+
     <div class="app-content">
       <!-- Display the action selection radio buttons -->
       <div class="action-selection">
@@ -175,6 +189,7 @@
           <div class="file-uploader">
             <input type="file" multiple on:change={upload} />
             <button
+              class="btn btn-primary"
               on:click={() =>
                 file_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, files)}
               >Upload Files</button
@@ -183,11 +198,13 @@
           <div class="url-uploader">
             <textarea bind:value={url} />
             <button
+              class="btn btn-primary"
               on:click={() =>
                 url_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, url)}
               >Add the URL to the database</button
             >
           </div>
+
           <!-- <div class="file-uploader">
           {file_uploader(supabase, openai_api_key, vectorStore)}
         </div>
@@ -205,6 +222,9 @@
             <select id="model" bind:value={$model}>
               <option value="tiiuae/falcon-7b-instruct"
                 >tiiuae/falcon-7b-instruct</option
+              >
+              <option value="meta-llama/Llama-2-70b-chat-hf"
+                >meta-llama/Llama-2-70b-chat-hf</option
               >
               <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
                 >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
@@ -228,16 +248,13 @@
         <!-- Display the chat with brain functionality -->
         <div class="content">
           <textarea bind:value={question} />
-          <button
-            on:click={() =>
-              chatWithDoc(
-                PUBLIC_HUGGINGFACE_API_KEY,
-                vector,
-                model,
-                temperature,
-                question
-              )}>Add the URL to the database</button
+          <button class="btn btn-primary" on:click={() => getAIResponse()}
+            >Ask the AI</button
           >
+        </div>
+        <p>Generated Text:</p>
+        <div id="displayTextContainer">
+          <!-- The content of the retrievedText variable will be displayed here -->
         </div>
       {:else if mode === "Forget"}
         <!-- Display the configuration sidebar for forgetting knowledge -->
@@ -253,7 +270,9 @@
       {/if}
     </div>
   </div>
-  <button class="btn btn-primary" on:click={() => signOutUser()}>Logout</button>
+  <button class="btn btn-secondary" on:click={() => signOutUser()}
+    >Logout</button
+  >
 </AuthCheck>
 
 <style>

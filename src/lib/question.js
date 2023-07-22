@@ -62,6 +62,7 @@ export async function chatWithDoc(
   question
 ) {
   const questionValue = question;
+  console.log("model", model);
 
   const llm = new HuggingFaceInference({
     apiKey: huggingfacehubApiToken,
@@ -80,4 +81,5 @@ export async function chatWithDoc(
   });
   console.log("result", result);
   console.log(result.text);
+  return result.text;
 }

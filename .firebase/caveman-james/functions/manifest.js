@@ -10,11 +10,13 @@ return {
 	assets: new Set(["chatui/favicon.png","chatui/favicon.svg","chatui/touch-icon-ipad-retina.png","chatui/touch-icon-ipad.png","chatui/touch-icon-iphone-retina.png","favicon.png","huggingchat/favicon.png","huggingchat/favicon.svg","huggingchat/thumbnail.png","huggingchat/touch-icon-ipad-retina.png","huggingchat/touch-icon-ipad.png","huggingchat/touch-icon-iphone-retina.png"]),
 	mimeTypes: {".png":"image/png",".svg":"image/svg+xml"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.159d5896.js","app":"_app/immutable/entry/app.62adff32.js","imports":["_app/immutable/entry/start.159d5896.js","_app/immutable/chunks/scheduler.744affc9.js","_app/immutable/chunks/singletons.99a73b17.js","_app/immutable/chunks/index.43531919.js","_app/immutable/entry/app.62adff32.js","_app/immutable/chunks/preload-helper.cf010ec4.js","_app/immutable/chunks/scheduler.744affc9.js","_app/immutable/chunks/index.f15cdbf8.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.a4ff221f.js","app":"_app/immutable/entry/app.d499a983.js","imports":["_app/immutable/entry/start.a4ff221f.js","_app/immutable/chunks/scheduler.193b0897.js","_app/immutable/chunks/singletons.05c1289d.js","_app/immutable/chunks/index.cfa5c76d.js","_app/immutable/entry/app.d499a983.js","_app/immutable/chunks/public.9150bb34.js","_app/immutable/chunks/supabase.a749d6da.js","_app/immutable/chunks/scheduler.193b0897.js","_app/immutable/chunks/index.18598242.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),
-			__memo(() => import('./nodes/2.js'))
+			__memo(() => import('./nodes/2.js')),
+			__memo(() => import('./nodes/3.js')),
+			__memo(() => import('./nodes/4.js'))
 		],
 		routes: [
 			{
@@ -30,6 +32,27 @@ return {
 				params: [],
 				page: null,
 				endpoint: __memo(() => import('./entries/endpoints/api/_server.ts.js'))
+			},
+			{
+				id: "/login",
+				pattern: /^\/login\/?$/,
+				params: [],
+				page: { layouts: [0,], errors: [1,], leaf: 3 },
+				endpoint: null
+			},
+			{
+				id: "/logout",
+				pattern: /^\/logout\/?$/,
+				params: [],
+				page: null,
+				endpoint: __memo(() => import('./entries/endpoints/logout/_server.ts.js'))
+			},
+			{
+				id: "/register",
+				pattern: /^\/register\/?$/,
+				params: [],
+				page: { layouts: [0,], errors: [1,], leaf: 4 },
+				endpoint: null
 			}
 		],
 		matchers: async () => {
