@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-
   // Add your imports here
   import {
     file_uploader,

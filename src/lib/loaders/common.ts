@@ -31,6 +31,13 @@ export async function process_file(
     chunkSize: chunkSizeValue,
     chunkOverlap: chunkOverlapValue,
   });
+  const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+
+  // let session = await client.auth.getSession();
+  let user = await client.auth.getUser();
+  let userID = user.data.user.id;
+  console.log("userID", userID);
+
   let splittedDocuments;
   console.log("isUrl", isUrl)
   if (isUrl === true) {
@@ -41,8 +48,6 @@ export async function process_file(
     // Set up an event listener to handle when the file content is loaded
     reader.onload = async function (event) {
       const fileContent = event.target.result; // This will contain the content of the file
-      console.log("fileContent", fileContent);
-
       const documentObject = {
         pageContent: fileContent.toString(),
         metadata: {
@@ -56,7 +61,7 @@ export async function process_file(
       };
     
       splittedDocuments = await textSplitter.splitDocuments([documentObject]);
-      console.log("splittedDocuments", splittedDocuments)
+      console.log("splittedDocuments", splittedDocuments[0].user_id)
       fileSha1 = await computeSHA1FromContent(fileContent);// You can use the file content here
       const docsWithMetadata = [];
   for (const doc of splittedDocuments) {
@@ -80,17 +85,18 @@ export async function process_file(
   const embeddings = new HuggingFaceInferenceEmbeddings({
     apiKey: PUBLIC_HUGGINGFACE_API_KEY, 
   });
-      
+      console.log("user_id", userID);
   let vector = new SupabaseVectorStore(embeddings, {
     client,
+    queryName: "insert",
     tableName: "documents",
   });
 
-  console.log(docsWithMetadata);
+  console.log("docs Metadata", docsWithMetadata[0].user_id);
   vector.addDocuments(docsWithMetadata);
-    };
+  };
   
-    await reader.readAsText(file);
+  await reader.readAsText(file);
     
     
   } else {
@@ -105,14 +111,16 @@ export async function process_file(
   
 
   // Modify the code to match your desired text splitting logic
-  const splitter = {
-    splitDocuments: function (documents) {
-      return documents.map((doc, index) => ({
-        id: uuidv4(), // Generate a unique ID for each document
-        page_content: doc,
-      }));
-    },
-  };
+  // const splitter = {
+  //   splitDocuments: function (documents) {
+  //     return documents.map((doc, index) => ({
+  //       id: uuidv4(), // Generate a unique ID for each document
+  //       page_content: doc,
+  //     }));
+  //   },
+  // };
+ 
+
   const docsWithMetadata = [];
   for (const doc of splittedDocuments) {
     const documentObject = {
@@ -131,19 +139,20 @@ export async function process_file(
   
   // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
   // const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
-  const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+
 // const openAIApiKey = "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"; 
   const embeddings = new HuggingFaceInferenceEmbeddings({
     apiKey: PUBLIC_HUGGINGFACE_API_KEY, 
   });
  // let embeddings = new OpenAIEmbeddings({ openAIApiKey }); // Replace with your actual OpenAI API key
-
+ console.log("user_id", userID);
   let vector = new SupabaseVectorStore(embeddings, {
     client,
     tableName: "documents",
+    queryName: "insert",
   });
 
-  console.log(docsWithMetadata);
+  console.log("docsWithMetadata", docsWithMetadata);
   vector.addDocuments(docsWithMetadata);
 
   return;
