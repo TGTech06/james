@@ -19,6 +19,9 @@
     PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import AuthCheck from "$lib/AuthCheck.svelte";
+  import Insert from "./insert.svelte";
+  import Ask from "./ask.svelte";
+  import Forget from "./forget.svelte";
 
   //import { enhance, type SubmitFunction } from '$app/forms';
 
@@ -34,7 +37,7 @@
   // 	cancel();
   // };
 
-  let mode;
+  let mode = writable("Add Knowledge");
   let model = writable("tiiuae/falcon-7b-instruct");
   let temperature = writable(0.2);
   let chunkSize = writable(500);
@@ -130,150 +133,35 @@
       </p>
     </div>
 
-    <div class="app-content">
-      <!-- Display the action selection radio buttons -->
-      <div class="action-selection">
-        <input
-          type="radio"
-          bind:group={mode}
-          value="Add Knowledge"
-          id="add-knowledge"
-        />
-        <label for="add-knowledge">Add Knowledge</label>
+    <!-- Render different components based on the selected mode -->
+    {#if $mode === "Add Knowledge"}
+      <Insert />
+    {:else if $mode === "Chat with your Brain"}
+      <Ask />
+    {:else if $mode === "Forget"}
+      <Forget />
+    {/if}
 
-        <input
-          type="radio"
-          bind:group={mode}
-          value="Chat with your Brain"
-          id="chat-with-brain"
-        />
-        <label for="chat-with-brain">Chat with your Brain</label>
-
-        <input type="radio" bind:group={mode} value="Forget" id="forget" />
-        <label for="forget">Forget</label>
-      </div>
-
-      {#if mode === "Add Knowledge"}
-        <!-- Display the configuration sidebar for adding knowledge -->
-        <div class="sidebar">
-          <h2>Configuration</h2>
-          <p>Choose your chunk size and overlap for adding knowledge.</p>
-          <div class="slider">
-            <label for="chunk-size">Chunk Size</label>
-            <input
-              type="range"
-              id="chunk-size"
-              min="100"
-              max="1000"
-              step="50"
-              bind:value={$chunkSize}
-            />
-            <span>{$chunkSize}</span>
-          </div>
-          <div class="slider">
-            <label for="chunk-overlap">Chunk Overlap</label>
-            <input
-              type="range"
-              id="chunk-overlap"
-              min="0"
-              max="100"
-              step="10"
-              bind:value={$chunkOverlap}
-            />
-            <span>{$chunkOverlap}</span>
-          </div>
-        </div>
-
-        <!-- Display the file uploader and URL uploader -->
-        <div class="content">
-          <div class="file-uploader">
-            <input type="file" multiple on:change={upload} />
-            <button
-              class="btn btn-primary"
-              on:click={() =>
-                file_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, files)}
-              >Upload Files</button
-            >
-          </div>
-          <div class="url-uploader">
-            <textarea bind:value={url} />
-            <button
-              class="btn btn-primary"
-              on:click={() =>
-                url_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, url)}
-              >Add the URL to the database</button
-            >
-          </div>
-
-          <!-- <div class="file-uploader">
-          {file_uploader(supabase, openai_api_key, vectorStore)}
-        </div>
-        <div class="url-uploader">
-          {url_uploader(supabase, openai_api_key, vectorStore)}
-        </div> -->
-        </div>
-      {:else if mode === "Chat with your Brain"}
-        <!-- Display the configuration sidebar for asking questions -->
-        <div class="sidebar">
-          <h2>Configuration</h2>
-          <p>Choose your model and temperature for asking questions.</p>
-          <div class="select">
-            <label for="model">Model</label>
-            <select id="model" bind:value={$model}>
-              <option value="tiiuae/falcon-7b-instruct"
-                >tiiuae/falcon-7b-instruct</option
-              >
-              <option value="meta-llama/Llama-2-70b-chat-hf"
-                >meta-llama/Llama-2-70b-chat-hf</option
-              >
-              <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
-                >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
-              >
-            </select>
-          </div>
-          <div class="slider">
-            <label for="temperature">Temperature</label>
-            <input
-              type="range"
-              id="temperature"
-              min="0.1"
-              max="1.0"
-              step="0.2"
-              bind:value={$temperature}
-            />
-            <span>{$temperature}</span>
-          </div>
-        </div>
-
-        <!-- Display the chat with brain functionality -->
-        <div class="content">
-          <textarea bind:value={question} />
-          <button class="btn btn-primary" on:click={() => getAIResponse()}
-            >Ask the AI</button
-          >
-        </div>
-        <p>Generated Text:</p>
-        <div id="displayTextContainer">
-          <!-- The content of the retrievedText variable will be displayed here -->
-        </div>
-      {:else if mode === "Forget"}
-        <!-- Display the configuration sidebar for forgetting knowledge -->
-        <div class="sidebar">
-          <h2>Configuration</h2>
-          <!-- Add your configuration options here for forgetting knowledge -->
-        </div>
-
-        <!-- Display the brain forgetting functionality -->
-        <div class="content">
-          {brain(supabase)}
-        </div>
-      {/if}
+    <!-- Add navigation buttons to move between pages -->
+    <div>
+      <button on:click={() => ($mode = "Add Knowledge")}
+        >Go to Add Knowledge</button
+      >
+      <button on:click={() => ($mode = "Chat with your Brain")}
+        >Go to Chat with your Brain</button
+      >
+      <button on:click={() => ($mode = "Forget")}>Go to Forget</button>
     </div>
   </div>
   <button class="btn btn-secondary" on:click={() => signOutUser()}
     >Logout</button
   >
 </AuthCheck>
+
+<!-- <button class="btn btn-secondary" on:click={() => signOutUser()}
+    >Logout</button
+  >
+</AuthCheck> -->
 
 <style>
   /* Add your CSS styles here to match the Streamlit app's appearance */
