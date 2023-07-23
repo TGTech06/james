@@ -9,7 +9,9 @@
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
     PUBLIC_HUGGINGFACE_API_KEY,
+    PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
+  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 
   // Initialize the Supabase client and other variables
   let supabase;
@@ -25,9 +27,11 @@
   // Bind the functions to the corresponding elements in the ask.html file, if needed
   async function getAIResponse() {
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    embeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    });
+    // embeddings = new HuggingFaceInferenceEmbeddings({
+    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    // });
+    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    embeddings = new OpenAIEmbeddings({ openAIApiKey });
     vector = new SupabaseVectorStore(embeddings, {
       client,
       tableName: "documents",

@@ -82,9 +82,12 @@ export async function process_file(
   // const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
   const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 // const openAIApiKey = "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"; 
-  const embeddings = new HuggingFaceInferenceEmbeddings({
-    apiKey: PUBLIC_HUGGINGFACE_API_KEY, 
-  });
+  // const embeddings = new HuggingFaceInferenceEmbeddings({
+  //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+  // });
+      
+  const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+  const embeddings = new OpenAIEmbeddings({ openAIApiKey });
       console.log("user_id", userID);
   let vector = new SupabaseVectorStore(embeddings, {
     client,
@@ -141,9 +144,11 @@ export async function process_file(
   // const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
 
 // const openAIApiKey = "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"; 
-  const embeddings = new HuggingFaceInferenceEmbeddings({
-    apiKey: PUBLIC_HUGGINGFACE_API_KEY, 
-  });
+  // const embeddings = new HuggingFaceInferenceEmbeddings({
+  //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+  // });
+  const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+  const embeddings = new OpenAIEmbeddings({ openAIApiKey });
  // let embeddings = new OpenAIEmbeddings({ openAIApiKey }); // Replace with your actual OpenAI API key
  console.log("user_id", userID);
   let vector = new SupabaseVectorStore(embeddings, {
