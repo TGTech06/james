@@ -20,6 +20,7 @@
   let embeddings;
   let files;
   let url;
+  let error = "";
 
   // Add any additional functions specific to the insert page, if needed
 
@@ -40,29 +41,70 @@
   });
 
   async function handleFileUpload() {
-    await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
+    try {
+      await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
+      error = "";
+    } catch (err) {
+      error = err.message;
+    }
   }
 
   async function handleUrlUpload() {
-    await url_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, url);
+    try {
+      await url_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, url);
+      error = "";
+    } catch (err) {
+      error = err.message;
+    }
   }
 </script>
 
-<h1>Insert Data Page</h1>
-<!-- Your insert page content -->
-<!-- ... -->
+<div class="p-8 flex flex-col items-center h-screen">
+  <h1 class="text-4xl font-bold mb-8">Insert Data Page</h1>
+  <!-- Error Display -->
+  {#if error}
+    <div class="text-red-500 mb-4">{error}</div>
+  {/if}
+
+  <!-- File Uploader -->
+  <div class="w-full mb-8">
+    <label class="label mb-2 text-lg font-bold">Upload Files</label>
+    <div class="flex items-center">
+      <input
+        type="file"
+        multiple
+        on:change={upload}
+        class="input input-accent mr-4"
+      />
+      <button
+        class="btn btn-primary text-lg font-bold"
+        on:click={() => handleFileUpload()}
+      >
+        Upload Files
+      </button>
+    </div>
+  </div>
+
+  <!-- URL Uploader -->
+  <div class="w-full">
+    <label class="label mb-2 text-lg font-bold"
+      >Add the URL to the database</label
+    >
+    <div class="flex items-center">
+      <textarea
+        bind:value={url}
+        class="textarea textarea-accent resize-none flex-grow text-lg font-bold"
+        rows="1"
+      />
+      <button
+        class="btn btn-primary text-lg font-bold ml-4"
+        on:click={() => handleUrlUpload()}
+      >
+        Add URL
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Add navigation buttons to move between pages -->
 <!-- ... -->
-
-<!-- File Uploader -->
-<input type="file" multiple on:change={upload} />
-<button class="btn btn-primary" on:click={() => handleFileUpload()}
-  >Upload Files</button
->
-
-<!-- URL Uploader -->
-<textarea bind:value={url} />
-<button class="btn btn-primary" on:click={() => handleUrlUpload()}
-  >Add the URL to the database</button
->

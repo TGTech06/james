@@ -121,48 +121,97 @@
   }
 </script>
 
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+  rel="stylesheet"
+/>
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+/>
+
 <AuthCheck>
-  <div class="app-container">
-    <div class="app-header">
-      <h1>🧠🧠 James 🧠🧠</h1>
-      <p>
+  <div class="flex flex-col min-h-screen bg-gray-800 text-white">
+    <div class="flex items-center justify-between p-4">
+      <!-- Logout button as an icon -->
+      <button class="btn btn-secondary btn-sm" on:click={() => signOutUser()}
+        ><i class="fas fa-sign-out-alt" /></button
+      >
+    </div>
+    <div class="app-header p-4">
+      <h1 class="text-4xl font-bold text-center mb-4">🧠🧠 James 🧠🧠</h1>
+      <p class="text-lg text-center">
         He will remember everything you tell him and answer your questions.
         (Please let me know if I have to discipline him. He's still learning,
         and any feedback is welcome!)
       </p>
     </div>
 
-    <!-- Render different components based on the selected mode -->
-    {#if $mode === "Add Knowledge"}
-      <Insert />
-    {:else if $mode === "Chat with your Brain"}
-      <Ask />
-    {:else if $mode === "Forget"}
-      <Forget />
-    {/if}
+    <div class="flex-grow p-8">
+      <!-- Render different components based on the selected mode -->
+      {#if $mode === "Add Knowledge"}
+        <Insert />
+      {:else if $mode === "Chat with your Brain"}
+        <Ask />
+      {:else if $mode === "Forget"}
+        <Forget />
+      {/if}
+    </div>
 
-    <!-- Add navigation buttons to move between pages -->
-    <div>
-      <button on:click={() => ($mode = "Add Knowledge")}
-        >Go to Add Knowledge</button
+    <!-- Add navigation links to move between pages -->
+    <div class="flex justify-center space-x-8 mt-8 p-4">
+      <a
+        class="text-lg text-blue-500 hover:underline cursor-pointer"
+        on:click={() => ($mode = "Add Knowledge")}>Add Knowledge</a
       >
-      <button on:click={() => ($mode = "Chat with your Brain")}
-        >Go to Chat with your Brain</button
+      <a
+        class="text-lg text-blue-500 hover:underline cursor-pointer"
+        on:click={() => ($mode = "Chat with your Brain")}
+        >Chat with your Brain</a
       >
-      <button on:click={() => ($mode = "Forget")}>Go to Forget</button>
+      <a
+        class="text-lg text-blue-500 hover:underline cursor-pointer"
+        on:click={() => ($mode = "Forget")}>Forget</a
+      >
     </div>
   </div>
-  <button class="btn btn-secondary" on:click={() => signOutUser()}
-    >Logout</button
-  >
+
+  <style>
+    /* Add your CSS styles here to match the Streamlit app's appearance */
+    /* Example: .app-title { font-size: 24px; } */
+
+    /* Custom styles for the app container and header */
+    .app-container {
+      padding: 24px;
+      border-radius: 8px;
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    /* Custom styles for navigation links */
+    .text-blue-500 {
+      color: #3b82f6;
+    }
+
+    .text-blue-500:hover {
+      color: #2563eb;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .btn-secondary:hover {
+      background-color: #525b62;
+    }
+  </style>
 </AuthCheck>
-
-<!-- <button class="btn btn-secondary" on:click={() => signOutUser()}
-    >Logout</button
-  >
-</AuthCheck> -->
-
-<style>
-  /* Add your CSS styles here to match the Streamlit app's appearance */
-  /* Example: .app-title { font-size: 24px; } */
-</style>

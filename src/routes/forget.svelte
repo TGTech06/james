@@ -51,15 +51,27 @@
   }
 </script>
 
-<h1>Forget Data Page</h1>
-<div id="displayTextContainer">
-  {#each documents as document}
-    <p>
-      <strong>{document.name}</strong> ({document.size} bytes)
-      <button on:click={() => handleDeleteDocument(document.name)}>❌</button>
-    </p>
-  {/each}
+<div class="p-8">
+  <h1 class="text-4xl font-bold mb-8">Forget Data Page</h1>
+  <div class="space-y-4">
+    {#each documents as document}
+      <div class="bg-gray-800 p-4 rounded-lg flex items-center justify-between">
+        <div>
+          <p class="text-lg">
+            <strong>{document.name}</strong> ({document.size} bytes)
+          </p>
+        </div>
+        <button
+          class="btn btn-error"
+          on:click={() => handleDeleteDocument(document.name)}
+        >
+          <i class="fas fa-trash" />
+        </button>
+      </div>
+    {/each}
+  </div>
 </div>
+
 <!-- Your forget page content -->
 <!-- ... -->
 

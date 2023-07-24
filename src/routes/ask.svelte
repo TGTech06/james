@@ -47,55 +47,78 @@
   }
 </script>
 
-<h1>Ask AI Page</h1>
-<!-- Your ask page content -->
-<!-- ... -->
-
-<!-- Add navigation buttons to move between pages -->
-<!-- ... -->
-
-<!-- Configuration Sidebar -->
-<div class="sidebar">
-  <h2>Configuration</h2>
-  <p>Choose your model and temperature for asking questions.</p>
-  <div class="select">
-    <label for="model">Model</label>
-    <select id="model" bind:value={model}>
-      <option value="tiiuae/falcon-7b-instruct"
-        >tiiuae/falcon-7b-instruct</option
-      >
-      <option value="meta-llama/Llama-2-70b-chat-hf"
-        >meta-llama/Llama-2-70b-chat-hf</option
-      >
-      <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
-        >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
-      >
-    </select>
+<div class="grid grid-cols-12 min-h-screen gap-4 bg-gray-900 text-white p-8">
+  <!-- Configuration Sidebar -->
+  <div class="col-span-3 bg-gray-800 rounded-lg p-4">
+    <h2 class="text-2xl font-bold mb-4">Configuration</h2>
+    <p class="mb-4">Choose your model and temperature for asking questions.</p>
+    <div class="form-control">
+      <label for="model">Model</label>
+      <select id="model" bind:value={model} class="input input-primary">
+        <option value="tiiuae/falcon-7b-instruct"
+          >tiiuae/falcon-7b-instruct</option
+        >
+        <option value="meta-llama/Llama-2-70b-chat-hf"
+          >meta-llama/Llama-2-70b-chat-hf</option
+        >
+        <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
+          >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
+        >
+      </select>
+    </div>
+    <div class="form-control mt-4">
+      <label for="temperature">Temperature</label>
+      <input
+        type="range"
+        id="temperature"
+        min="0.1"
+        max="1.0"
+        step="0.2"
+        bind:value={temperature}
+        class="input input-primary"
+      />
+      <span class="text-sm ml-2">{temperature}</span>
+    </div>
   </div>
-  <div class="slider">
-    <label for="temperature">Temperature</label>
-    <input
-      type="range"
-      id="temperature"
-      min="0.1"
-      max="1.0"
-      step="0.2"
-      bind:value={temperature}
-    />
-    <span>{temperature}</span>
+
+  <!-- Ask the AI functionality -->
+  <div class="col-span-9">
+    <h1 class="text-4xl font-bold mb-8">Ask AI Page</h1>
+    <div class="form-control mb-4">
+      <label for="question" class="label">Your Question</label>
+      <textarea
+        bind:value={question}
+        id="question"
+        class="textarea textarea-primary"
+      />
+    </div>
+    <button class="btn btn-primary mb-4" on:click={() => getAIResponse()}
+      >Ask the AI</button
+    >
+
+    <!-- Display the generated text -->
+    <div class="bg-gray-800 p-4 rounded-lg">
+      <p class="text-xl mb-2">Generated Text:</p>
+      <div id="displayTextContainer" class="text-gray-200">{responseText}</div>
+    </div>
   </div>
 </div>
 
-<!-- Ask the AI functionality -->
-<div class="content">
-  <textarea bind:value={question} />
-  <button class="btn btn-primary" on:click={() => getAIResponse()}
-    >Ask the AI</button
-  >
-</div>
+<style>
+  /* Additional global styles go here */
 
-<!-- Display the generated text -->
-<p>Generated Text:</p>
-<div id="displayTextContainer">
-  {responseText}
-</div>
+  /* Style the sidebar elements */
+  .form-control label {
+    font-size: 1rem;
+  }
+
+  /* Style the temperature slider span */
+  .form-control span {
+    font-size: 0.75rem;
+  }
+
+  /* Style the AI response text container */
+  #displayTextContainer {
+    white-space: pre-wrap; /* Preserve line breaks */
+  }
+</style>
