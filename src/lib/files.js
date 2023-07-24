@@ -1,4 +1,5 @@
 import { processTxt } from "./loaders/txt";
+import { process_pdf } from "./loaders/pdf";
 import { processHtml } from "./loaders/html";
 import { computeSHA1FromContent } from "./utils";
 import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html";
@@ -25,7 +26,7 @@ const file_processors = {
   // '.mpga': process_audio,
   // '.wav': process_audio,
   // '.mpeg': process_audio,
-  // '.pdf': process_pdf,
+  ".pdf": process_pdf,
   ".html": processHtml,
 };
 
@@ -76,7 +77,9 @@ async function filter_file(file, supabase, vector_store) {
         client,
         tableName: "documents",
       });
+
       await file_processors[file_extension](vector, file);
+
       console.log(`✅ ${file.name}`);
       return true;
     } else {

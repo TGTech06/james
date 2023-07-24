@@ -8,6 +8,7 @@ import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_HUGGINGFACE_API_KEY, PUBLIC_OPENAI_API_KEY  } from "$env/static/public";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { getDocument } from "pdfjs-dist";
 import { v4 as uuidv4 } from 'uuid';
 export async function process_file(
   vectorStore,
@@ -64,45 +65,141 @@ export async function process_file(
       console.log("splittedDocuments", splittedDocuments[0].user_id)
       fileSha1 = await computeSHA1FromContent(fileContent);// You can use the file content here
       const docsWithMetadata = [];
-  for (const doc of splittedDocuments) {
-    const documentObject = {
-      pageContent: doc.pageContent,
-      metadata: {
-        file_sha1: fileSha1,
-        file_size: fileSize,
-        file_name: fileName,
-        chunk_size: chunkSize,
-        chunk_overlap: chunkOverlap,
-        date: dateShort,
-      },
-    };
-    docsWithMetadata.push(documentObject);
-  }
-  // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
-  // const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
-  const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-// const openAIApiKey = "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"; 
-  // const embeddings = new HuggingFaceInferenceEmbeddings({
-  //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-  // });
+      for (const doc of splittedDocuments) {
+        const documentObject = {
+          pageContent: doc.pageContent,
+          metadata: {
+            file_sha1: fileSha1,
+            file_size: fileSize,
+            file_name: fileName,
+            chunk_size: chunkSize,
+            chunk_overlap: chunkOverlap,
+            date: dateShort,
+          },
+        };
+        docsWithMetadata.push(documentObject);
+      }
+      // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
+      // const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
+      const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+      // const openAIApiKey = "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"; 
+      // const embeddings = new HuggingFaceInferenceEmbeddings({
+      //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+      // });
       
-  const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-  const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+      const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+      const embeddings = new OpenAIEmbeddings({ openAIApiKey });
       console.log("user_id", userID);
-  let vector = new SupabaseVectorStore(embeddings, {
-    client,
-    queryName: "insert",
-    tableName: "documents",
-  });
+      let vector = new SupabaseVectorStore(embeddings, {
+        client,
+        queryName: "insert",
+        tableName: "documents",
+      });
 
-  console.log("docs Metadata", docsWithMetadata[0].user_id);
-  vector.addDocuments(docsWithMetadata);
-  };
+      console.log("docs Metadata", docsWithMetadata[0].user_id);
+      vector.addDocuments(docsWithMetadata);
+    };
   
-  await reader.readAsText(file);
+    await reader.readAsText(file);
     
     
-  } else {
+  } else if (fileSuffix === ".pdf") {
+    console.log("isPdf")
+    const tmpFile = new File([file], fileName, { type: file.type });
+    fileSha1 = await computeSHA1FromFile(tmpFile);
+    const pdfData = await fetchFileAsArrayBuffer(tmpFile);
+    // const arrayBuffer = await new Promise((resolve, reject) => {
+    //   const reader = new FileReader();
+    //   reader.onloadend = () => resolve(reader.result);
+    //   reader.onerror = reject;
+    //   reader.readAsArrayBuffer(tmpFile);
+    // });
+    //const pdfData = new Uint8Array(arrayBuffer);
+const pdf = await getDocument({ data: pdfData }).promise;
+const pdfText = await extractTextFromPDF(pdf);
+    console.log("pdfText", pdfText);
+    // Function to split pdfText into individual document chunks
+  
+    
+    
+    // ... Your existing code to fetch the file as an ArrayBuffer ...
+    
+    // Now, extract text from PDF and generate the loadedDocuments array
+   // const pdfText = await extractTextFromPDF(pdfData);
+   // const loadedDocuments = splitTextIntoChunks(pdfText);
+    
+
+// Generate the loadedDocuments array from the pdfText
+   // const loadedDocuments = splitTextIntoChunks(pdfText);
+    // console.log("loadedDocuments", loadedDocuments);
+    // const documentsWithMetadata = loadedDocuments.map(document => ({
+    //   ...document,
+    //   metadata: {
+    //     file_sha1: fileSha1,
+    //     file_size: fileSize,
+    //     file_name: fileName,
+    //     chunk_size: chunkSize,
+    //     chunk_overlap: chunkOverlap,
+    //     date: dateShort,
+    //   },
+    // })); 
+    const documentObject = {
+        pageContent: pdfText,
+        metadata: {
+          file_sha1: fileSha1,
+          file_size: fileSize,
+          file_name: fileName,
+          chunk_size: chunkSize,
+          chunk_overlap: chunkOverlap,
+          date: dateShort,
+        },
+      };
+    
+      splittedDocuments = await textSplitter.splitDocuments([documentObject]);
+// Now, let's split the documents using textSplitter.splitDocuments
+    //splittedDocuments = await textSplitter.splitDocuments(documentsWithMetadata);
+    console.log("splittedDocuments", splittedDocuments);
+    const docsWithMetadata = [];
+    for (const doc of splittedDocuments) {
+      const documentObject = {
+        pageContent: doc.pageContent,
+        metadata: {
+          file_sha1: fileSha1,
+          file_size: fileSize,
+          file_name: fileName,
+          chunk_size: chunkSize,
+          chunk_overlap: chunkOverlap,
+          date: dateShort,
+        },
+      };
+      docsWithMetadata.push(documentObject);
+    }
+    // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
+    // const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
+    const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+    // const openAIApiKey = "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"; 
+    // const embeddings = new HuggingFaceInferenceEmbeddings({
+    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    // });
+    
+    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    console.log("user_id", userID);
+    let vector = new SupabaseVectorStore(embeddings, {
+      client,
+      queryName: "insert",
+      tableName: "documents",
+    });
+
+    console.log("docs Metadata", docsWithMetadata[0].user_id);
+    vector.addDocuments(docsWithMetadata);
+
+// const loader = new loaderClass(tmpFile);
+// const loadedDocuments = await loader.load();
+// splittedDocuments = await textSplitter.splitDocuments(loadedDocuments);
+
+  }else
+    {
     const tmpFile = new File([file], fileName, { type: file.type });
     fileSha1 = await computeSHA1FromFile(tmpFile);
 
@@ -158,7 +255,31 @@ export async function process_file(
   });
 
   console.log("docsWithMetadata", docsWithMetadata);
-  vector.addDocuments(docsWithMetadata);
+  try {
+
+    vector.addDocuments(docsWithMetadata);
+  } catch (error) {
+    console.log("error", error);
+  }
+  
 
   return;
+}
+
+async function extractTextFromPDF(pdf) {
+  let text = '';
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(item => item.str).join(' ');
+    text += pageText + ' '; // You can modify how you want to concatenate the text from different pages.
+  }
+
+  return text;
+}
+
+async function fetchFileAsArrayBuffer(file) {
+  const response = await fetch(URL.createObjectURL(file));
+  return await response.arrayBuffer();
 }
