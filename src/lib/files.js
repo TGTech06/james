@@ -7,12 +7,12 @@ import { createClient } from "@supabase/supabase-js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { process_file } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/loaders/common.ts";
+import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 import {
   PUBLIC_SUPABASE_KEY,
   PUBLIC_SUPABASE_URL,
   PUBLIC_HUGGINGFACE_API_KEY,
-  PUBLIC_OPENAI_API_KEY,
 } from "$env/static/public";
 const file_processors = {
   ".txt": processTxt,
@@ -70,9 +70,12 @@ async function filter_file(file, supabase, vector_store) {
     const file_extension = `.${file.name.split(".").pop()}`;
     console.log(file.name, file_extension);
     if (file_extension in file_processors) {
-      const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+      // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
       let client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-      let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+      const embeddings = new HuggingFaceInferenceEmbeddings({
+        apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+      });
+      // let embeddings = new OpenAIEmbeddings({ openAIApiKey });
       let vector = new SupabaseVectorStore(embeddings, {
         client,
         tableName: "documents",

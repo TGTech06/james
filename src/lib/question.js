@@ -12,7 +12,6 @@ import {
   PUBLIC_SUPABASE_KEY,
   PUBLIC_SUPABASE_URL,
   PUBLIC_HUGGINGFACE_API_KEY,
-  PUBLIC_OPENAI_API_KEY,
 } from "$env/static/public";
 
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
@@ -83,11 +82,11 @@ export async function chatWithDoc(
   });
 
   const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-  const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-  let embeddings = new OpenAIEmbeddings({ openAIApiKey });
-  // let embeddings = new HuggingFaceInferenceEmbeddings({
-  //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-  // });
+  // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+  // let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+  let embeddings = new HuggingFaceInferenceEmbeddings({
+    apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+  });
   let vector = new SupabaseVectorStore(embeddings, {
     client,
     tableName: "documents",

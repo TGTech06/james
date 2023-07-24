@@ -16,7 +16,6 @@
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
     PUBLIC_HUGGINGFACE_API_KEY,
-    PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import Insert from "./insert.svelte";
@@ -106,11 +105,11 @@
     console.log("public_supabase_key", PUBLIC_SUPABASE_KEY);
 
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    // embeddings = new HuggingFaceInferenceEmbeddings({
-    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    // });
+    // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    // embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    embeddings = new HuggingFaceInferenceEmbeddings({
+      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    });
     vector = new SupabaseVectorStore(embeddings, {
       client,
       tableName: "documents",

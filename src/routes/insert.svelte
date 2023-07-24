@@ -11,7 +11,7 @@
   import {
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
-    PUBLIC_OPENAI_API_KEY,
+    PUBLIC_HUGGINGFACE_API_KEY,
   } from "$env/static/public";
 
   // Initialize the Supabase client and other variables
@@ -31,7 +31,7 @@
   onMount(() => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     embeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: PUBLIC_OPENAI_API_KEY,
+      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
     });
     vector = new SupabaseVectorStore(embeddings, {
       client: supabase,
@@ -40,11 +40,11 @@
   });
 
   async function handleFileUpload() {
-    await file_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, files);
+    await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
   }
 
   async function handleUrlUpload() {
-    await url_uploader(supabase, PUBLIC_OPENAI_API_KEY, vector, url);
+    await url_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, url);
   }
 </script>
 

@@ -6,9 +6,9 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_HUGGINGFACE_API_KEY, PUBLIC_OPENAI_API_KEY  } from "$env/static/public";
+import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_HUGGINGFACE_API_KEY } from "$env/static/public";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { getDocument } from "pdfjs-dist";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import { v4 as uuidv4 } from 'uuid';
 export async function process_file(
   vectorStore,
@@ -24,6 +24,7 @@ export async function process_file(
   const fileSize = file.size;
   const dateShort = new Date();
   let fileSha1;
+  GlobalWorkerOptions.workerSrc = '/Users/tommasogiovannini/VSCode Projects/james/node_modules/pdfjs-dist/build/pdf.worker.js'; // Replace with the actual path to the worker script
 
   const chunkSizeValue = chunkSize;
   const chunkOverlapValue = chunkOverlap;
@@ -87,16 +88,17 @@ export async function process_file(
       //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
       // });
       
-      const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-      const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+      // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+      // const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+      const embeddings = new HuggingFaceInferenceEmbeddings({
+        apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+      });
       console.log("user_id", userID);
       let vector = new SupabaseVectorStore(embeddings, {
         client,
         queryName: "insert",
         tableName: "documents",
       });
-
-      console.log("docs Metadata", docsWithMetadata[0].user_id);
       vector.addDocuments(docsWithMetadata);
     };
   
@@ -182,8 +184,11 @@ const pdfText = await extractTextFromPDF(pdf);
     //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
     // });
     
-    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    // const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    const embeddings = new HuggingFaceInferenceEmbeddings({
+      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    });
     console.log("user_id", userID);
     let vector = new SupabaseVectorStore(embeddings, {
       client,
@@ -244,8 +249,11 @@ const pdfText = await extractTextFromPDF(pdf);
   // const embeddings = new HuggingFaceInferenceEmbeddings({
   //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
   // });
-  const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-  const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+  // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+  // const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+  const embeddings = new HuggingFaceInferenceEmbeddings({
+    apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+  });
  // let embeddings = new OpenAIEmbeddings({ openAIApiKey }); // Replace with your actual OpenAI API key
  console.log("user_id", userID);
   let vector = new SupabaseVectorStore(embeddings, {
