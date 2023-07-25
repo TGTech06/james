@@ -1,0 +1,150 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { createClient } from "@supabase/supabase-js";
+  import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+  import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
+  import {
+    PUBLIC_SUPABASE_KEY,
+    PUBLIC_SUPABASE_URL,
+    PUBLIC_HUGGINGFACE_API_KEY,
+  } from "$env/static/public";
+  import {
+    getDocuments,
+    deleteDocument,
+  } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/brain.js";
+  import AuthCheck from "$lib/AuthCheck.svelte";
+
+  // Initialize the Supabase client and other variables
+  let supabase;
+  let vector;
+  // Reactive statement to handle documents list
+  let documents = [];
+
+  // Bind the functions to the corresponding elements in the forget.html file, if needed
+  onMount(async () => {
+    supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+    vector = new SupabaseVectorStore(
+      new HuggingFaceInferenceEmbeddings({
+        apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+      }),
+      {
+        client: supabase,
+        tableName: "documents",
+      }
+    );
+
+    documents = await getDocuments(supabase);
+  });
+
+  async function handleDeleteDocument(documentName) {
+    // Extract the filename from the full URL
+    const urlParts = documentName.split("/");
+    const filename = urlParts[urlParts.length - 1];
+
+    const isDeleted = await deleteDocument(supabase, filename);
+    if (isDeleted) {
+      // Document deleted successfully
+      documents = documents.filter((doc) => doc.name !== filename);
+    } else {
+      // Document not found or not deleted
+      console.error(`Error deleting ${filename}`);
+    }
+  }
+
+  async function signOutUser() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.log(error);
+    } else {
+      window.location.reload();
+    }
+  }
+</script>
+
+<AuthCheck>
+  <div class="flex flex-col min-h-screen min-w-full bg-gray-900 text-white p-4">
+    <div class="flex flex-col items-center">
+      <nav class="w-full bg-gray-900 rounded-lg mb-6 shadow-md">
+        <div
+          class="navbar p-4 bg-gray-900 text-white rounded-t-lg rounded-b-lg border border-white"
+        >
+          <div class="flex items-center justify-center flex-1">
+            <a
+              href="/"
+              class="text-3xl font-bold hover:text-blue-400 cursor-pointer"
+            >
+              James 🧠🧠
+            </a>
+          </div>
+          <div class="flex items-center justify-center flex-1 space-x-4">
+            <a href="/upload" class="text-lg text-white hover:text-blue-400">
+              Upload Data
+            </a>
+            <a href="/ask" class="text-lg text-white hover:text-blue-400">
+              Chat with James
+            </a>
+            <a href="/profile" class="text-lg text-white hover:text-blue-400">
+              Profile
+            </a>
+            <!-- You can add more navigation items here if needed -->
+          </div>
+        </div>
+      </nav>
+      <div class="p-8">
+        <div class="flex items-center justify-between">
+          <h1 class="text-4xl font-bold mb-8">Your James</h1>
+          <button
+            class="btn btn-secondary btn-md flex items-center"
+            on:click={() => signOutUser()}
+          >
+            <i class="fas fa-sign-out-alt" />
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          {#each documents as document}
+            <div
+              class="bg-gray-800 p-4 rounded-lg flex items-center justify-between"
+            >
+              <div>
+                <p class="text-lg">
+                  <strong>{document.name}</strong> ({document.size} bytes)
+                </p>
+              </div>
+              <button
+                class="btn btn-error"
+                on:click={() => handleDeleteDocument(document.name)}
+              >
+                <i class="fas fa-trash white-icon" />
+              </button>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </div>
+  </div>
+</AuthCheck>
+
+<!-- Your forget page content -->
+<!-- ... -->
+
+<!-- Add navigation buttons to move between pages -->
+<!-- ... -->
+
+<style>
+  .btn-md {
+    padding: 12px 24px; /* Adjust the padding to make the button larger */
+    font-size: 16px; /* Adjust the font size to make the icon larger */
+  }
+  nav {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  nav a {
+    padding: 8px 12px;
+  }
+
+  nav a:hover {
+    color: #d1d5db; /* A slightly muted color on hover */
+  }
+</style>

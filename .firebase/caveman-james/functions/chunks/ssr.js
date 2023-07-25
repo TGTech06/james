@@ -132,13 +132,13 @@ function add_attribute(name, value, boolean) {
 }
 export {
   subscribe as a,
-  add_attribute as b,
+  setContext as b,
   create_ssr_component as c,
-  each as d,
+  validate_component as d,
   escape as e,
-  validate_component as f,
+  add_attribute as f,
   getContext as g,
-  setContext as h,
+  each as h,
   is_promise as i,
   missing_component as m,
   noop as n,

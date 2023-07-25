@@ -12,6 +12,7 @@
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
   import { writable } from "svelte/store";
   import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
+
   import {
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
@@ -61,7 +62,7 @@
   let embeddings;
 
   let retrievedText = "";
-
+  let userLoggedIn = false;
   async function signOutUser() {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -88,7 +89,32 @@
     displayTextContainer.textContent = response;
   }
 
+  const getSessionData = async () => {
+    const supabaseClient = createClient(
+      PUBLIC_SUPABASE_URL,
+      PUBLIC_SUPABASE_KEY
+    );
+
+    const {
+      data: { session },
+      error,
+    } = await supabaseClient.auth.getSession();
+
+    if (error) {
+      console.log(error);
+      return null;
+    }
+    if (session?.user) {
+      userLoggedIn = true;
+    } else {
+      userLoggedIn = false;
+    }
+
+    return session;
+  };
+
   onMount(() => {
+    getSessionData();
     // if (data.session) {
     //   console.log(data.session.data.session);
     // }
@@ -121,97 +147,120 @@
   }
 </script>
 
-<link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
-  rel="stylesheet"
-/>
-
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-/>
-
-<AuthCheck>
-  <div class="flex flex-col min-h-screen bg-gray-800 text-white">
-    <div class="flex items-center justify-between p-4">
-      <!-- Logout button as an icon -->
-      <button class="btn btn-secondary btn-sm" on:click={() => signOutUser()}
-        ><i class="fas fa-sign-out-alt" /></button
+<div class="flex flex-col min-h-screen bg-gray-900 text-white p-4">
+  <div class="flex flex-col items-center">
+    <!-- Daisy UI Navbar -->
+    <nav class="w-full bg-gray-900 rounded-lg mb-6 shadow-md">
+      <div
+        class="navbar p-4 bg-gray-900 text-white rounded-t-lg rounded-b-lg border border-white"
       >
-    </div>
-    <div class="app-header p-4">
-      <h1 class="text-4xl font-bold text-center mb-4">🧠🧠 James 🧠🧠</h1>
-      <p class="text-lg text-center">
-        He will remember everything you tell him and answer your questions.
-        (Please let me know if I have to discipline him. He's still learning,
-        and any feedback is welcome!)
+        <div class="flex items-center justify-center flex-1">
+          <a
+            href="/"
+            class="text-3xl font-bold hover:text-blue-400 cursor-pointer"
+          >
+            James 🧠🧠
+          </a>
+        </div>
+        <div class="flex items-center justify-center flex-1 space-x-4">
+          <a href="/upload" class="text-lg text-white hover:text-blue-400">
+            Upload Data
+          </a>
+          <a href="/ask" class="text-lg text-white hover:text-blue-400">
+            Chat with James
+          </a>
+          <a href="/profile" class="text-lg text-white hover:text-blue-400">
+            Profile
+          </a>
+          <!-- You can add more navigation items here if needed -->
+        </div>
+      </div>
+    </nav>
+    <h1 class="text-6xl font-bold my-8">Welcome to James 🧠🧠</h1>
+
+    <div class="max-w-3xl mx-auto space-y-4">
+      <p class="text-xl text-center mb-6">
+        James is an AI-powered assistant that can remember everything you tell
+        him and answer your questions. He is a smart and curious AI, constantly
+        learning and improving with every interaction.
+      </p>
+      <p class="text-xl text-center mb-6">
+        Whether you need help with research, have questions about various
+        topics, or simply want to chat, James should be here to assist you.
+        PLEASE provide feedback and suggestions to help him become even better!
       </p>
     </div>
 
-    <div class="flex-grow p-8">
-      <!-- Render different components based on the selected mode -->
-      {#if $mode === "Add Knowledge"}
-        <Insert />
-      {:else if $mode === "Chat with your Brain"}
-        <Ask />
-      {:else if $mode === "Forget"}
-        <Forget />
-      {/if}
+    {#if userLoggedIn}
+      <button
+        class="btn btn-primary btn-lg mt-8 rounded-md uppercase"
+        on:click={() => (window.location.href = "/upload")}
+      >
+        Get Started
+      </button>
+    {:else}
+      <button
+        class="btn btn-primary btn-lg mt-8 rounded-md uppercase"
+        on:click={() => (window.location.href = "/login")}
+      >
+        Log In
+      </button>
+    {/if}
+
+    <p class="text-xl text-center mt-8 mb-6">
+      What James can help you with (when he feels like it):
+    </p>
+
+    <!-- Daisy UI Grid View to showcase features -->
+    <div class="grid gap-8 md:grid-cols-2 max-w-3xl mx-auto mb-8">
+      <div class="bg-gray-900 p-6 rounded-lg border border-blue-400 space-y-4">
+        <div class="flex items-center justify-center mb-4">
+          <span class="text-4xl" role="img" aria-label="Research">🔍</span>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Research</h3>
+        <p class="text-lg text-white">
+          James can read and remember entire books, articles, and web pages. He
+          can also answer your questions about what he has read, but don't try
+          to trick him, he's smarter than you.
+        </p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-lg border border-blue-400 space-y-4">
+        <div class="flex items-center justify-center mb-4">
+          <span class="text-4xl" role="img" aria-label="Study">📚</span>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Studying</h3>
+        <p class="text-lg text-white">
+          With James by your side, you will probably never need to study again,
+          but if you do, he can help you with that too. He can make flashcards,
+          answer questions, and even help you with your homework (but don't tell
+          your teacher).
+        </p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-lg border border-blue-400 space-y-4">
+        <div class="flex items-center justify-center mb-4">
+          <span class="text-4xl" role="img" aria-label="Programming">💻</span>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Programming</h3>
+        <p class="text-lg text-white">
+          James can swallow up entire documentation pages so you don't have to.
+          If you have a question about a programming language or framework, he
+          can hopefully answer it. He can also help you with your code, but he's
+          not very good at it yet.
+        </p>
+      </div>
+      <div class="bg-gray-900 p-6 rounded-lg border border-blue-400 space-y-4">
+        <div class="flex items-center justify-center mb-4">
+          <span class="text-4xl" role="img" aria-label="Chat">💬</span>
+        </div>
+        <h3 class="text-2xl font-bold text-white">Chat with Your Notes</h3>
+        <p class="text-lg text-white">
+          Please let James read all your personal notes and thoughts. He
+          promises he won't tell anyone. He can also answer your questions and
+          have a conversation with you.
+        </p>
+      </div>
     </div>
 
-    <!-- Add navigation links to move between pages -->
-    <div class="flex justify-center space-x-8 mt-8 p-4">
-      <a
-        class="text-lg text-blue-500 hover:underline cursor-pointer"
-        on:click={() => ($mode = "Add Knowledge")}>Add Knowledge</a
-      >
-      <a
-        class="text-lg text-blue-500 hover:underline cursor-pointer"
-        on:click={() => ($mode = "Chat with your Brain")}
-        >Chat with your Brain</a
-      >
-      <a
-        class="text-lg text-blue-500 hover:underline cursor-pointer"
-        on:click={() => ($mode = "Forget")}>Forget</a
-      >
-    </div>
+    <!-- The rest of the code remains the same -->
   </div>
-
-  <style>
-    /* Add your CSS styles here to match the Streamlit app's appearance */
-    /* Example: .app-title { font-size: 24px; } */
-
-    /* Custom styles for the app container and header */
-    .app-container {
-      padding: 24px;
-      border-radius: 8px;
-    }
-
-    .app-header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    /* Custom styles for navigation links */
-    .text-blue-500 {
-      color: #3b82f6;
-    }
-
-    .text-blue-500:hover {
-      color: #2563eb;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-      color: #fff;
-      padding: 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.2s ease-in-out;
-    }
-
-    .btn-secondary:hover {
-      background-color: #525b62;
-    }
-  </style>
-</AuthCheck>
+</div>

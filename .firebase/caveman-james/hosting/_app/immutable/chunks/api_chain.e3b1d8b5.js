@@ -1,4 +1,4 @@
-import{P as u,h as c,j as a}from"./2.dcee5b7c.js";const p=`You are given the below API Documentation:
+import{P as u,h as c,j as a}from"./2.bc7961c5.js";const p=`You are given the below API Documentation:
 {api_docs}
 Using this documentation, generate the full API url to call for answering the user question.
 You should build the API url in order to get a response that is as short as possible, while still getting the necessary information to answer the question. Pay attention to deliberately exclude any unnecessary pieces of data in the API call.
