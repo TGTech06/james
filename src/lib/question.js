@@ -119,7 +119,7 @@ export async function chatWithDoc(
   }
 
   const stuffChain = loadQAStuffChain(llm);
-
+  console.log("relevantDocs", relevantDocs);
   const result = await stuffChain.call({
     input_documents: relevantDocs,
     question: questionValue,

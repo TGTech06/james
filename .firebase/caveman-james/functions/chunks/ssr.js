@@ -1,9 +1,5 @@
 function noop() {
 }
-function is_promise(value) {
-  return !!value && (typeof value === "object" || typeof value === "function") && typeof /** @type {any} */
-  value.then === "function";
-}
 function run(fn) {
   return fn();
 }
@@ -131,17 +127,16 @@ function add_attribute(name, value, boolean) {
   return ` ${name}${assignment}`;
 }
 export {
-  subscribe as a,
-  setContext as b,
+  validate_store as a,
+  subscribe as b,
   create_ssr_component as c,
-  validate_component as d,
+  add_attribute as d,
   escape as e,
-  add_attribute as f,
+  each as f,
   getContext as g,
-  each as h,
-  is_promise as i,
+  safe_not_equal as h,
   missing_component as m,
   noop as n,
-  safe_not_equal as s,
-  validate_store as v
+  setContext as s,
+  validate_component as v
 };

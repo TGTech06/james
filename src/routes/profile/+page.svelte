@@ -13,6 +13,7 @@
     deleteDocument,
   } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
+  import NavBar from "$lib/NavBar.svelte";
 
   // Initialize the Supabase client and other variables
   let supabase;
@@ -64,32 +65,7 @@
 <AuthCheck>
   <div class="flex flex-col min-h-screen min-w-full bg-gray-900 text-white p-4">
     <div class="flex flex-col items-center">
-      <nav class="w-full bg-gray-900 rounded-lg mb-6 shadow-md">
-        <div
-          class="navbar p-4 bg-gray-900 text-white rounded-t-lg rounded-b-lg border border-white"
-        >
-          <div class="flex items-center justify-center flex-1">
-            <a
-              href="/"
-              class="text-3xl font-bold hover:text-blue-400 cursor-pointer"
-            >
-              James 🧠🧠
-            </a>
-          </div>
-          <div class="flex items-center justify-center flex-1 space-x-4">
-            <a href="/upload" class="text-lg text-white hover:text-blue-400">
-              Upload Data
-            </a>
-            <a href="/ask" class="text-lg text-white hover:text-blue-400">
-              Chat with James
-            </a>
-            <a href="/profile" class="text-lg text-white hover:text-blue-400">
-              Profile
-            </a>
-            <!-- You can add more navigation items here if needed -->
-          </div>
-        </div>
-      </nav>
+      <NavBar />
       <div class="p-8">
         <div class="flex items-center justify-between">
           <h1 class="text-4xl font-bold mb-8">Your James</h1>
