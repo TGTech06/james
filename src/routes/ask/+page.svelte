@@ -56,6 +56,50 @@
     }
   }
 
+  // async function loadUserChats() {
+  //   const userId = await getCurrentUserId();
+
+  //   // Fetch user chats from Supabase based on the user ID
+  //   const { data: chats, error } = await supabaseClient
+  //     .from("chats")
+  //     .select("chat_id")
+  //     .eq("user_id", userId);
+
+  //   if (error) {
+  //     console.error("Error fetching user chats:", error.message);
+  //   } else {
+  //     // Filter out duplicate chat IDs
+  //     const uniqueChats = chats.reduce((acc, chat) => {
+  //       if (!acc.find((item) => item.chat_id === chat.chat_id)) {
+  //         acc.push(chat);
+  //       }
+  //       return acc;
+  //     }, []);
+
+  //     userChats.set(uniqueChats);
+  //   }
+  // }
+  async function getFirstUserMessage(chatId) {
+    // Fetch the first user message from Supabase based on the chat ID
+    const { data: messages, error } = await supabaseClient
+      .from("chats")
+      .select("message")
+      .eq("chat_id", chatId)
+      .eq("is_user_message", true)
+      .order("timestamp", { ascending: true })
+      .range(1, 2);
+
+    if (error) {
+      console.error("Error fetching first user message:", error.message);
+      return ""; // Return an empty string if an error occurs
+    }
+
+    // Check if any messages were found and return the first user message
+    return messages.length > 0 ? messages[0].message : "";
+  }
+
+  // Function to load user chats with the first user message
+
   async function loadUserChats() {
     const userId = await getCurrentUserId();
 
@@ -68,18 +112,28 @@
     if (error) {
       console.error("Error fetching user chats:", error.message);
     } else {
-      // Filter out duplicate chat IDs
-      const uniqueChats = chats.reduce((acc, chat) => {
-        if (!acc.find((item) => item.chat_id === chat.chat_id)) {
-          acc.push(chat);
-        }
-        return acc;
-      }, []);
+      // Create a Set to keep track of unique chat IDs
+      const uniqueChatIds = new Set();
 
-      userChats.set(uniqueChats);
+      // Create an array to store the processed user chats
+      const processedChats = [];
+
+      // Loop through each chat and add it to the processedChats array only if it's unique
+      for (const chat of chats) {
+        if (!uniqueChatIds.has(chat.chat_id)) {
+          uniqueChatIds.add(chat.chat_id);
+
+          const firstUserMessage = await getFirstUserMessage(chat.chat_id);
+
+          // Add the chat with the first user message to the processedChats array
+          processedChats.push({ ...chat, firstUserMessage });
+        }
+      }
+
+      // Update the userChats store with the processed chats
+      userChats.set(processedChats);
     }
   }
-
   // Function to load selected chat messages when a chat is clicked
   async function loadChatMessages(chatId) {
     selectedChatId = chatId; // Update the selected chat ID
@@ -99,10 +153,6 @@
   async function sendMessage(userId) {
     // Save the user message to Supabase
     // Make sure to replace 'userId' with the actual user ID or fetch it from your authentication system
-    console.log("userId", userId);
-    console.log("selectedChatId", selectedChatId);
-    console.log("question", question);
-    console.log("timestamp", new Date().toISOString());
     await supabaseClient.from("chats").insert([
       {
         user_id: userId,
@@ -262,9 +312,13 @@
           {#each $userChats as chat}
             <div
               class="flex items-center justify-between mb-2"
-              on:click={() => selectChat(chat.chat_id)}
+              on:click={() => selectChat(chat.chat_id.slice(0, 36))}
             >
-              <span>Chat ID: {chat.chat_id}</span>
+              {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null}
+                <span>{chat.firstUserMessage}</span>
+              {:else}
+                <span>New Chat</span>
+              {/if}
               <!-- Add a button to delete the chat -->
               <button
                 class="btn btn-error btn-sm"
@@ -378,6 +432,18 @@
 >
 
 <style>
+  .chat-container {
+    height: 300px; /* Set a fixed height for chat messages display area */
+    overflow-y: auto; /* Enable vertical scrolling if the messages overflow */
+  }
+
+  .chat-message {
+    margin-bottom: 8px;
+  }
+
+  .chat-message.is-user-message {
+    color: #ffcc00; /* Customize the user message color */
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));

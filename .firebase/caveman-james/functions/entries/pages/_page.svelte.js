@@ -1,4 +1,4 @@
-import { c as create_ssr_component } from "../../chunks/ssr.js";
+import { c as create_ssr_component, v as validate_component } from "../../chunks/ssr.js";
 import "langchain/text_splitter";
 import "langchain/embeddings/hf";
 import "langchain/vectorstores/supabase";
@@ -12,9 +12,10 @@ import "langchain/chains";
 import "langchain/memory";
 import "langchain/llms/hf";
 import "langchain/vectorstores/memory";
-/* empty css                                                    */const ask_svelte_svelte_type_style_lang = "";
+import { N as NavBar } from "../../chunks/NavBar.js";
+const ask_svelte_svelte_type_style_lang = "";
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  return `<div class="flex flex-col min-h-screen bg-gray-900 text-white p-4"><div class="flex flex-col items-center"> <nav class="w-full bg-gray-900 rounded-lg mb-6 shadow-md"><div class="navbar p-4 bg-gray-900 text-white rounded-t-lg rounded-b-lg border border-white"><div class="flex items-center justify-center flex-1"><a href="/" class="text-3xl font-bold hover:text-blue-400 cursor-pointer" data-svelte-h="svelte-crqc6f">James 🧠🧠</a></div> <div class="flex items-center justify-center flex-1 space-x-4"><a href="/upload" class="text-lg text-white hover:text-blue-400" data-svelte-h="svelte-ohllob">Upload Data</a> <a href="/ask" class="text-lg text-white hover:text-blue-400" data-svelte-h="svelte-1lfwjm8">Chat with James</a> <a href="/profile" class="text-lg text-white hover:text-blue-400" data-svelte-h="svelte-l2udlb">Profile</a> </div></div></nav> <h1 class="text-6xl font-bold my-8" data-svelte-h="svelte-10ixsw2">Welcome to James 🧠🧠</h1> <div class="max-w-3xl mx-auto space-y-4"><p class="text-xl text-center mb-6" data-svelte-h="svelte-11zjwmi">James is an AI-powered assistant that can remember everything you tell
+  return `<div class="flex flex-col min-h-screen bg-gray-900 text-white p-4"><div class="flex flex-col items-center"> ${validate_component(NavBar, "NavBar").$$render($$result, {}, {}, {})} <h1 class="text-6xl font-bold my-8" data-svelte-h="svelte-10ixsw2">Welcome to James 🧠🧠</h1> <div class="max-w-3xl mx-auto space-y-4"><p class="text-xl text-center mb-6" data-svelte-h="svelte-11zjwmi">James is an AI-powered assistant that can remember everything you tell
         him and answer your questions. He is a smart and curious AI, constantly
         learning and improving with every interaction.</p> <p class="text-xl text-center mb-6" data-svelte-h="svelte-1a5mza6">Whether you need help with research, have questions about various
         topics, or simply want to chat, James should be here to assist you.
