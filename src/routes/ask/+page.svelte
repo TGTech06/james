@@ -4,7 +4,7 @@
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
   import { onMount, onDestroy } from "svelte";
-  import { createClient } from "@supabase/supabase-js";
+  import { GoTrueAdminApi, createClient } from "@supabase/supabase-js";
 
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
   import { writable } from "svelte/store";
@@ -173,8 +173,10 @@
   async function sendUserMessageAndAIResponse() {
     const userId = await getCurrentUserId(); // Fetch the authenticated user's ID from Supabase Auth
     console.log("userId", userId);
-    await sendMessage(userId); // Send the user message to the database
+    await sendMessage(userId); // Send the user message to the chat
+    // Send the user message to the database
     // Get the AI response and save it to the database
+    await getAIResponse(userId);
   }
 
   // Function to save the AI response to the database
@@ -221,7 +223,7 @@
 
   async function getCurrentUserId() {
     const user = await supabaseClient.auth.getUser();
-    return user ? user.data.user.id : null; // Return the user ID or null if user is not authenticated
+    return user ? user.data.user.id : null; // Return the user ID or null if the user is not authenticated
   }
 
   function selectChat(chatId) {
@@ -252,41 +254,28 @@
     loadUserChats();
   });
 
-  // async function sendUserMessageAndAIResponse() {
-  //   await sendMessage(); // Send the user message to the database
-  //   await getAIResponse(); // Get the AI response
-  // }
   let isChatHistorySidebarOpen = false;
-  let isConfigurationSidebarOpen = false;
 
-  // Function to toggle the chat history sidebar visibility
-  function toggleChatHistorySidebar() {
-    console.log("toggleChatHistorySidebar");
+  // Function to toggle the combined sidebar visibility
+  function toggleSidebar() {
     isChatHistorySidebarOpen = !isChatHistorySidebarOpen;
   }
 
-  // Function to toggle the configuration sidebar visibility
-  function toggleConfigurationSidebar() {
-    console.log("toggleConfigurationSidebar");
-    isConfigurationSidebarOpen = !isConfigurationSidebarOpen;
-  }
-
   // Responsive layout logic for mobile view
-  let isMobile = false;
   const mediaQuery = window.matchMedia("(max-width: 768px)");
 
-  function handleMobileViewChange(event) {
-    isMobile = event.matches;
-  }
+  // function handleMobileViewChange(event) {
+  //   isMobile = event.matches;
+  // }
 
-  onMount(() => {
-    isMobile = mediaQuery.matches;
-    mediaQuery.addListener(handleMobileViewChange);
-  });
+  // onMount(() => {
+  //   isMobile = mediaQuery.matches;
+  //   mediaQuery.addListener(handleMobileViewChange);
+  // });
 
-  onDestroy(() => {
-    mediaQuery.removeListener(handleMobileViewChange);
-  });
+  // onDestroy(() => {
+  //   mediaQuery.removeListener(handleMobileViewChange);
+  // });
 </script>
 
 <link
@@ -294,46 +283,99 @@
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
 />
 <AuthCheck>
-  <div class="flex flex-col min-h-screen bg-gray-900 text-white p-4">
+  <div class="flex flex-col bg-gray-900 text-white p-4">
     <NavBar />
-    <div class="grid">
-      <!-- Left Sidebar - Chat History -->
-      <div
-        class="col-span-3 bg-gray-800 rounded-lg p-4 sidebar"
-        class:open={!isMobile && isChatHistorySidebarOpen}
-      >
-        <h2 class="text-2xl font-bold mb-4">Chat History</h2>
-        <!-- Add a button to create a new chat -->
-        <button class="btn btn-primary btn-sm mb-2" on:click={createNewChat}>
-          <i class="fas fa-plus" /> New Chat
-        </button>
+    <div class="relative flex flex-col md:flex-row min-h-screen">
+      <!-- Combined Sidebar - Chat History and Configuration -->
 
-        <div class="overflow-y-auto h-96">
-          {#each $userChats as chat}
-            <div
-              class="flex items-center justify-between mb-2"
-              on:click={() => selectChat(chat.chat_id.slice(0, 36))}
-            >
-              {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null}
-                <span>{chat.firstUserMessage}</span>
-              {:else}
-                <span>New Chat</span>
-              {/if}
-              <!-- Add a button to delete the chat -->
-              <button
-                class="btn btn-error btn-sm"
-                on:click={() => deleteChat(chat.chat_id)}
+      {#if isChatHistorySidebarOpen}
+        <div class="absolute left-0 top-0 bg-gray-800 rounded-lg p-4 sidebar">
+          <div class="w-full md:w-3/4 mt-14">
+            <div class="mb-4">
+              <label class="block text-lg font-semibold" for="model"
+                >Select Model</label
               >
-                <i class="fas fa-trash-alt" />
-              </button>
+              <select
+                id="model"
+                bind:value={model}
+                style="width: 200px;"
+                class="select select-sm select-primary"
+              >
+                <option value="tiiuae/falcon-7b-instruct"
+                  >tiiuae/falcon-7b-instruct</option
+                >
+                <option value="meta-llama/Llama-2-70b-chat-hf"
+                  >meta-llama/Llama-2-70b-chat-hf</option
+                >
+                <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
+                  >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
+                >
+              </select>
             </div>
-          {/each}
+            <div class="mb-4">
+              <label class="block text-lg font-semibold" for="temperature"
+                >Temperature</label
+              >
+              <input
+                type="range"
+                id="temperature"
+                min="0.1"
+                max="1.0"
+                step="0.2"
+                bind:value={temperature}
+                class="input input-sm input-primary"
+              />
+              <span class="text-sm ml-2">{temperature}</span>
+            </div>
+          </div>
+
+          <h2 class="text-2xl font-bold mb-4">Chat History</h2>
+          <!-- Add a button to create a new chat -->
+          <button class="btn btn-primary btn-sm mb-2" on:click={createNewChat}>
+            <i class="fas fa-plus" /> New Chat
+          </button>
+
+          <div class="overflow-y-auto h-96">
+            {#each $userChats as chat}
+              <div
+                class="flex items-center justify-between mb-2"
+                on:click={() => selectChat(chat.chat_id.slice(0, 36))}
+              >
+                {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null}
+                  <span>{chat.firstUserMessage}</span>
+                {:else}
+                  <span>New Chat</span>
+                {/if}
+                <!-- Add a button to delete the chat -->
+                <button
+                  class="btn btn-error btn-sm"
+                  on:click={() => deleteChat(chat.chat_id)}
+                >
+                  <i class="fas fa-trash-alt" />
+                </button>
+              </div>
+            {/each}
+          </div>
         </div>
+      {/if}
+
+      <div
+        class="sidebar-toggle-btn"
+        style=" left: 1rem"
+        on:click={() => toggleSidebar()}
+      >
+        {#if isChatHistorySidebarOpen}
+          <i class="chevron fas fa-chevron-left text-2xl" />
+        {:else}
+          <i class="chevron fas fa-chevron-right text-2xl" />
+        {/if}
       </div>
 
       <!-- Middle Section - Chat Messages -->
-      <div class="col-span-6">
-        <div class="col-span-6">
+      <div
+        class="flex flex-col items-center justify-center w-full md:w-3/4 mx-auto"
+      >
+        <div class="w-full md:w-3/4">
           <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
           {#if selectedChatId === null}
             <p class="text-gray-500">
@@ -354,7 +396,7 @@
         </div>
 
         <!-- Ask AI Box -->
-        <div class="col-span-9">
+        <div class="w-full md:w-3/4 mt-4">
           <div class="form-control mb-4">
             <textarea
               bind:value={question}
@@ -373,65 +415,50 @@
           </button>
         </div>
       </div>
-
-      <!-- Right Sidebar - Configuration -->
-      <div
-        class="col-span-3 bg-gray-800 rounded-lg p-4 sidebar"
-        class:open={!isMobile && isConfigurationSidebarOpen}
-      >
-        <h2 class="text-2xl font-bold mb-4">Configuration</h2>
-        <p class="mb-4">
-          Choose your model and temperature for asking questions.
-        </p>
-        <div class="form-control">
-          <label for="model">Model</label>
-          <select id="model" bind:value={model} class="input input-primary">
-            <option value="tiiuae/falcon-7b-instruct"
-              >tiiuae/falcon-7b-instruct</option
-            >
-            <option value="meta-llama/Llama-2-70b-chat-hf"
-              >meta-llama/Llama-2-70b-chat-hf</option
-            >
-            <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
-              >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
-            >
-          </select>
-        </div>
-        <div class="form-control mt-4">
-          <label for="temperature">Temperature</label>
-          <input
-            type="range"
-            id="temperature"
-            min="0.1"
-            max="1.0"
-            step="0.2"
-            bind:value={temperature}
-            class="input input-primary"
-          />
-          <span class="text-sm ml-2">{temperature}</span>
-        </div>
-      </div>
     </div>
 
-    <!-- Toggle buttons to open sidebars -->
-    <div
-      class="toggle-btn toggle-chat-history-btn"
-      on:click={() => toggleChatHistorySidebar()}
-      class:visible={!isMobile || !isChatHistorySidebarOpen}
-    >
-      ☰
-    </div>
-    <div
-      class="toggle-btn toggle-configuration-btn"
-      on:click={() => toggleConfigurationSidebar()}
-      class:visible={!isMobile || !isConfigurationSidebarOpen}
-    >
-      ☰
-    </div>
-  </div></AuthCheck
->
+    <!-- Toggle button to open the combined sidebar -->
+  </div>
+</AuthCheck>
 
 <style>
+  .sidebar.open {
+    display: block;
+  }
+  .sidebar-toggle-btn {
+    position: absolute;
+    top: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .sidebar-toggle-btn-right {
+    right: 1rem;
+  }
+
+  .sidebar-toggle-btn-left {
+    left: 1rem;
+  }
+
+  .sidebar-toggle-btn .chevron {
+    color: #1f2937;
+  }
+  .flex {
+    display: flex;
+  }
+
+  .flex-1 {
+    flex: 1;
+  }
+
   .chat-container {
     height: 300px; /* Set a fixed height for chat messages display area */
     overflow-y: auto; /* Enable vertical scrolling if the messages overflow */
@@ -444,60 +471,44 @@
   .chat-message.is-user-message {
     color: #ffcc00; /* Customize the user message color */
   }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: auto;
-    gap: 1rem;
-  }
 
-  .col-span-3 {
-    grid-column: span 3;
-  }
+  /* Responsive layout using media queries */
+  @media (max-width: 50px) {
+    .md\:pl-16 {
+      padding-left: 16px;
+    }
 
-  .col-span-6 {
-    grid-column: span 6;
-  }
+    .md\:pr-16 {
+      padding-right: 16px;
+    }
 
-  /* Sidebar styles */
-  .sidebar {
-    position: relative;
-    z-index: 1;
-    display: none;
-  }
+    .md\:flex-row {
+      flex-direction: row;
+    }
 
-  /* Sidebar visibility based on the 'open' class */
-  .sidebar.open {
-    display: block;
-  }
+    /* Adjust the sidebar and middle section layout on small screens */
+    .sidebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+      z-index: 1;
+      width: 80%; /* Set the width of the sidebar on small screens */
+    }
 
-  /* Toggle buttons styles */
-  .toggle-btn {
-    position: fixed;
-    bottom: 10px;
-    padding: 10px;
-    border-radius: 50%;
-    background-color: #333;
-    color: #fff;
-    font-size: 18px;
-    cursor: pointer;
-    z-index: 2;
-    display: none;
-  }
+    .sidebar.open {
+      transform: translateX(0);
+    }
 
-  /* Toggle button visibility */
-  .toggle-btn.visible {
-    display: block;
+    .middle-section {
+      margin-left: 20%; /* Add margin to the middle section to make space for the sidebar */
+    }
+    .form-control select {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 14px;
+    }
   }
-
-  /* Button positions */
-  .toggle-chat-history-btn {
-    left: 20px;
-  }
-
-  .toggle-configuration-btn {
-    right: 20px;
-  }
-
   /* Additional global styles go here */
 </style>

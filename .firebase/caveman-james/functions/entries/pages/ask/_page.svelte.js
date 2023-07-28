@@ -13,7 +13,7 @@ import { A as AuthCheck } from "../../../chunks/AuthCheck.js";
 import { N as NavBar } from "../../../chunks/NavBar.js";
 const _page_svelte_svelte_type_style_lang = "";
 const css = {
-  code: ".grid.s-uhtJAkW7ZDek{display:grid;grid-template-columns:repeat(12, minmax(0, 1fr));grid-template-rows:auto;gap:1rem}.col-span-3.s-uhtJAkW7ZDek{grid-column:span 3}.col-span-6.s-uhtJAkW7ZDek{grid-column:span 6}.sidebar.s-uhtJAkW7ZDek{position:relative;z-index:1;display:none}.sidebar.open.s-uhtJAkW7ZDek{display:block}.toggle-btn.s-uhtJAkW7ZDek{position:fixed;bottom:10px;padding:10px;border-radius:50%;background-color:#333;color:#fff;font-size:18px;cursor:pointer;z-index:2;display:none}.toggle-btn.visible.s-uhtJAkW7ZDek{display:block}.toggle-chat-history-btn.s-uhtJAkW7ZDek{left:20px}.toggle-configuration-btn.s-uhtJAkW7ZDek{right:20px}",
+  code: ".chat-container.s-uhtJAkW7ZDek{height:300px;overflow-y:auto}.chat-message.s-uhtJAkW7ZDek{margin-bottom:8px}.chat-message.is-user-message.s-uhtJAkW7ZDek{color:#ffcc00}.grid.s-uhtJAkW7ZDek{display:grid;grid-template-columns:repeat(12, minmax(0, 1fr));grid-template-rows:auto;gap:1rem}.col-span-3.s-uhtJAkW7ZDek{grid-column:span 3}.col-span-6.s-uhtJAkW7ZDek{grid-column:span 6}.sidebar.s-uhtJAkW7ZDek{position:relative;z-index:1;display:none}.sidebar.open.s-uhtJAkW7ZDek{display:block}.toggle-btn.s-uhtJAkW7ZDek{position:fixed;bottom:10px;padding:10px;border-radius:50%;background-color:#333;color:#fff;font-size:18px;cursor:pointer;z-index:2;display:none}.toggle-btn.visible.s-uhtJAkW7ZDek{display:block}.toggle-chat-history-btn.s-uhtJAkW7ZDek{left:20px}.toggle-configuration-btn.s-uhtJAkW7ZDek{right:20px}",
   map: null
 };
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
@@ -46,7 +46,7 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
         "col-span-3 bg-gray-800 rounded-lg p-4 sidebar s-uhtJAkW7ZDek",
         !isMobile && isChatHistorySidebarOpen ? "open" : ""
       ].join(" ").trim()}"><h2 class="text-2xl font-bold mb-4" data-svelte-h="svelte-141gz04">Chat History</h2>  <button class="btn btn-primary btn-sm mb-2"><i class="fas fa-plus"></i> New Chat</button> <div class="overflow-y-auto h-96">${each($userChats, (chat) => {
-        return `<div class="flex items-center justify-between mb-2"><span>Chat ID: ${escape(chat.chat_id)}</span>  <button class="btn btn-error btn-sm"><i class="fas fa-trash-alt"></i></button> </div>`;
+        return `<div class="flex items-center justify-between mb-2">${chat.firstUserMessage !== "" && chat.firstUserMessage !== null ? `<span>${escape(chat.firstUserMessage)}</span>` : `<span data-svelte-h="svelte-t9s83e">New Chat</span>`}  <button class="btn btn-error btn-sm"><i class="fas fa-trash-alt"></i></button> </div>`;
       })}</div></div>  <div class="col-span-6 s-uhtJAkW7ZDek"><div class="col-span-6 s-uhtJAkW7ZDek"><h1 class="text-4xl font-bold mb-8" data-svelte-h="svelte-fy4ok2">Chat Messages</h1> ${`<p class="text-gray-500" data-svelte-h="svelte-ulna32">Select a chat from the history to view messages.</p>`}</div>  <div class="col-span-9"><div class="form-control mb-4"><textarea id="question" class="textarea textarea-primary">${escape("")}</textarea></div>  <button class="btn btn-primary mb-4" ${"disabled"}>Ask the AI and Send Message</button></div></div>  <div class="${[
         "col-span-3 bg-gray-800 rounded-lg p-4 sidebar s-uhtJAkW7ZDek",
         !isMobile && isConfigurationSidebarOpen ? "open" : ""

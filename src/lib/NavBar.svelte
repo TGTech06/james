@@ -4,7 +4,7 @@
   >
     <div class="flex items-center justify-center flex-1">
       <a href="/" class="text-3xl font-bold hover:text-blue-400 cursor-pointer">
-        James 🧠🧠
+        🧠 James 🧠
       </a>
     </div>
     <div class="flex items-center justify-center flex-1 space-x-4">
