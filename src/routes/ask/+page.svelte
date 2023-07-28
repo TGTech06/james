@@ -14,9 +14,7 @@
     PUBLIC_SUPABASE_URL,
     PUBLIC_HUGGINGFACE_API_KEY,
   } from "$env/static/public";
-  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { v4 as uuidv4 } from "uuid";
-
   // Initialize the Supabase client and other variables
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   let vector;
@@ -24,6 +22,8 @@
   let model = "tiiuae/falcon-7b-instruct";
   let temperature = 0.2;
   let question = "";
+  let loading = false;
+  let errorText = null;
   let responseText = "";
 
   // Store to hold list of user chats
@@ -33,52 +33,65 @@
   // Store to hold the currently selected chat ID
   let selectedChatId = null;
 
-  async function createNewChat() {
-    const userId = await getCurrentUserId();
-    const newChatId = uuidv4(); // Generate a new UUID for the chat_id
-
-    // Save the new chat to Supabase
-    const { data, error } = await supabaseClient.from("chats").insert([
-      {
-        user_id: userId,
-        chat_id: newChatId,
-        message: "", // You can leave the first message empty or set a default message
-        is_user_message: true,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-
-    if (error) {
-      console.error("Error creating new chat:", error.message);
-    } else {
-      // Add the new chat to the userChats store
-      userChats.update((chats) => [...chats, { chat_id: newChatId }]);
-    }
-  }
-
-  // async function loadUserChats() {
+  // async function createNewChat() {
   //   const userId = await getCurrentUserId();
-
-  //   // Fetch user chats from Supabase based on the user ID
-  //   const { data: chats, error } = await supabaseClient
+  //   // if (selectedChatId !== null) {
+  //   // Check if the selected chat has messages
+  //   const { data: messages, error } = await supabaseClient
   //     .from("chats")
-  //     .select("chat_id")
-  //     .eq("user_id", userId);
+  //     .select("message")
+  //     .eq("chat_id", selectedChatId);
 
   //   if (error) {
-  //     console.error("Error fetching user chats:", error.message);
-  //   } else {
-  //     // Filter out duplicate chat IDs
-  //     const uniqueChats = chats.reduce((acc, chat) => {
-  //       if (!acc.find((item) => item.chat_id === chat.chat_id)) {
-  //         acc.push(chat);
-  //       }
-  //       return acc;
-  //     }, []);
-
-  //     userChats.set(uniqueChats);
+  //     console.error("Error fetching chat messages:", error.message);
+  //     return;
   //   }
+
+  //   if (messages.length > 0) {
+  //     // If the selected chat has messages, prevent creating a new chat
+  //     return;
+  //   }
+  //   // }
+
+  //   const newChatId = uuidv4(); // Generate a new UUID for the chat_id
+
+  //   // Add the new chat to the userChats store
+  //   userChats.update((chats) => [...chats, { chat_id: newChatId }]);
+  //   // Set the newly created chat as the selected chat
+  //   selectedChatId = newChatId;
   // }
+  async function createNewChat() {
+    if (loading) return;
+    const userId = await getCurrentUserId();
+    if (selectedChatId !== null) {
+      // Check if the selected chat has messages
+      const { data: messages, error } = await supabaseClient
+        .from("chats")
+        .select("message")
+        .eq("chat_id", selectedChatId);
+
+      if (error) {
+        errorText = error.message;
+        console.error("Error fetching chat messages:", error.message);
+        return;
+      }
+
+      // if (messages.length > 0) {
+      //   // If the selected chat has messages, prevent creating a new chat
+      //   return;
+      // }
+    }
+
+    // Create a new chat with a temporary chat_id (not saved to the database yet)
+    const newChatId = uuidv4();
+
+    // Add the new chat to the userChats store
+    userChats.update((chats) => [...chats, { chat_id: newChatId }]);
+    // Set the newly created chat as the selected chat
+    selectedChatId = newChatId;
+    selectedChatMessages.set([]);
+  }
+
   async function getFirstUserMessage(chatId) {
     // Fetch the first user message from Supabase based on the chat ID
     const { data: messages, error } = await supabaseClient
@@ -87,12 +100,14 @@
       .eq("chat_id", chatId)
       .eq("is_user_message", true)
       .order("timestamp", { ascending: true })
-      .range(1, 2);
+      .limit(1);
 
     if (error) {
-      console.error("Error fetching first user message:", error.message);
+      console.log("Error fetching first user message:", error.message);
+      errorText = error.message;
       return ""; // Return an empty string if an error occurs
     }
+    console.log("messages", messages);
 
     // Check if any messages were found and return the first user message
     return messages.length > 0 ? messages[0].message : "";
@@ -111,6 +126,7 @@
 
     if (error) {
       console.error("Error fetching user chats:", error.message);
+      errorText = error.message;
     } else {
       // Create a Set to keep track of unique chat IDs
       const uniqueChatIds = new Set();
@@ -145,12 +161,38 @@
       .order("timestamp", { ascending: true });
     if (error) {
       console.error("Error fetching chat messages:", error.message);
+      errorText = error.message;
     } else {
       selectedChatMessages.set(messages);
     }
   }
+
+  // async function sendMessage(userId) {
+  //   if (selectedChatId === null) {
+  //     // If there is no selected chat, create a new one first
+  //     await createNewChat();
+  //   }
+
+  //   // Save the user message to Supabase
+  //   await supabaseClient.from("chats").insert([
+  //     {
+  //       user_id: userId,
+  //       chat_id: selectedChatId,
+  //       message: question,
+  //       is_user_message: true,
+  //       timestamp: new Date().toISOString(),
+  //     },
+  //   ]);
+
+  //   // Clear the question input field
+
+  //   // Trigger loading of the updated chat messages
+  //   loadChatMessages(selectedChatId);
+  //   await getAIResponse(userId);
+  // }
   // Function to send a new message in the chat
   async function sendMessage(userId) {
+    console.log("selectedChatId", selectedChatId);
     // Save the user message to Supabase
     // Make sure to replace 'userId' with the actual user ID or fetch it from your authentication system
     await supabaseClient.from("chats").insert([
@@ -163,7 +205,10 @@
       },
     ]);
     // Clear the question input field
-
+    console.log("selectedChatMessages", $selectedChatMessages);
+    if ($selectedChatMessages.length === 0) {
+      loadUserChats();
+    }
     // Trigger loading of the updated chat messages
     loadChatMessages(selectedChatId);
     await getAIResponse(userId);
@@ -171,12 +216,17 @@
 
   // Function to load AI response for a chat
   async function sendUserMessageAndAIResponse() {
+    if (loading) return; // Prevent sending the message if a previous message is still being sent
+    loading = true;
     const userId = await getCurrentUserId(); // Fetch the authenticated user's ID from Supabase Auth
     console.log("userId", userId);
     await sendMessage(userId); // Send the user message to the chat
+    console.log("finised");
+    console.log("selectedchatid in funciton", selectedChatId);
     // Send the user message to the database
     // Get the AI response and save it to the database
     await getAIResponse(userId);
+    loading = false;
   }
 
   // Function to save the AI response to the database
@@ -231,6 +281,10 @@
   }
 
   async function deleteChat(chatId) {
+    if (loading) return; // Prevent deleting the chat if a previous deletion is still in progress
+    // Check if the deleted chat is the current chat
+    const isCurrentChat = selectedChatId === chatId;
+
     // Delete the chat from the database
     const { data, error } = await supabaseClient
       .from("chats")
@@ -239,19 +293,36 @@
 
     if (error) {
       console.error("Error deleting chat:", error.message);
+      errorText = error.message;
     } else {
-      // Fetch and load user chats again to update the chat list
+      // Fetch the most recent chat ID from the user's chats after deleting the current chat
+      const userId = await getCurrentUserId();
+      const { data: chats } = await supabaseClient
+        .from("chats")
+        .select("chat_id")
+        .eq("user_id", userId)
+        .order("timestamp", { ascending: false })
+        .limit(1);
+
+      const mostRecentChatId = chats.length > 0 ? chats[0].chat_id : null;
+
+      // Fetch and load user chats again to update the chat list with the most recent chat ID
       await loadUserChats();
+
       // Clear the selected chat messages
-      selectedChatMessages.set([]);
-      // Set the selectedChatId to null
-      selectedChatId = null;
+      // selectedChatMessages.set([]);
+
+      // Set the selectedChatId to the most recent chat ID only if the deleted chat was the current chat
+      if (isCurrentChat) {
+        selectedChatId = mostRecentChatId;
+      }
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
     // Fetch and load user chats on component mount
-    loadUserChats();
+    await loadUserChats();
+    await createNewChat();
   });
 
   let isChatHistorySidebarOpen = false;
@@ -262,7 +333,7 @@
   }
 
   // Responsive layout logic for mobile view
-  const mediaQuery = window.matchMedia("(max-width: 768px)");
+  // const mediaQuery = window.matchMedia("(max-width: 768px)");
 
   // function handleMobileViewChange(event) {
   //   isMobile = event.matches;
@@ -290,58 +361,62 @@
 
       {#if isChatHistorySidebarOpen}
         <div class="absolute left-0 top-0 bg-gray-800 rounded-lg p-4 sidebar">
-          <div class="w-full md:w-3/4 mt-14">
-            <div class="mb-4">
-              <label class="block text-lg font-semibold" for="model"
-                >Select Model</label
-              >
-              <select
-                id="model"
-                bind:value={model}
-                style="width: 200px;"
-                class="select select-sm select-primary"
-              >
-                <option value="tiiuae/falcon-7b-instruct"
-                  >tiiuae/falcon-7b-instruct</option
+          <div class="overflow-y-auto max-h-96">
+            <div class="w-full md:w-3/4 mt-14">
+              <div class="mb-4">
+                <label class="block text-lg font-semibold" for="model"
+                  >Select Model</label
                 >
-                <option value="meta-llama/Llama-2-70b-chat-hf"
-                  >meta-llama/Llama-2-70b-chat-hf</option
+                <select
+                  id="model"
+                  bind:value={model}
+                  style="width: 200px;"
+                  class="select select-sm select-primary"
                 >
-                <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
-                  >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
+                  <option value="tiiuae/falcon-7b-instruct"
+                    >tiiuae/falcon-7b-instruct</option
+                  >
+                  <option value="meta-llama/Llama-2-70b-chat-hf"
+                    >meta-llama/Llama-2-70b-chat-hf</option
+                  >
+                  <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
+                    >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
+                  >
+                </select>
+              </div>
+              <div class="mb-4">
+                <label class="block text-lg font-semibold" for="temperature"
+                  >Temperature</label
                 >
-              </select>
+                <input
+                  type="range"
+                  id="temperature"
+                  min="0.1"
+                  max="1.0"
+                  step="0.2"
+                  bind:value={temperature}
+                  class="input input-sm input-primary"
+                />
+                <span class="text-sm ml-2">{temperature}</span>
+              </div>
             </div>
-            <div class="mb-4">
-              <label class="block text-lg font-semibold" for="temperature"
-                >Temperature</label
-              >
-              <input
-                type="range"
-                id="temperature"
-                min="0.1"
-                max="1.0"
-                step="0.2"
-                bind:value={temperature}
-                class="input input-sm input-primary"
-              />
-              <span class="text-sm ml-2">{temperature}</span>
-            </div>
-          </div>
 
-          <h2 class="text-2xl font-bold mb-4">Chat History</h2>
-          <!-- Add a button to create a new chat -->
-          <button class="btn btn-primary btn-sm mb-2" on:click={createNewChat}>
-            <i class="fas fa-plus" /> New Chat
-          </button>
+            <h2 class="text-2xl font-bold mb-4">Chat History</h2>
+            <!-- Add a button to create a new chat -->
+            <button
+              class="btn btn-primary btn-sm mb-2"
+              on:click={createNewChat}
+            >
+              <i class="fas fa-plus" /> New Chat
+            </button>
 
-          <div class="overflow-y-auto h-96">
+            <!-- <div class="overflow-y-auto h-96"> -->
             {#each $userChats as chat}
               <div
                 class="flex items-center justify-between mb-2"
                 on:click={() => selectChat(chat.chat_id.slice(0, 36))}
               >
-                {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null}
+                {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
                   <span>{chat.firstUserMessage}</span>
                 {:else}
                   <span>New Chat</span>
@@ -402,6 +477,7 @@
               bind:value={question}
               id="question"
               class="textarea textarea-primary"
+              disabled={selectedChatId === null || loading}
             />
           </div>
 
@@ -416,7 +492,13 @@
         </div>
       </div>
     </div>
-
+    {#if errorText !== null}
+      <div
+        class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
+      >
+        {errorText}
+      </div>
+    {/if}
     <!-- Toggle button to open the combined sidebar -->
   </div>
 </AuthCheck>
