@@ -8,6 +8,8 @@ import { createClient } from "@supabase/supabase-js";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { loadQAStuffChain } from "langchain/chains";
+import { RetrievalQAChain } from "langchain/chains";
+
 import {
   PUBLIC_SUPABASE_KEY,
   PUBLIC_SUPABASE_URL,
@@ -72,11 +74,12 @@ export async function chatWithDoc(
   temperature,
   question
 ) {
-  const questionValue = question;
-  console.log("model", model);
+  // Return the user ID or null if the user is not authenticated
 
+  console.log("question is actually ", question);
   const llm = new HuggingFaceInference({
     apiKey: huggingfacehubApiToken,
+    // model: "stabilityai/StableBeluga2",
     model: "tiiuae/falcon-7b-instruct",
     maxTokens: 5000,
   });
@@ -87,54 +90,70 @@ export async function chatWithDoc(
   let embeddings = new HuggingFaceInferenceEmbeddings({
     apiKey: PUBLIC_HUGGINGFACE_API_KEY,
   });
+  const user = await client.auth.getUser();
   let vector = new SupabaseVectorStore(embeddings, {
     client,
     tableName: "documents",
   });
 
-  const relevantDocs = await vector.similaritySearch(questionValue);
+  const relevantDocs = await vector.similaritySearch(
+    question
+    // {
+    // user_id: user.data.user.id,
+    // }
+  );
 
-  console.log(relevantDocs.length);
-  console.log(relevantDocs);
+  // console.log(relevantDocs.length);
+  console.log("relevantDocs", relevantDocs);
 
-  try {
-    let { data: documents, error } = await client
-      .from("documents")
-      .select("content");
-    // Limit to one row
+  // try {
+  //   let { data: documents, error } = await client
+  //     .from("documents")
+  //     .select("content");
+  //   // Limit to one row
 
-    if (error) {
-      console.error("Error fetching data:", error.message);
-    }
+  //   if (error) {
+  //     console.error("Error fetching data:", error.message);
+  //   }
 
-    if (documents.length === 0) {
-      console.log("No data found in the table.");
-    }
+  //   if (documents.length === 0) {
+  //     console.log("No data found in the table.");
+  //   }
 
-    // Assuming 'content' is of type 'text', you can access the value like this:
-    const contentValue = documents[0].content;
-    console.log("contentValue", contentValue);
-  } catch (error) {
-    console.error("Error fetching data:", error.message);
-  }
+  //   // Assuming 'content' is of type 'text', you can access the value like this:
+  //   const contentValue = documents[0].content;
+  //   console.log("contentValue", contentValue);
+  // } catch (error) {
+  //   console.error("Error fetching data:", error.message);
+  // }
 
   const stuffChain = loadQAStuffChain(llm);
   console.log("relevantDocs", relevantDocs);
   const result = await stuffChain.call({
     input_documents: relevantDocs,
-    question: questionValue,
+    question: question,
   });
+
+  // const CUSTOM_QUESTION_GENERATOR_CHAIN_PROMPT = `{question}`;
 
   // const qa = ConversationalRetrievalQAChain.fromLLM(
   //   llm,
   //   vectorStore.asRetriever(),
-  //   { returnSourceDocuments: true }
+  //   {
+  //     returnSourceDocuments: true,
+  //     questionGeneratorChainOptions: {
+  //       template: CUSTOM_QUESTION_GENERATOR_CHAIN_PROMPT,
+  //     },
+  //   }
   // );
+  // let vectordbkwargs = { search_distance: 0.9 };
   // const result = await qa.call({
-  //   question: questionValue,
+  //   question: question,
   //   chat_history: [],
+  //   vector_db_kwargs: vectordbkwargs,
   // });
   console.log("result", result);
+  console.log("result['source_documents'][0]", result["source_documents"]);
   console.log(result.text);
   return result.text;
 }

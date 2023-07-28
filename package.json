@@ -10,6 +10,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
+    "@gradio/client": "^0.1.4",
     "@supabase/auth-helpers-sveltekit": "^0.10.1",
     "@supabase/supabase-js": "^2.26.0",
     "@sveltejs/adapter-auto": "^2.0.0",

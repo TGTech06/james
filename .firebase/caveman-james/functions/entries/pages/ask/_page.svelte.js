@@ -17,8 +17,8 @@ const css = {
   map: null
 };
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let $$unsubscribe_userChats;
   let $$unsubscribe_selectedChatMessages;
+  let $$unsubscribe_userChats;
   createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   const userChats = writable([]);
   validate_store(userChats, "userChats");
@@ -26,13 +26,12 @@ const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   const selectedChatMessages = writable([]);
   validate_store(selectedChatMessages, "selectedChatMessages");
   $$unsubscribe_selectedChatMessages = subscribe(selectedChatMessages, (value) => value);
-  window.matchMedia("(max-width: 768px)");
   $$result.css.add(css);
-  $$unsubscribe_userChats();
   $$unsubscribe_selectedChatMessages();
+  $$unsubscribe_userChats();
   return `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> ${validate_component(AuthCheck, "AuthCheck").$$render($$result, {}, {}, {
     default: () => {
-      return `<div class="flex flex-col bg-gray-900 text-white p-4 s-uhtJAkW7ZDek">${validate_component(NavBar, "NavBar").$$render($$result, {}, {}, {})} <div class="relative flex flex-col md:flex-row min-h-screen s-uhtJAkW7ZDek"> ${``} <div class="sidebar-toggle-btn s-uhtJAkW7ZDek" style="left: 1rem">${`<i class="chevron fas fa-chevron-right text-2xl s-uhtJAkW7ZDek"></i>`}</div>  <div class="flex flex-col items-center justify-center w-full md:w-3/4 mx-auto s-uhtJAkW7ZDek"><div class="w-full md:w-3/4"><h1 class="text-4xl font-bold mb-8" data-svelte-h="svelte-fy4ok2">Chat Messages</h1> ${`<p class="text-gray-500" data-svelte-h="svelte-ulna32">Select a chat from the history to view messages.</p>`}</div>  <div class="w-full md:w-3/4 mt-4"><div class="form-control mb-4"><textarea id="question" class="textarea textarea-primary">${escape("")}</textarea></div>  <button class="btn btn-primary mb-4" ${"disabled"}>Ask the AI and Send Message</button></div></div></div> </div>`;
+      return `<div class="flex flex-col bg-gray-900 text-white p-4 s-uhtJAkW7ZDek">${validate_component(NavBar, "NavBar").$$render($$result, {}, {}, {})} <div class="relative flex flex-col md:flex-row min-h-screen s-uhtJAkW7ZDek"> ${``} <div class="sidebar-toggle-btn s-uhtJAkW7ZDek" style="left: 1rem">${`<i class="chevron fas fa-chevron-right text-2xl s-uhtJAkW7ZDek"></i>`}</div>  <div class="flex flex-col items-center justify-center w-full md:w-3/4 mx-auto s-uhtJAkW7ZDek"><div class="w-full md:w-3/4"><h1 class="text-4xl font-bold mb-8" data-svelte-h="svelte-fy4ok2">Chat Messages</h1> ${`<p class="text-gray-500" data-svelte-h="svelte-ulna32">Select a chat from the history to view messages.</p>`}</div>  <div class="w-full md:w-3/4 mt-4"><div class="form-control mb-4"><textarea id="question" class="textarea textarea-primary" ${"disabled"}>${escape("")}</textarea></div>  <button class="btn btn-primary mb-4" ${"disabled"}>Ask the AI and Send Message</button></div></div></div> ${``} </div>`;
     }
   })}`;
 });
