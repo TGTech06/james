@@ -7,7 +7,9 @@
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
     PUBLIC_HUGGINGFACE_API_KEY,
+    PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
+  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import {
     getDocuments,
     deleteDocument,
@@ -24,10 +26,13 @@
   // Bind the functions to the corresponding elements in the forget.html file, if needed
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    let embeddings = new OpenAIEmbeddings({ openAIApiKey });
     vector = new SupabaseVectorStore(
-      new HuggingFaceInferenceEmbeddings({
-        apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-      }),
+      embeddings,
+      // new HuggingFaceInferenceEmbeddings({
+      //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+      // }),
       {
         client: supabase,
         tableName: "documents",

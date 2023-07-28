@@ -5,7 +5,7 @@
   import NavBar from "$lib/NavBar.svelte";
   import { onMount, onDestroy } from "svelte";
   import { GoTrueAdminApi, createClient } from "@supabase/supabase-js";
-
+  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
   import { writable } from "svelte/store";
   import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
@@ -13,6 +13,7 @@
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
     PUBLIC_HUGGINGFACE_API_KEY,
+    PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import { v4 as uuidv4 } from "uuid";
   // Initialize the Supabase client and other variables
@@ -211,7 +212,6 @@
     }
     // Trigger loading of the updated chat messages
     loadChatMessages(selectedChatId);
-    await getAIResponse(userId);
   }
 
   // Function to load AI response for a chat
@@ -248,11 +248,11 @@
   // Updated function to get the AI response and save it to the database
   async function getAIResponse(userId) {
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    embeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    });
-    // const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    // embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    // embeddings = new HuggingFaceInferenceEmbeddings({
+    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    // });
+    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    embeddings = new OpenAIEmbeddings({ openAIApiKey });
     vector = new SupabaseVectorStore(embeddings, {
       client,
       tableName: "documents",

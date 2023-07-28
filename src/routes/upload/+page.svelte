@@ -4,14 +4,15 @@
     file_uploader,
     url_uploader,
   } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/files.js";
+  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { createClient } from "@supabase/supabase-js";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-  import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
   import { onMount } from "svelte";
   import {
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
     PUBLIC_HUGGINGFACE_API_KEY,
+    PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
@@ -33,9 +34,11 @@
 
   onMount(() => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    embeddings = new HuggingFaceInferenceEmbeddings({
-      apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    });
+    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    // embeddings = new HuggingFaceInferenceEmbeddings({
+    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    // });
     vector = new SupabaseVectorStore(embeddings, {
       client: supabase,
       tableName: "documents",
