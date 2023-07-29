@@ -1,6 +1,7 @@
 import { c as create_ssr_component, v as validate_component, f as each, e as escape } from "../../../chunks/ssr.js";
 import "langchain/vectorstores/supabase";
 import "langchain/embeddings/hf";
+import "langchain/embeddings/openai";
 import { A as AuthCheck } from "../../../chunks/AuthCheck.js";
 import { N as NavBar } from "../../../chunks/NavBar.js";
 const _page_svelte_svelte_type_style_lang = "";

@@ -92,11 +92,11 @@ export async function chatWithDoc(
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
     let embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    const aimodel = new OpenAI({
-      temperature: 0,
-      openAIApiKey,
-      maxTokens: 1000,
-    });
+    // const aimodel = new OpenAI({
+    //   temperature: 0,
+    //   openAIApiKey,
+    //   maxTokens: 1000,
+    // });
     // const chain = loadQARefineChain(aimodel);
     // let embeddings = new HuggingFaceInferenceEmbeddings({
     //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
@@ -148,7 +148,7 @@ export async function chatWithDoc(
     const CUSTOM_QUESTION_GENERATOR_CHAIN_PROMPT = `{question}`;
 
     const qa = ConversationalRetrievalQAChain.fromLLM(
-      aimodel,
+      llm,
       vectorStore.asRetriever(),
       {
         returnSourceDocuments: true,

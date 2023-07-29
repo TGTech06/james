@@ -23,7 +23,7 @@ export async function process_file(
   const fileSize = file.size;
   const dateShort = new Date();
   let fileSha1;
-  GlobalWorkerOptions.workerSrc = '/Users/tommasogiovannini/VSCode Projects/james/node_modules/pdfjs-dist/build/pdf.worker.js'; // Replace with the actual path to the worker script
+ GlobalWorkerOptions.workerSrc = './src/lib/loaders/pdf.worker.js'; // Replace with the actual path to the worker script
 
   const chunkSizeValue = chunkSize;
   const chunkOverlapValue = chunkOverlap;

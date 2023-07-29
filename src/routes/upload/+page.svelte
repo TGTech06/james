@@ -46,21 +46,21 @@
   });
 
   async function handleFileUpload() {
-    try {
-      await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
-      error = "";
-    } catch (err) {
-      error = err.message;
-    }
+    // try {
+    await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
+    error = "";
+    // } catch (err) {
+    //   error = err.message;
+    // }
   }
 
   async function handleUrlUpload() {
-    try {
-      await url_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, url);
-      error = "";
-    } catch (err) {
-      error = err.message;
-    }
+    // try {
+    await url_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, url);
+    error = "";
+    // } catch (err) {
+    //   error = err.message;
+    // }
   }
 </script>
 
@@ -68,22 +68,24 @@
   <div class="flex flex-col min-h-screen min-w-full bg-gray-900 text-white p-4">
     <div class="flex flex-col items-center">
       <NavBar />
-      <div class="p-8 flex flex-col items-center h-screen">
-        <h1 class="text-4xl font-bold mb-8">Insert Data Page</h1>
+      <div class="p-4 md:p-8 flex flex-col items-center h-screen">
+        <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
+          Insert Data Page
+        </h1>
         <!-- Error Display -->
         {#if error}
           <div class="text-red-500 mb-4">{error}</div>
         {/if}
 
         <!-- File Uploader -->
-        <div class="w-full mb-8">
+        <div class="w-full mb-4 md:mb-8">
           <label class="label mb-2 text-lg font-bold">Upload Files</label>
-          <div class="flex items-center">
+          <div class="flex flex-col md:flex-row items-center">
             <input
               type="file"
               multiple
               on:change={upload}
-              class="input input-accent mr-4"
+              class="input input-accent mr-0 md:mr-4 mb-2 md:mb-0"
             />
             <button
               class="btn btn-primary text-lg font-bold"
@@ -99,14 +101,14 @@
           <label class="label mb-2 text-lg font-bold"
             >Add the URL to the database</label
           >
-          <div class="flex items-center">
+          <div class="flex flex-col md:flex-row items-center">
             <textarea
               bind:value={url}
-              class="textarea textarea-accent resize-none flex-grow text-lg font-bold"
+              class="textarea textarea-accent resize-none flex-grow text-lg font-bold mb-2 md:mb-0 md:mr-4"
               rows="1"
             />
             <button
-              class="btn btn-primary text-lg font-bold ml-4"
+              class="btn btn-primary text-lg font-bold"
               on:click={() => handleUrlUpload()}
             >
               Add URL
@@ -117,5 +119,6 @@
     </div>
   </div>
 </AuthCheck>
+
 <!-- Add navigation buttons to move between pages -->
 <!-- ... -->
