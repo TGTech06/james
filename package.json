@@ -36,7 +36,7 @@
     "langchain": "^0.0.110",
     "openai": "^3.3.0",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^3.8.162",
+    "pdfjs-dist": "^2.11.338",
     "puppeteer": "^19.7.2",
     "re": "^0.1.4",
     "requests": "^0.3.0",

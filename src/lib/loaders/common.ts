@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_HUGGINGFACE_API_KEY, PUBLIC_OPENAI_API_KEY } from "$env/static/public";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import * as pdfjsLib from 'pdfjs-dist';
 import { v4 as uuidv4 } from 'uuid';
 export async function process_file(
   vectorStore,
@@ -23,7 +23,7 @@ export async function process_file(
   const fileSize = file.size;
   const dateShort = new Date();
   let fileSha1;
- GlobalWorkerOptions.workerSrc = './src/lib/loaders/pdf.worker.js'; // Replace with the actual path to the worker script
+//  GlobalWorkerOptions.workerSrc = './src/lib/loaders/pdf.worker.js'; // Replace with the actual path to the worker script
 
   const chunkSizeValue = chunkSize;
   const chunkOverlapValue = chunkOverlap;
@@ -115,7 +115,7 @@ export async function process_file(
     //   reader.readAsArrayBuffer(tmpFile);
     // });
     //const pdfData = new Uint8Array(arrayBuffer);
-const pdf = await getDocument({ data: pdfData }).promise;
+const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
 const pdfText = await extractTextFromPDF(pdf);
     console.log("pdfText", pdfText);
     // Function to split pdfText into individual document chunks
