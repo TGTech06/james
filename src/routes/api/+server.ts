@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import domino from 'domino';
 export async function GET({ url }) {
+  
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
   console.log("url", url.searchParams.get('url'));

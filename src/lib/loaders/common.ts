@@ -48,7 +48,8 @@ export async function process_file(
 
     // Set up an event listener to handle when the file content is loaded
     reader.onload = async function (event) {
-      const fileContent = event.target.result; // This will contain the content of the file
+      const fileContent = await event.target.result; // This will contain the content of the file
+      console.log("file content: ", fileContent)
       const documentObject = {
         pageContent: fileContent.toString(),
         metadata: {
