@@ -1,6 +1,6 @@
 <script lang="ts">
   // Import necessary functions from your existing script
-  import { chatWithDoc } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/question.js";
+  import { chatWithDoc } from "$lib/question.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
   import { onMount, onDestroy } from "svelte";

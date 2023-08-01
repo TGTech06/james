@@ -6,7 +6,7 @@ import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html";
 import { createClient } from "@supabase/supabase-js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { process_file } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/loaders/common.ts";
+import { process_file } from "./loaders/common.ts";
 import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 import {
