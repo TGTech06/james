@@ -31,6 +31,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@cloudflare/puppeteer": "^0.0.4",
     "@huggingface/inference": "^1.8.0",
     "domino": "^2.1.6",
     "huggingface": "^1.4.0",
