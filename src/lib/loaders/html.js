@@ -38,9 +38,11 @@ export async function getHtml(url) {
       let retrievedText = await response.text();
       return retrievedText;
     } else {
+      console.log("error: ", response.status);
       return null;
     }
   } catch (error) {
+    console.log("error: ", error);
     return null;
   }
 }
