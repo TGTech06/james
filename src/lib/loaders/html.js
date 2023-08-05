@@ -1,6 +1,6 @@
 import { process_file } from "./common";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
-import fs from "fs";
+// import fs from "fs";
 
 export async function processHtml(vector_store, file) {
   return process_file(vector_store, file, UnstructuredLoader, ".html");
@@ -46,7 +46,7 @@ export function createHtmlFile(url, content) {
 
 export function deleteTempFile(temp_file_path, url, ret) {
   try {
-    fs.unlinkSync(temp_file_path);
+    // fs.unlinkSync(temp_file_path);
     if (ret) {
       console.log(`✅ Content saved... ${url}`);
     }
