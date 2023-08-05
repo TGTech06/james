@@ -6,44 +6,44 @@ export async function processHtml(vector_store, file) {
   return process_file(vector_store, file, UnstructuredLoader, ".html");
 }
 
-export async function getHtml(url) {
-  const queryParams = new URLSearchParams({ url });
-  const endpointUrl = "https://jameswebscraper.tgtech06.workers.dev/"; // Replace with your actual Cloudflare worker URL
-  try {
-    const response = await fetch(
-      `${endpointUrl}?url=${encodeURIComponent(url)}`
-    );
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch the data.");
-    }
-
-    const data = await response.text();
-    console.log("Scraped data:", data); // You can use this data in your app as needed
-  } catch (error) {
-    console.error("Error occurred while scraping:", error);
-  }
-}
-
 // export async function getHtml(url) {
+//   const queryParams = new URLSearchParams({ url });
+//   const endpointUrl = "https://jameswebscraper.tgtech06.workers.dev/"; // Replace with your actual Cloudflare worker URL
 //   try {
-//     // const response = await axios.get(url);
-//     // const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
-//     const queryParams = new URLSearchParams({ url });
-//     const apiUrl = `/api?${queryParams.toString()}`;
-//     const response = await fetch(apiUrl, {
-//       method: "GET",
-//     });
-//     if (response.status === 200) {
-//       let retrievedText = await response.text();
-//       return retrievedText;
-//     } else {
-//       return null;
+//     const response = await fetch(
+//       `${endpointUrl}?url=${encodeURIComponent(url)}`
+//     );
+
+//     if (!response.ok) {
+//       throw new Error("Failed to fetch the data.");
 //     }
+
+//     const data = await response.text();
+//     console.log("Scraped data:", data); // You can use this data in your app as needed
 //   } catch (error) {
-//     return null;
+//     console.error("Error occurred while scraping:", error);
 //   }
 // }
+
+export async function getHtml(url) {
+  try {
+    // const response = await axios.get(url);
+    // const url = "https://en.wikipedia.org/wiki/GitHub_Copilot";
+    const queryParams = new URLSearchParams({ url });
+    const apiUrl = `/api?${queryParams.toString()}`;
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+    if (response.status === 200) {
+      let retrievedText = await response.text();
+      return retrievedText;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    return null;
+  }
+}
 
 class CustomFile extends Blob {
   constructor(parts, properties) {
