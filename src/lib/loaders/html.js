@@ -10,10 +10,9 @@ export async function getHtml(url) {
   const queryParams = new URLSearchParams({ url });
   const endpointUrl = "https://jameswebscraper.tgtech06.workers.dev/"; // Replace with your actual Cloudflare worker URL
   try {
-    const response = await fetch(endpointUrl, {
-      method: "POST", // Assuming your worker accepts POST requests
-      body: JSON.stringify({ url: queryParams }), // Replace with the URL you want to scrape
-    });
+    const response = await fetch(
+      `${endpointUrl}?url=${encodeURIComponent(url)}`
+    );
 
     if (!response.ok) {
       throw new Error("Failed to fetch the data.");
