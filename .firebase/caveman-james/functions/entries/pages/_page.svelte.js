@@ -1,19 +1,7 @@
 import { c as create_ssr_component, v as validate_component } from "../../chunks/ssr.js";
-import "langchain/text_splitter";
-import "langchain/vectorstores/supabase";
 import "langchain/embeddings/openai";
-import "pdfjs-dist";
-import "langchain/document_loaders/fs/text";
-import "langchain/document_loaders/fs/pdf";
-import "langchain/document_loaders/fs/unstructured";
-import "fs";
-import "langchain/embeddings/hf";
-import "langchain/chains";
-import "langchain/memory";
-import "langchain/llms/hf";
-import "langchain/llms/openai";
-import "langchain/vectorstores/memory";
-/* empty css                                                    */import { N as NavBar } from "../../chunks/NavBar.js";
+import "langchain/vectorstores/supabase";
+import { N as NavBar } from "../../chunks/NavBar.js";
 const Page = create_ssr_component(($$result, $$props, $$bindings, slots) => {
   return `<div class="flex flex-col min-h-screen bg-gray-900 text-white p-4"><div class="flex flex-col items-center"> ${validate_component(NavBar, "NavBar").$$render($$result, {}, {}, {})} <h1 class="text-6xl font-bold my-8" data-svelte-h="svelte-eg541c">Welcome to 🧠 James 🧠</h1> <div class="max-w-3xl mx-auto space-y-4"><p class="text-xl text-center mb-6" data-svelte-h="svelte-11zjwmi">James is an AI-powered assistant that can remember everything you tell
         him and answer your questions. He is a smart and curious AI, constantly

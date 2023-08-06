@@ -9,9 +9,10 @@ import "langchain/vectorstores/supabase";
 import "langchain/llms/openai";
 import { P as PUBLIC_SUPABASE_URL, a as PUBLIC_SUPABASE_KEY } from "../../../chunks/public.js";
 import "langchain/vectorstores/memory";
-/* empty css                                                       */import { A as AuthCheck } from "../../../chunks/AuthCheck.js";
+import { A as AuthCheck } from "../../../chunks/AuthCheck.js";
 import { N as NavBar } from "../../../chunks/NavBar.js";
 import "langchain/embeddings/hf";
+const ChatInput_svelte_svelte_type_style_lang = "";
 const _page_svelte_svelte_type_style_lang = "";
 const css = {
   code: ".sidebar-toggle-btn.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{position:absolute;top:1rem;width:2.5rem;height:2.5rem;display:flex;justify-content:center;align-items:center;border-radius:50%;background-color:#fff;box-shadow:0 2px 4px rgba(0, 0, 0, 0.2);cursor:pointer;z-index:2}.sidebar-toggle-btn.s-uhtJAkW7ZDek .chevron.s-uhtJAkW7ZDek{color:#1f2937}.flex.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{display:flex}.chat-container.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{height:300px;overflow-y:auto}.chat-message.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{margin-bottom:8px}.chat-message.is-user-message.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{color:#ffcc00}@media(max-width: 50px){.md\\:flex-row.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{flex-direction:row}.sidebar.s-uhtJAkW7ZDek.s-uhtJAkW7ZDek{position:absolute;top:0;left:0;transform:translateX(-100%);transition:transform 0.3s ease-in-out;z-index:1;width:80%}}",
