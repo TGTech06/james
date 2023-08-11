@@ -2,7 +2,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
   computeSHA1FromFile,
   computeSHA1FromContent,
-} from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/utils.js";
+} from "./utils.js";
 import { createClient } from "@supabase/supabase-js";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_HUGGINGFACE_API_KEY, PUBLIC_OPENAI_API_KEY } from "$env/static/public";

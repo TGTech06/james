@@ -20,7 +20,6 @@
       errorMessage = error.message;
     } else {
       errorMessage = ""; // Clear the error message if there was no error
-      console.log(data.user.id);
       window.location.href = "/";
     }
   };

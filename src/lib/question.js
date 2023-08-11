@@ -80,7 +80,6 @@ export async function chatWithDoc(
   if (question === undefined || question === null || question === "") {
     return "Please enter a question";
   } else {
-    console.log("question is actually ", question);
     const llm = new HuggingFaceInference({
       apiKey: huggingfacehubApiToken,
       // temperature: 0.2,

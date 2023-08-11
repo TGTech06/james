@@ -126,9 +126,6 @@
     //   tableName: "documents",
     // });
 
-    console.log("public_supabase_url", PUBLIC_SUPABASE_URL);
-    console.log("public_supabase_key", PUBLIC_SUPABASE_KEY);
-
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
     embeddings = new OpenAIEmbeddings({ openAIApiKey });

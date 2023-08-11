@@ -104,12 +104,9 @@
       .limit(1);
 
     if (error) {
-      console.log("Error fetching first user message:", error.message);
       errorText = error.message;
       return ""; // Return an empty string if an error occurs
     }
-    console.log("messages", messages);
-
     // Check if any messages were found and return the first user message
     return messages.length > 0 ? messages[0].message : "";
   }
@@ -193,7 +190,6 @@
   // }
   // Function to send a new message in the chat
   async function sendMessage(userId) {
-    console.log("selectedChatId", selectedChatId);
     // Save the user message to Supabase
     // Make sure to replace 'userId' with the actual user ID or fetch it from your authentication system
     await supabaseClient.from("chats").insert([
@@ -206,7 +202,6 @@
       },
     ]);
     // Clear the question input field
-    console.log("selectedChatMessages", $selectedChatMessages);
     if ($selectedChatMessages.length === 0) {
       loadUserChats();
     }
@@ -219,10 +214,7 @@
     if (loading) return; // Prevent sending the message if a previous message is still being sent
     loading = true;
     const userId = await getCurrentUserId(); // Fetch the authenticated user's ID from Supabase Auth
-    console.log("userId", userId);
     await sendMessage(userId); // Send the user message to the chat
-    console.log("finised");
-    console.log("selectedchatid in funciton", selectedChatId);
     // Send the user message to the database
     // Get the AI response and save it to the database
     await getAIResponse(userId);
