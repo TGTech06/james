@@ -37,9 +37,10 @@ export async function process_file(
   // let session = await client.auth.getSession();
   let user = await client.auth.getUser();
   let userID = user.data.user.id;
+  console.log("userID", userID);
 
   let splittedDocuments;
-
+  console.log("isUrl", isUrl)
   if (isUrl === true) {
     console.log("isUrl", isUrl)
     // const loadedContent = [await file.data()]; 
@@ -90,6 +91,7 @@ export async function process_file(
       // const embeddings = new HuggingFaceInferenceEmbeddings({
       //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
       // });
+      console.log("user_id", userID);
       let vector = new SupabaseVectorStore(embeddings, {
         client,
         queryName: "insert",
@@ -185,6 +187,7 @@ const pdfText = await extractTextFromPDF(pdf);
     // const embeddings = new HuggingFaceInferenceEmbeddings({
     //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
     // });
+    console.log("user_id", userID);
     let vector = new SupabaseVectorStore(embeddings, {
       client,
       queryName: "insert",

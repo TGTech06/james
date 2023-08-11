@@ -1,10 +1,29 @@
 import { process_file } from "./common";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
-import fs from "fs";
+// import fs from "fs";
 
 export async function processHtml(vector_store, file) {
   return process_file(vector_store, file, UnstructuredLoader, ".html");
 }
+
+// export async function getHtml(url) {
+//   const queryParams = new URLSearchParams({ url });
+//   const endpointUrl = "https://jameswebscraper.tgtech06.workers.dev/"; // Replace with your actual Cloudflare worker URL
+//   try {
+//     const response = await fetch(
+//       `${endpointUrl}?url=${encodeURIComponent(url)}`
+//     );
+
+//     if (!response.ok) {
+//       throw new Error("Failed to fetch the data.");
+//     }
+
+//     const data = await response.text();
+//     console.log("Scraped data:", data); // You can use this data in your app as needed
+//   } catch (error) {
+//     console.error("Error occurred while scraping:", error);
+//   }
+// }
 
 export async function getHtml(url) {
   try {
@@ -19,9 +38,11 @@ export async function getHtml(url) {
       let retrievedText = await response.text();
       return retrievedText;
     } else {
+      console.log("error: ", response.status);
       return null;
     }
   } catch (error) {
+    console.log("error: ", error);
     return null;
   }
 }
@@ -46,7 +67,7 @@ export function createHtmlFile(url, content) {
 
 export function deleteTempFile(temp_file_path, url, ret) {
   try {
-    fs.unlinkSync(temp_file_path);
+    // fs.unlinkSync(temp_file_path);
     if (ret) {
       console.log(`✅ Content saved... ${url}`);
     }

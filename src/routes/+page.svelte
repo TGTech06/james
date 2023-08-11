@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   // Add your imports here
-  import {
-    file_uploader,
-    url_uploader,
-  } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/files.js";
-  import { chatWithDoc } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/question.js";
-  import { brain } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/brain.js";
+  // import {
+  //   file_uploader,
+  //   url_uploader,
+  // } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/files.js";
+  // import { chatWithDoc } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/question.js";
+  // import { brain } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/brain.js";
   import { createClient } from "@supabase/supabase-js";
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -125,9 +125,6 @@
     //   supabase,
     //   tableName: "documents",
     // });
-
-    // console.log("public_supabase_url", PUBLIC_SUPABASE_URL);
-    // console.log("public_supabase_key", PUBLIC_SUPABASE_KEY);
 
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
