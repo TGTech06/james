@@ -2,12 +2,11 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
   computeSHA1FromFile,
   computeSHA1FromContent,
-} from "./utils.js";
+} from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/utils.js";
 import { createClient } from "@supabase/supabase-js";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL, PUBLIC_HUGGINGFACE_API_KEY, PUBLIC_OPENAI_API_KEY } from "$env/static/public";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-//import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import * as pdfjsLib from 'pdfjs-dist';
 import { v4 as uuidv4 } from 'uuid';
 export async function process_file(
@@ -49,8 +48,7 @@ export async function process_file(
 
     // Set up an event listener to handle when the file content is loaded
     reader.onload = async function (event) {
-      const fileContent = await event.target.result; // This will contain the content of the file
-      console.log("file content: ", fileContent)
+      const fileContent = event.target.result; // This will contain the content of the file
       const documentObject = {
         pageContent: fileContent.toString(),
         metadata: {
