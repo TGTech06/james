@@ -1,6 +1,9 @@
 <script lang="ts">
   // Import necessary functions from your existing script
-  import { file_uploader, url_uploader } from "$lib/files.js";
+  import {
+    file_uploader,
+    url_uploader,
+  } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/files.js";
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { createClient } from "@supabase/supabase-js";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";

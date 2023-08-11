@@ -1,12 +1,12 @@
-import { processTxt } from "./loaders/txt";
-import { process_pdf } from "./loaders/pdf";
-import { processHtml } from "./loaders/html";
-import { computeSHA1FromContent } from "./utils";
-import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html";
+import { processTxt } from "./loaders/txt.js";
+import { process_pdf } from "./loaders/pdf.js";
+import { processHtml } from "./loaders/html.js";
+import { computeSHA1FromContent } from "./utils.js";
+import { getHtml, createHtmlFile, deleteTempFile } from "./loaders/html.js";
 import { createClient } from "@supabase/supabase-js";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-import { process_file } from "./loaders/common.ts";
+import { process_file } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/loaders/common.ts";
 import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
 import {

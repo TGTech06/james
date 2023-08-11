@@ -10,7 +10,10 @@
     PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-  import { getDocuments, deleteDocument } from "$lib/brain.js";
+  import {
+    getDocuments,
+    deleteDocument,
+  } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
 

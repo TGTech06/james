@@ -7,7 +7,7 @@ export async function computeSHA1FromFile(filePath) {
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  console.log("readableHash from computeSHA1FromFile: ", readableHash);
+  // console.log("readableHash from computeSHA1FromFile: ", readableHash);
   return readableHash;
 }
 
@@ -20,6 +20,6 @@ export async function computeSHA1FromContent(content) {
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  console.log("readableHash from computeSHA1FromContent: ", readableHash);
+  // console.log("readableHash from computeSHA1FromContent: ", readableHash);
   return readableHash;
 }

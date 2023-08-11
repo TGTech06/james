@@ -1,6 +1,6 @@
 <script lang="ts">
   // Import necessary functions from your existing script
-  import { chatWithDoc } from "$lib/question.js";
+  import { chatWithDoc } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/question.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
   import { onMount, onDestroy } from "svelte";
@@ -73,7 +73,6 @@
 
       if (error) {
         errorText = error.message;
-        console.error("Error fetching chat messages:", error.message);
         return;
       }
 
@@ -123,7 +122,6 @@
       .eq("user_id", userId);
 
     if (error) {
-      console.error("Error fetching user chats:", error.message);
       errorText = error.message;
     } else {
       // Create a Set to keep track of unique chat IDs
@@ -158,7 +156,6 @@
       .eq("chat_id", chatId)
       .order("timestamp", { ascending: true });
     if (error) {
-      console.error("Error fetching chat messages:", error.message);
       errorText = error.message;
     } else {
       selectedChatMessages.set(messages);
