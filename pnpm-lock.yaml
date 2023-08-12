@@ -24,7 +24,7 @@ dependencies:
     specifier: ^1.1.1
     version: 1.1.1
   pdfjs-dist:
-    specifier: ^2.11.338
+    specifier: ^2.6.347
     version: 2.16.105
   re:
     specifier: ^0.1.4
