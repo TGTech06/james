@@ -3,13 +3,11 @@ import { ConversationalRetrievalQAChain } from "langchain/chains";
 import { ConversationSummaryMemory } from "langchain/memory";
 // import { OpenAI } from "langchain/llms";
 import { HuggingFaceInference } from "langchain/llms/hf";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { createClient } from "@supabase/supabase-js";
-import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { loadQAStuffChain } from "langchain/chains";
 import { RetrievalQAChain } from "langchain/chains";
 // import { loadQARefineChain } from "langchain/chains";
-import { OpenAI } from "langchain/llms/openai";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   PUBLIC_SUPABASE_KEY,
   PUBLIC_SUPABASE_URL,
@@ -90,21 +88,31 @@ export async function chatWithDoc(
 
     const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    let embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    const aimodel = new OpenAI({
-      temperature: 1,
+    // let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+
+    const aimodel = new ChatOpenAI({
       openAIApiKey,
-      maxTokens: 1000,
+      modelName: "gpt-3.5-turbo",
+      temperature: 0,
     });
+    // const aimodel = new OpenAI(
+
+    //   {
+
+    //   temperature: 1,
+    //   openAIApiKey,
+    //   maxTokens: 1000,
+
+    // });
     // const chain = loadQARefineChain(aimodel);
     // let embeddings = new HuggingFaceInferenceEmbeddings({
     //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
     // });
-    const user = await client.auth.getUser();
-    let vector = new SupabaseVectorStore(embeddings, {
-      client,
-      tableName: "documents",
-    });
+    // const user = await client.auth.getUser();
+    // let vector = new SupabaseVectorStore(embeddings, {
+    //   client,
+    //   tableName: "documents",
+    // });
 
     // const relevantDocs = await vector.similaritySearch(
     //   question,
