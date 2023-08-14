@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createClient } from "@supabase/supabase-js";
+  import { goto } from "$app/navigation";
   import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
@@ -20,7 +21,7 @@
       errorMessage = error.message;
     } else {
       errorMessage = ""; // Clear the error message if there was no error
-      window.location.href = "/";
+      setTimeout(() => goto("/"), 0);
     }
   };
 
