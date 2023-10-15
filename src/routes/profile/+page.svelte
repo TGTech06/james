@@ -20,7 +20,8 @@
   let vector;
   // Reactive statement to handle documents list
   let documents = [];
-  let userID = "0";
+  let userID = "";
+  let userIsPremium = false;
   // Bind the functions to the corresponding elements in the forget.html file, if needed
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
@@ -37,7 +38,8 @@
       }
     );
     //userID = supabase.auth.getUser().id;
-    getUserID();
+    await getUserID();
+    await getUserData();
     documents = await getDocuments(supabase);
   });
 
@@ -73,22 +75,50 @@
       console.log(e);
     }
   }
+
+  async function getUserData() {
+    try {
+      // Fetch user data from Supabase
+      const { data, error } = await supabase
+        .from("user_data")
+        .select("is_premium")
+        .eq("user_id", userID)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user data:", error);
+        return;
+      }
+
+      if (data) {
+        // Check if the user is premium based on the retrieved data
+        userIsPremium = data.is_premium === true;
+      }
+    } catch (e) {
+      console.error("Error occurred while fetching user data:", e);
+    }
+  }
 </script>
 
 <AuthCheck>
   <div class="flex flex-col min-h-screen min-w-full bg-gray-900 text-white p-4">
     <div class="flex flex-col items-center">
       <NavBar />
-      <script async src="https://js.stripe.com/v3/buy-button.js">
-      </script>
-      <stripe-buy-button
-        buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
-        client-reference-id={userID}
-        publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
-      />
-      <!-- <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
-        {userID}
-      </h1> -->
+      {#if userIsPremium}
+        <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
+          I'm proud of you, you made the right choice!
+        </h1>
+      {/if}
+      {#if !userIsPremium}
+        <script async src="https://js.stripe.com/v3/buy-button.js">
+        </script>
+        <stripe-buy-button
+          buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
+          client-reference-id={userID}
+          publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
+        />
+      {/if}
+
       <div class="p-8">
         <div class="flex items-center justify-between">
           <h1 class="text-4xl font-bold mb-8">Your James</h1>
