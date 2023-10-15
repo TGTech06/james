@@ -56,10 +56,8 @@
       </div>
       <button class="btn btn-primary w-full py-3 rounded-lg">Register</button>
       <div class="mt-4 text-gray-300 text-sm text-center">
-        Already have an account? <a
-          href="#"
-          on:click={toggleView}
-          class="underline">Login</a
+        Already have an account? <a on:click={toggleView} class="underline"
+          >Login</a
         >
       </div>
     </form>

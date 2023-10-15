@@ -10,7 +10,7 @@ return {
 	assets: new Set(["chatui/favicon.png","chatui/favicon.svg","chatui/touch-icon-ipad-retina.png","chatui/touch-icon-ipad.png","chatui/touch-icon-iphone-retina.png","favicon.png","huggingchat/favicon.png","huggingchat/favicon.svg","huggingchat/thumbnail.png","huggingchat/touch-icon-ipad-retina.png","huggingchat/touch-icon-ipad.png","huggingchat/touch-icon-iphone-retina.png"]),
 	mimeTypes: {".png":"image/png",".svg":"image/svg+xml"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.04ec74d8.js","app":"_app/immutable/entry/app.e410c802.js","imports":["_app/immutable/entry/start.04ec74d8.js","_app/immutable/chunks/scheduler.2364b0ad.js","_app/immutable/chunks/singletons.d53d9455.js","_app/immutable/chunks/index.db1f7a41.js","_app/immutable/entry/app.e410c802.js","_app/immutable/chunks/public.41f5b175.js","_app/immutable/chunks/supabase.4d2148cf.js","_app/immutable/chunks/scheduler.2364b0ad.js","_app/immutable/chunks/index.be5c2245.js"],"stylesheets":[],"fonts":[]},
+		client: {"start":"_app/immutable/entry/start.2e25d00d.js","app":"_app/immutable/entry/app.04fb169e.js","imports":["_app/immutable/entry/start.2e25d00d.js","_app/immutable/chunks/scheduler.2364b0ad.js","_app/immutable/chunks/singletons.560ecbea.js","_app/immutable/chunks/index.db1f7a41.js","_app/immutable/entry/app.04fb169e.js","_app/immutable/chunks/public.f82b2f0c.js","_app/immutable/chunks/supabase.fcea5650.js","_app/immutable/chunks/scheduler.2364b0ad.js","_app/immutable/chunks/index.be5c2245.js"],"stylesheets":[],"fonts":[]},
 		nodes: [
 			__memo(() => import('./nodes/0.js')),
 			__memo(() => import('./nodes/1.js')),

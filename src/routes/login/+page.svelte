@@ -59,10 +59,8 @@
       </div>
       <button class="btn btn-primary w-full py-3 rounded-lg">Login</button>
       <div class="mt-4 text-gray-300 text-sm text-center">
-        Don't have an account? <a
-          href="#"
-          on:click={toggleView}
-          class="underline">Register</a
+        Don't have an account? <a on:click={toggleView} class="underline"
+          >Register</a
         >
       </div>
     </form>
