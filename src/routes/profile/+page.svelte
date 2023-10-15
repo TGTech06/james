@@ -13,13 +13,14 @@
   import { getDocuments, deleteDocument } from "$lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
+  import { get } from "svelte/store";
 
   // Initialize the Supabase client and other variables
   let supabase;
   let vector;
   // Reactive statement to handle documents list
   let documents = [];
-
+  let userID = "0";
   // Bind the functions to the corresponding elements in the forget.html file, if needed
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
@@ -35,7 +36,8 @@
         tableName: "documents",
       }
     );
-
+    //userID = supabase.auth.getUser().id;
+    getUserID();
     documents = await getDocuments(supabase);
   });
 
@@ -62,6 +64,15 @@
       window.location.reload();
     }
   }
+
+  async function getUserID() {
+    try {
+      let user = await supabase.auth.getUser();
+      userID = user.data.user.id;
+    } catch (e) {
+      console.log(e);
+    }
+  }
 </script>
 
 <AuthCheck>
@@ -70,11 +81,14 @@
       <NavBar />
       <script async src="https://js.stripe.com/v3/buy-button.js">
       </script>
-
       <stripe-buy-button
         buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
+        client-reference-id={userID}
         publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
       />
+      <!-- <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
+        {userID}
+      </h1> -->
       <div class="p-8">
         <div class="flex items-center justify-between">
           <h1 class="text-4xl font-bold mb-8">Your James</h1>
