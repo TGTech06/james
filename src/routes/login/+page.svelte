@@ -24,6 +24,7 @@
               user_id: userId,
               total_data_size: 0,
               is_premium: false,
+              stripe_customer_id: userId,
             },
           ]);
 

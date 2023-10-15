@@ -40,6 +40,7 @@
     //userID = supabase.auth.getUser().id;
     await getUserID();
     await getUserData();
+    await createUserDataIfNotExists(userID);
     documents = await getDocuments(supabase);
   });
 
@@ -96,6 +97,37 @@
       }
     } catch (e) {
       console.error("Error occurred while fetching user data:", e);
+    }
+  }
+
+  async function createUserDataIfNotExists(userId) {
+    try {
+      // Check if user data already exists
+      const { data, error } = await supabase
+        .from("user_data")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (!data) {
+        // User data doesn't exist; create a new row
+        const { data: insertedData, error: insertError } = await supabase
+          .from("user_data")
+          .upsert([
+            {
+              user_id: userId,
+              total_data_size: 0,
+              is_premium: false,
+              stripe_customer_id: userId,
+            },
+          ]);
+
+        // if (insertError) {
+        //   console.error("Error creating user data:", insertError);
+        // }
+      }
+    } catch (e) {
+      console.error("Error occurred while creating user data:", e);
     }
   }
 </script>
