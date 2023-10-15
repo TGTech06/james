@@ -2,12 +2,39 @@
   import { createClient } from "@supabase/supabase-js";
   import { goto } from "$app/navigation";
   import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
-  const supabaseClient = createClient(
-    PUBLIC_SUPABASE_URL,
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4"
-  );
+  const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
   let errorMessage = "";
+
+  async function createUserDataIfNotExists(userId) {
+    try {
+      // Check if user data already exists
+      const { data, error } = await supabaseClient
+        .from("user_data")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (!data) {
+        // User data doesn't exist; create a new row
+        const { data: insertedData, error: insertError } = await supabaseClient
+          .from("user_data")
+          .upsert([
+            {
+              user_id: userId,
+              total_data_size: 0,
+              is_premium: false,
+            },
+          ]);
+
+        // if (insertError) {
+        //   console.error("Error creating user data:", insertError);
+        // }
+      }
+    } catch (e) {
+      console.error("Error occurred while creating user data:", e);
+    }
+  }
 
   const loginUser = async (event: Event) => {
     event.preventDefault();
@@ -24,6 +51,7 @@
       errorMessage = error.message;
     } else {
       errorMessage = ""; // Clear the error message if there was no error
+      await createUserDataIfNotExists(data.user.id);
       window.location.href = "/";
       setTimeout(() => goto("/"), 0);
     }

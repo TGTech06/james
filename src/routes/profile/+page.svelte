@@ -86,7 +86,7 @@
         .single();
 
       if (error) {
-        console.error("Error fetching user data:", error);
+        // console.error("Error fetching user data:", error);
         return;
       }
 
