@@ -68,6 +68,13 @@
   <div class="flex flex-col min-h-screen min-w-full bg-gray-900 text-white p-4">
     <div class="flex flex-col items-center">
       <NavBar />
+      <script async src="https://js.stripe.com/v3/buy-button.js">
+      </script>
+
+      <stripe-buy-button
+        buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
+        publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
+      />
       <div class="p-8">
         <div class="flex items-center justify-between">
           <h1 class="text-4xl font-bold mb-8">Your James</h1>

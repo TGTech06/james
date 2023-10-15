@@ -24,6 +24,7 @@
       errorMessage = error.message;
     } else {
       errorMessage = ""; // Clear the error message if there was no error
+      window.location.href = "/";
       setTimeout(() => goto("/"), 0);
     }
   };
