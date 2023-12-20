@@ -1,6 +1,6 @@
 <script lang="ts">
   // Import necessary functions from your existing script
-  import { file_uploader, url_uploader } from "$lib/files.js";
+  import { file_uploader, upload_file, url_uploader } from "$lib/files.js";
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { createClient } from "@supabase/supabase-js";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -13,6 +13,7 @@
   } from "$env/static/public";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
+  // import { OpenAI } from "langchain/dist";
 
   // Initialize the Supabase client and other variables
   let supabase;
@@ -28,6 +29,34 @@
   async function upload(e) {
     files = e.target.files[0];
   }
+  const authorizedExtensions = [
+    ".c",
+    ".cpp",
+    ".csv",
+    ".docx",
+    ".html",
+    ".java",
+    ".json",
+    ".md",
+    ".pdf",
+    ".php",
+    ".pptxt",
+    ".py",
+    ".rb",
+    ".tex",
+    ".txt",
+    ".css",
+    ".jpeg",
+    ".jpg",
+    ".js",
+    ".gif",
+    ".png",
+    ".tar",
+    ".ts",
+    ".xlsx",
+    ".xml",
+    ".zip",
+  ];
 
   onMount(() => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
@@ -44,7 +73,20 @@
 
   async function handleFileUpload() {
     // try {
-    await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
+    // await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
+    console.log("uploading file");
+    try {
+      await upload_file(files);
+    } catch (err) {
+      error = err.message;
+    }
+
+    // let assistant = client.beta.assistants.create(
+    //   instructions="You are a customer support chatbot. Use your knowledge base to best respond to customer queries.",
+    //   model="gpt-3.5",
+    //   tools=[{"type": "retrieval"}],
+    //   file_ids=[file.id]
+    // )
     error = "";
     // } catch (err) {
     //   error = err.message;
@@ -82,6 +124,8 @@
               type="file"
               multiple
               on:change={upload}
+              accept={authorizedExtensions.join(",")}
+              required
               class="input input-accent mr-0 md:mr-4 mb-2 md:mb-0"
             />
             <button

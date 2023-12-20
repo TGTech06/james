@@ -9,12 +9,14 @@ import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
 import { process_file } from "./loaders/common.ts";
 import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
 import { UnstructuredLoader } from "langchain/document_loaders/fs/unstructured";
+import { OpenAI } from "openai";
 import {
   PUBLIC_SUPABASE_KEY,
   PUBLIC_SUPABASE_URL,
   PUBLIC_HUGGINGFACE_API_KEY,
   PUBLIC_OPENAI_API_KEY,
 } from "$env/static/public";
+import { supabaseClient } from "./supabase.ts";
 const file_processors = {
   ".txt": processTxt,
   // '.csv': process_csv,
@@ -30,6 +32,66 @@ const file_processors = {
   ".pdf": process_pdf,
   ".html": processHtml,
 };
+let userID;
+async function getUserID() {
+  try {
+    let supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+    let user = await supabase.auth.getUser();
+    userID = user.data.user.id;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+async function getAssistantID() {
+  await getUserID();
+  const { data: userData, error: userError } = await supabaseClient
+    .from("user_data")
+    .select("assistant_id")
+    .eq("user_id", userID)
+    .single();
+
+  if (userError) {
+    console.error("Error fetching user data:", userError);
+  } else {
+    if (userData) {
+      const assistantId = userData.assistant_id;
+      console.log("Assistant ID:", assistantId);
+      return assistantId;
+    } else {
+      console.log("User not found");
+    }
+  }
+}
+
+export async function upload_file(files) {
+  let assistantId = await getAssistantID();
+
+  // console.log(PUBLIC_OPENAI_API_KEY);
+  try {
+    const client = new OpenAI({
+      apiKey: PUBLIC_OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
+    const uploadResult = await client.files.create({
+      file: files,
+      purpose: "assistants",
+    });
+    // console.log(uploadResult);
+    let currentFiles = await client.beta.assistants.files.list(assistantId);
+    let file_ids = [];
+    for (var i = 0; i < currentFiles.data.length; i++) {
+      file_ids.push(currentFiles.data[i].id);
+    }
+    file_ids.push(uploadResult.id);
+    client.beta.assistants.update(assistantId, {
+      file_ids: file_ids,
+    });
+  } catch (E) {
+    console.log(E);
+  }
+}
 
 export async function file_uploader(supabase, openai_key, vector_store, files) {
   if (!Array.isArray(files)) {
@@ -68,28 +130,27 @@ async function filter_file(file, supabase, vector_store) {
     console.log(`💨 ${file.name} is empty.`);
     return false;
   } else {
-    const file_extension = `.${file.name.split(".").pop()}`;
-    console.log(file.name, file_extension);
-    if (file_extension in file_processors) {
-      const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-      let client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-      // const embeddings = new HuggingFaceInferenceEmbeddings({
-      //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-      // });
-      let embeddings = new OpenAIEmbeddings({ openAIApiKey });
-      let vector = new SupabaseVectorStore(embeddings, {
-        client,
-        tableName: "documents",
-      });
-
-      await file_processors[file_extension](vector, file);
-
-      console.log(`✅ ${file.name}`);
-      return true;
-    } else {
-      console.log(`❌ ${file.name} is not a valid file type.`);
-      return false;
-    }
+    //TODO implement new file upload system to an assistant
+    // const file_extension = `.${file.name.split(".").pop()}`;
+    // console.log(file.name, file_extension);
+    // if (file_extension in file_processors) {
+    //   const openAIApiKey = PUBLIC_OPENAI_API_KEY;
+    //   let client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+    //   // const embeddings = new HuggingFaceInferenceEmbeddings({
+    //   //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
+    //   // });
+    //   let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    //   let vector = new SupabaseVectorStore(embeddings, {
+    //     client,
+    //     tableName: "documents",
+    //   });
+    //   await file_processors[file_extension](vector, file);
+    //   console.log(`✅ ${file.name}`);
+    //   return true;
+    // } else {
+    //   console.log(`❌ ${file.name} is not a valid file type.`);
+    //   return false;
+    // }
   }
 }
 

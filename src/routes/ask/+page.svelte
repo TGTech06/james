@@ -16,6 +16,8 @@
     PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import { v4 as uuidv4 } from "uuid";
+  import { OpenAI } from "openai";
+  import { isEmptyObj } from "openai/core";
   // Initialize the Supabase client and other variables
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   let vector;
@@ -26,13 +28,15 @@
   let loading = false;
   let errorText = null;
   let responseText = "";
+  let client;
+  // let threadID;
 
   // Store to hold list of user chats
   const userChats = writable([]);
   // Store to hold selected chat messages
   const selectedChatMessages = writable([]);
   // Store to hold the currently selected chat ID
-  let selectedChatId = null;
+  let selectedThreadId = null;
 
   // async function createNewChat() {
   //   const userId = await getCurrentUserId();
@@ -62,53 +66,75 @@
   //   selectedChatId = newChatId;
   // }
   async function createNewChat() {
-    if (loading) return;
+    let thread = await client.beta.threads.create();
+    console.log("this is what a thread looks like");
+    console.log(thread.id);
     const userId = await getCurrentUserId();
-    if (selectedChatId !== null) {
-      // Check if the selected chat has messages
-      const { data: messages, error } = await supabaseClient
-        .from("chats")
-        .select("message")
-        .eq("chat_id", selectedChatId);
+    await supabaseClient.from("chats").upsert([
+      {
+        user_id: userId,
+        chat_id: thread.id,
+        message: "New chat created", // Your default or initial message
+        is_user_message: false, // Indicate that it's not a user message
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+    userChats.update((chats) => [...chats, { thread_id: thread.id }]);
+    // Set the newly created chat as the selected chat
+    selectedThreadId = thread.id;
+    selectedChatMessages.set([]);
+    // threadID = thread.id;
+    // if (loading) return;
 
-      if (error) {
-        errorText = error.message;
-        console.error("Error fetching chat messages:", error.message);
-        return;
-      }
+    // if (selectedChatId !== null) {
+    //   // Check if the selected chat has messages
+    //   const { data: messages, error } = await supabaseClient
+    //     .from("chats")
+    //     .select("message")
+    //     .eq("chat_id", selectedChatId);
 
-      // if (messages.length > 0) {
-      //   // If the selected chat has messages, prevent creating a new chat
-      //   return;
-      // }
-    }
+    //   if (error) {
+    //     errorText = error.message;
+    //     console.error("Error fetching chat messages:", error.message);
+    //     return;
+    //   }
 
-    // Create a new chat with a temporary chat_id (not saved to the database yet)
-    const newChatId = uuidv4();
+    //   // if (messages.length > 0) {
+    //   //   // If the selected chat has messages, prevent creating a new chat
+    //   //   return;
+    //   // }
+    // }
+
+    // // Create a new chat with a temporary chat_id (not saved to the database yet)
+    // const newChatId = uuidv4();
 
     // Add the new chat to the userChats store
-    userChats.update((chats) => [...chats, { chat_id: newChatId }]);
-    // Set the newly created chat as the selected chat
-    selectedChatId = newChatId;
-    selectedChatMessages.set([]);
   }
 
-  async function getFirstUserMessage(chatId) {
-    // Fetch the first user message from Supabase based on the chat ID
-    const { data: messages, error } = await supabaseClient
-      .from("chats")
-      .select("message")
-      .eq("chat_id", chatId)
-      .eq("is_user_message", true)
-      .order("timestamp", { ascending: true })
-      .limit(1);
-
-    if (error) {
-      errorText = error.message;
-      return ""; // Return an empty string if an error occurs
+  async function getFirstUserMessage(threadID) {
+    try {
+      // Get messages from the OpenAI thread
+      let response = await client.beta.threads.messages.list(threadID);
+      console.log("response", response);
+      // Find the first user message
+      for (const message of response.data.reverse()) {
+        if (
+          message.role === "user" &&
+          message.content &&
+          message.content.length > 0 &&
+          message.content[0].type === "text"
+        ) {
+          // Return the first user message
+          return message.content[0].text.value;
+        }
+      }
+      // Return an empty string if no user message is found
+      return "";
+    } catch (e) {
+      console.error("Error fetching first user message:", e);
+      // Handle error as needed
+      return "";
     }
-    // Check if any messages were found and return the first user message
-    return messages.length > 0 ? messages[0].message : "";
   }
 
   // Function to load user chats with the first user message
@@ -149,19 +175,70 @@
     }
   }
   // Function to load selected chat messages when a chat is clicked
-  async function loadChatMessages(chatId) {
-    selectedChatId = chatId; // Update the selected chat ID
-    // Fetch chat messages from Supabase based on the chat ID
-    const { data: messages, error } = await supabaseClient
-      .from("chats")
-      .select("message, is_user_message, timestamp") // Include 'timestamp' in the selection
-      .eq("chat_id", chatId)
-      .order("timestamp", { ascending: true });
-    if (error) {
-      console.error("Error fetching chat messages:", error.message);
-      errorText = error.message;
-    } else {
+  // async function loadChatMessages(chatId) {
+  //   selectedChatId = chatId; // Update the selected chat ID
+  //   // Fetch chat messages from Supabase based on the chat ID
+  //   const { data: messages, error } = await supabaseClient
+  //     .from("chats")
+  //     .select("message, is_user_message, timestamp") // Include 'timestamp' in the selection
+  //     .eq("chat_id", chatId)
+  //     .order("timestamp", { ascending: true });
+  //   if (error) {
+  //     console.error("Error fetching chat messages:", error.message);
+  //     errorText = error.message;
+  //   } else {
+  //     selectedChatMessages.set(messages);
+  //   }
+  // }
+  async function loadChatMessages(threadID) {
+    // console.log("threadID = ", threadID);
+    // selectedChatId = chatId; // Update the selected chat ID
+    // threadID = "thread_jIBWQaQk9MFLMwPJy2wEWlDj";
+    try {
+      // Get messages from the OpenAI thread
+      let response = await client.beta.threads.messages.list(threadID);
+      console.log("response", response);
+
+      // Display AI response messages on the screen
+      let messages = [];
+      for (const message of response.data) {
+        if (
+          message.content &&
+          message.content.length > 0 &&
+          message.content[0].type === "text"
+        ) {
+          let annotations = message.content[0].text.annotations;
+          console.log("annotations", annotations);
+          if (annotations !== undefined) {
+            //   console.log("file citation", annotations[0].file_citation);
+          }
+          let fileNames = [];
+          for (const annotation of annotations) {
+            if (annotation.file_citation !== undefined) {
+              let fileName = await retrieveFileName(
+                annotation.file_citation.file_id
+              );
+              fileNames.push(fileName);
+            }
+          }
+
+          // Append message to the messages array
+          messages.push({
+            message: message.content[0].text.value,
+            is_user_message: message.role === "user",
+            annotations: annotations,
+            file_names: fileNames,
+          });
+        }
+      }
+      // Reverse the order of messages
+      messages.reverse();
+
+      // Update the selectedChatMessages store
       selectedChatMessages.set(messages);
+    } catch (e) {
+      console.error("Error fetching chat messages:", e);
+      // Handle error as needed
     }
   }
 
@@ -192,21 +269,21 @@
   async function sendMessage(userId) {
     // Save the user message to Supabase
     // Make sure to replace 'userId' with the actual user ID or fetch it from your authentication system
-    await supabaseClient.from("chats").insert([
-      {
-        user_id: userId,
-        chat_id: selectedChatId,
-        message: question,
-        is_user_message: true,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-    // Clear the question input field
-    if ($selectedChatMessages.length === 0) {
-      loadUserChats();
-    }
-    // Trigger loading of the updated chat messages
-    loadChatMessages(selectedChatId);
+    // await supabaseClient.from("chats").insert([
+    //   {
+    //     user_id: userId,
+    //     chat_id: selectedChatId,
+    //     message: question,
+    //     is_user_message: true,
+    //     timestamp: new Date().toISOString(),
+    //   },
+    // ]);
+    // // Clear the question input field
+    // if ($selectedChatMessages.length === 0) {
+    //   loadUserChats();
+    // }
+    // // Trigger loading of the updated chat messages
+    // loadChatMessages(selectedChatId);
   }
 
   // Function to load AI response for a chat
@@ -214,53 +291,166 @@
     if (loading) return; // Prevent sending the message if a previous message is still being sent
     loading = true;
     const userId = await getCurrentUserId(); // Fetch the authenticated user's ID from Supabase Auth
-    await sendMessage(userId); // Send the user message to the chat
+    // Send the user message to the chat
     // Send the user message to the database
     // Get the AI response and save it to the database
     await getAIResponse(userId);
     loading = false;
+    question = "";
   }
 
   // Function to save the AI response to the database
-  async function saveAIResponse(aiResponse, userId) {
-    // Save the AI response to Supabase
-    await supabaseClient.from("chats").insert([
-      {
-        user_id: userId,
-        chat_id: selectedChatId,
-        message: aiResponse,
-        is_user_message: false,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-    // Trigger loading of the updated chat messages (including the AI response)
-    loadChatMessages(selectedChatId);
+  // async function saveAIResponse(aiResponse, userId) {
+  //   // Save the AI response to Supabase
+  //   await supabaseClient.from("chats").insert([
+  //     {
+  //       user_id: userId,
+  //       chat_id: selectedThreadId,
+  //       message: aiResponse,
+  //       is_user_message: false,
+  //       timestamp: new Date().toISOString(),
+  //     },
+  //   ]);
+  //   // Trigger loading of the updated chat messages (including the AI response)
+  //   loadChatMessages(selectedThreadId);
+  // }
+
+  async function getAssistantID(userID) {
+    const { data: userData, error: userError } = await supabaseClient
+      .from("user_data")
+      .select("assistant_id")
+      .eq("user_id", userID)
+      .single();
+
+    if (userError) {
+      console.error("Error fetching user data:", userError);
+    } else {
+      if (userData) {
+        const assistantId = userData.assistant_id;
+        console.log("Assistant ID:", assistantId);
+        return assistantId;
+      } else {
+        console.log("User not found");
+      }
+    }
   }
 
-  // Updated function to get the AI response and save it to the database
   async function getAIResponse(userId) {
-    const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    // embeddings = new HuggingFaceInferenceEmbeddings({
-    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    // });
-    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    vector = new SupabaseVectorStore(embeddings, {
-      client,
-      tableName: "documents",
-    });
+    // threadID = "thread_jIBWQaQk9MFLMwPJy2wEWlDj";
+    // console.log("threadID", selectedThreadId);
 
-    let response = await chatWithDoc(
-      PUBLIC_HUGGINGFACE_API_KEY,
-      vector,
-      model,
-      temperature,
-      question
-    );
+    try {
+      let client = new OpenAI({
+        apiKey: PUBLIC_OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
 
-    // Save the AI response to the database
-    await saveAIResponse(response, userId);
-    question = "";
+      // Send user message to the OpenAI thread
+      let userMessage = await client.beta.threads.messages.create(
+        selectedThreadId,
+        {
+          role: "user",
+          content: question,
+        }
+      );
+      console.log("user message", userMessage);
+
+      // Get Assistant ID
+      let assistantId = await getAssistantID(userId);
+
+      // Run the OpenAI thread
+
+      let run = await client.beta.threads.runs.create(
+        selectedThreadId, // threadId
+        {
+          assistant_id: assistantId,
+          instructions:
+            "Please address the user as Jane Doe. The user has a premium account.",
+        }
+        // {
+        //   maxTokens: 10,
+        // }
+      );
+      // console.log("run", run);
+      // console.log("run status", run.status);
+      // Check the status of the run instead of using a fixed timeout
+      while (
+        run.status === "in_progress" ||
+        run.status === "queued" ||
+        run.status === "cancelling"
+      ) {
+        // Wait for a short interval before checking again
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        run = await client.beta.threads.runs.retrieve(selectedThreadId, run.id);
+        console.log("new run status", run.status);
+      }
+
+      if (run.status === "completed") {
+        await loadChatMessages(selectedThreadId);
+        return;
+      } else {
+        errorText = "Run failed";
+        console.error("Run failed:");
+      }
+
+      // Get AI response from the OpenAI thread
+      // let response = await client.beta.threads.messages.list(threadID);
+      // console.log("response", response);
+      // console.log("response", response.data[0].content[0].text.value);
+      // // Loop through response.data
+      // response.data.forEach((message, index) => {
+      //   // Check if the message is from a user or assistant
+      //   const messageType =
+      //     message.role === "user" ? "User Message" : "Assistant Message";
+
+      //   // Output the content and message type
+      //   console.log(
+      //     `Message ${index + 1}: ${
+      //       message.content[0].text.value
+      //     } (${messageType})`
+      //   );
+      // });
+      // response.data.forEach((message) => {
+      //   if (
+      //     message.role === "assistant" &&
+      //     message.content &&
+      //     message.content.length > 0 &&
+      //     message.content[0].type === "text"
+      //   ) {
+      //     // Append assistant's text message to the chat messages
+      //     selectedChatMessages.update((messages) => [
+      //       ...messages,
+      //       { message: message.content[0].text.value, is_user_message: false },
+      //     ]);
+      //   }
+      // });
+      //code that didnt work anyway
+      // await sendMessage(userId);
+      // let aiResponse = response.data[1].content;
+      // console.log("aiResponse", aiResponse);
+      // Display AI response messages on the screen
+      // response.data.forEach((message) => {
+      //   if (message.role === "assistant") {
+      //     if (
+      //       message.content &&
+      //       message.content.length > 0 &&
+      //       message.content[0].type === "text"
+      //     ) {
+      //       // Append assistant's text message to the chat messages
+      //       selectedChatMessages.update((messages) => [
+      //         ...messages,
+      //         {
+      //           message: message.content[0].text.value,
+      //           is_user_message: false,
+      //         },
+      //       ]);
+      //     }
+      //   }
+      // });
+    } catch (e) {
+      console.error("Error getting AI response:", e);
+      // Handle error as needed
+    }
   }
 
   async function getCurrentUserId() {
@@ -268,14 +458,18 @@
     return user ? user.data.user.id : null; // Return the user ID or null if the user is not authenticated
   }
 
-  function selectChat(chatId) {
-    loadChatMessages(chatId);
+  async function selectChat(chatId) {
+    selectedThreadId = chatId;
+    await loadChatMessages(selectedThreadId);
   }
 
   async function deleteChat(chatId) {
-    if (loading) return; // Prevent deleting the chat if a previous deletion is still in progress
+    if (loading) {
+      console.log("It's loading");
+      return;
+    } // Prevent deleting the chat if a previous deletion is still in progress
     // Check if the deleted chat is the current chat
-    const isCurrentChat = selectedChatId === chatId;
+    const isCurrentChat = selectedThreadId === chatId;
 
     // Delete the chat from the database
     const { data, error } = await supabaseClient
@@ -306,13 +500,33 @@
 
       // Set the selectedChatId to the most recent chat ID only if the deleted chat was the current chat
       if (isCurrentChat) {
-        selectedChatId = mostRecentChatId;
+        selectedThreadId = mostRecentChatId;
       }
+    }
+  }
+
+  async function retrieveFileName(fileId) {
+    try {
+      // Use the OpenAI API client to retrieve file details
+      const fileDetails = await client.files.retrieve(fileId);
+      console.log("file details", fileDetails);
+      // Extract the file name from the file details
+      const fileName = fileDetails.filename;
+      return fileName;
+    } catch (error) {
+      console.error("Error retrieving file details:", error);
+      // Handle error as needed
+      return "Error retrieving file";
     }
   }
 
   onMount(async () => {
     // Fetch and load user chats on component mount
+    client = new OpenAI({
+      apiKey: PUBLIC_OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+
     await loadUserChats();
     await createNewChat();
   });
@@ -323,22 +537,6 @@
   function toggleSidebar() {
     isChatHistorySidebarOpen = !isChatHistorySidebarOpen;
   }
-
-  // Responsive layout logic for mobile view
-  // const mediaQuery = window.matchMedia("(max-width: 768px)");
-
-  // function handleMobileViewChange(event) {
-  //   isMobile = event.matches;
-  // }
-
-  // onMount(() => {
-  //   isMobile = mediaQuery.matches;
-  //   mediaQuery.addListener(handleMobileViewChange);
-  // });
-
-  // onDestroy(() => {
-  //   mediaQuery.removeListener(handleMobileViewChange);
-  // });
 </script>
 
 <link
@@ -355,7 +553,7 @@
         <div class="absolute left-0 top-0 bg-gray-800 rounded-lg p-4 sidebar">
           <div class="overflow-y-auto max-h-96">
             <div class="w-full md:w-3/4 mt-14">
-              <div class="mb-4">
+              <!-- <div class="mb-4">
                 <label class="block text-lg font-semibold" for="model"
                   >Select Model</label
                 >
@@ -375,7 +573,7 @@
                     >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
                   >
                 </select>
-              </div>
+              </div> -->
               <div class="mb-4">
                 <label class="block text-lg font-semibold" for="temperature"
                   >Temperature</label
@@ -406,7 +604,8 @@
             {#each $userChats as chat}
               <div
                 class="flex items-center justify-between mb-2"
-                on:click={() => selectChat(chat.chat_id.slice(0, 36))}
+                on:click={async () =>
+                  await selectChat(chat.chat_id.slice(0, 36))}
               >
                 {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
                   <span>{chat.firstUserMessage}</span>
@@ -444,7 +643,7 @@
       >
         <div class="w-full md:w-3/4">
           <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
-          {#if selectedChatId === null}
+          {#if selectedThreadId === null}
             <p class="text-gray-500">
               Select a chat from the history to view messages.
             </p>
@@ -457,6 +656,22 @@
                 >
                   {message.message}
                 </div>
+                {#if message.annotations !== undefined}
+                  <div class="file-citations">
+                    {#each message.annotations as annotation}
+                      <!-- {#if annotation.file_citation} -->
+                      <p class="file-citation">
+                        <span class="annotation-index">{annotation.text}</span>
+                        Lines {annotation.start_index} to {annotation.end_index}
+                        "{annotation.file_citation.quote.substring(0, 50)}..."
+                        from {message.file_names[
+                          message.annotations.indexOf(annotation)
+                        ]}
+                      </p>
+                      <!-- {/if} -->
+                    {/each}
+                  </div>
+                {/if}
               {/each}
             </div>
           {/if}
@@ -469,7 +684,7 @@
               bind:value={question}
               id="question"
               class="textarea textarea-primary"
-              disabled={selectedChatId === null || loading}
+              disabled={selectedThreadId === null || loading}
             />
           </div>
 
@@ -477,7 +692,7 @@
           <button
             class="btn btn-primary mb-4"
             on:click={() => sendUserMessageAndAIResponse()}
-            disabled={selectedChatId === null}
+            disabled={selectedThreadId === null}
           >
             Ask the AI and Send Message
           </button>
@@ -496,6 +711,15 @@
 </AuthCheck>
 
 <style>
+  .file-citations {
+    /* color: blue; Change the color to your preference */
+    margin-top: 8px;
+    font-size: small;
+  }
+
+  .annotation-index {
+    font-weight: bold;
+  }
   .sidebar.open {
     display: block;
   }

@@ -14,7 +14,8 @@
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
   import { get } from "svelte/store";
-
+  import { goto } from "$app/navigation";
+  import { OpenAI } from "openai";
   // Initialize the Supabase client and other variables
   let supabase;
   let vector;
@@ -22,11 +23,16 @@
   let documents = [];
   let userID = "";
   let userIsPremium = false;
+  let openAIClient;
   // Bind the functions to the corresponding elements in the forget.html file, if needed
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
     let embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    openAIClient = new OpenAI({
+      apiKey: PUBLIC_OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
     vector = new SupabaseVectorStore(
       embeddings,
       // new HuggingFaceInferenceEmbeddings({
@@ -68,11 +74,26 @@
     }
   }
 
+  async function createNewAssistant() {
+    let assistant = openAIClient.beta.assistants.create({
+      name: "James",
+      instructions:
+        'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. To ensure the students do not fail their exams you must not make up answers but always end your response with a new and original joke to lighten the mood about exams.',
+      model: "gpt-3.5-turbo-1106",
+      tools: [{ type: "retrieval" }],
+      // file_ids: [uploadResult.id],
+    });
+    let assistantID = (await assistant).id;
+    console.log(assistantID);
+    return assistantID;
+  }
+
   async function getUserID() {
     try {
       let user = await supabase.auth.getUser();
       userID = user.data.user.id;
     } catch (e) {
+      userID = "";
       console.log(e);
     }
   }
@@ -102,6 +123,7 @@
 
   async function createUserDataIfNotExists(userId) {
     try {
+      console.log("checking user");
       // Check if user data already exists
       const { data, error } = await supabase
         .from("user_data")
@@ -109,7 +131,9 @@
         .eq("user_id", userId)
         .single();
 
-      if (!data) {
+      if (!data && userID != null && userID != "") {
+        console.log("creating user");
+        let assistantID = await createNewAssistant();
         // User data doesn't exist; create a new row
         const { data: insertedData, error: insertError } = await supabase
           .from("user_data")
@@ -119,6 +143,7 @@
               total_data_size: 0,
               is_premium: false,
               stripe_customer_id: userId,
+              assistant_id: assistantID,
             },
           ]);
 
@@ -140,6 +165,15 @@
         <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
           I'm proud of you, you made the right choice!
         </h1>
+        <button
+          class="btn btn-primary w-full py-3 rounded-lg"
+          on:click={() =>
+            goto("https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288")}
+          >Manage Subscription</button
+        >
+        <href>
+          https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288
+        </href>
       {/if}
       {#if !userIsPremium}
         <script async src="https://js.stripe.com/v3/buy-button.js">
@@ -162,6 +196,12 @@
           </button>
         </div>
 
+        <!-- <button
+          class="btn btn-primary btn-md flex items-center"
+          on:click={() => createNewAssistant()}
+        >
+          <i class="fas fa-sign-out-alt" />
+        </button> -->
         <div class="space-y-4">
           {#each documents as document}
             <div

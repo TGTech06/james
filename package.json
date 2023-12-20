@@ -32,9 +32,10 @@
   "dependencies": {
     "@huggingface/inference": "^1.8.0",
     "cheerio": "1.0.0-rc.12",
+    "esbuild": "^0.19.10",
     "huggingface": "^1.4.0",
     "langchain": "^0.0.110",
-    "openai": "^3.3.0",
+    "openai": "^4.19.0",
     "pdfjs-dist": "^2.11.338",
     "re": "^0.1.4",
     "requests": "^0.3.0",

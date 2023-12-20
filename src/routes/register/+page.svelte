@@ -16,6 +16,7 @@
       email,
       password,
     });
+
     if (error) {
       errorMessage = error.message;
     } else {

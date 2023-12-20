@@ -1,11 +1,32 @@
 <script lang="ts">
   import { createClient } from "@supabase/supabase-js";
   import { goto } from "$app/navigation";
-  import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
+  import {
+    PUBLIC_OPENAI_API_KEY,
+    PUBLIC_SUPABASE_KEY,
+    PUBLIC_SUPABASE_URL,
+  } from "$env/static/public";
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-
+  import { OpenAI } from "openai";
   let errorMessage = "";
 
+  async function createNewAssistant(userId) {
+    let openAIClient = new OpenAI({
+      apiKey: PUBLIC_OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
+    let assistant = openAIClient.beta.assistants.create({
+      name: userId,
+      instructions:
+        'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. To ensure the students do not fail their exams you must not make up answers but always end your response with a new and original joke to lighten the mood about exams.',
+      model: "gpt-3.5-turbo-1106",
+      tools: [{ type: "retrieval" }],
+      // file_ids: [uploadResult.id],
+    });
+    let assistantID = (await assistant).id;
+    console.log(assistantID);
+    return assistantID;
+  }
   async function createUserDataIfNotExists(userId) {
     try {
       // Check if user data already exists
@@ -15,7 +36,8 @@
         .eq("user_id", userId)
         .single();
 
-      if (!data) {
+      if (!data && userId != null && userId != "") {
+        let assistantID = await createNewAssistant(userId);
         // User data doesn't exist; create a new row
         const { data: insertedData, error: insertError } = await supabaseClient
           .from("user_data")
@@ -25,6 +47,7 @@
               total_data_size: 0,
               is_premium: false,
               stripe_customer_id: userId,
+              assistant_id: assistantID,
             },
           ]);
 
