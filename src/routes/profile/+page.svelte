@@ -24,6 +24,7 @@
   let userID = "";
   let userIsPremium = false;
   let openAIClient;
+  let assistantId;
   // Bind the functions to the corresponding elements in the forget.html file, if needed
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
@@ -47,21 +48,66 @@
     await getUserID();
     await getUserData();
     await createUserDataIfNotExists(userID);
-    documents = await getDocuments(supabase);
+    assistantId = await getAssistantID(userID);
+    console.log(assistantId);
+    documents = await getDocuments(openAIClient, assistantId);
   });
 
-  async function handleDeleteDocument(documentName) {
-    // Extract the filename from the full URL
-    const urlParts = documentName.split("/");
-    const filename = urlParts[urlParts.length - 1];
+  async function getAssistantID(userID) {
+    const { data: userData, error: userError } = await supabase
+      .from("user_data")
+      .select("assistant_id")
+      .eq("user_id", userID)
+      .single();
 
-    const isDeleted = await deleteDocument(supabase, filename);
-    if (isDeleted) {
-      // Document deleted successfully
-      documents = documents.filter((doc) => doc.name !== filename);
+    if (userError) {
+      console.error("Error fetching user data:", userError);
     } else {
-      // Document not found or not deleted
-      console.error(`Error deleting ${filename}`);
+      if (userData) {
+        const assistantId = userData.assistant_id;
+        console.log("Assistant ID:", assistantId);
+        return assistantId;
+      } else {
+        console.log("User not found");
+      }
+    }
+  }
+
+  // Function to format timestamp to date
+  function formatDate(timestamp) {
+    const createdDate = new Date(timestamp * 1000);
+    return `${createdDate.getDate()}/${
+      createdDate.getMonth() + 1
+    }/${createdDate.getFullYear()} ${createdDate.getHours()}:${createdDate.getMinutes()}`;
+  }
+
+  export async function handleDeleteDocument(assistantId, fileId) {
+    try {
+      // Use the OpenAI API client to delete the assistant file
+      // const deleteResponse = await openAIClient.beta.assistants.files.delete(
+      //   assistantId,
+      //   fileId
+      // );
+
+      const deletedFromAssistants =
+        await openAIClient.beta.assistants.files.del(assistantId, fileId);
+      const deletedFile = await openAIClient.files.del(fileId);
+      console.log(deletedFile);
+
+      if (
+        deletedFile.deleted === true &&
+        deletedFromAssistants.deleted === true
+      ) {
+        console.log(`Successfully deleted file with ID ${fileId}`);
+        documents = await getDocuments(openAIClient, assistantId);
+        // Add any additional UI logic or state updates as needed
+      } else {
+        console.error(`Error deleting file with ID ${fileId}`);
+        // Handle error as needed
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      // Handle error as needed
     }
   }
 
@@ -96,6 +142,20 @@
       userID = "";
       console.log(e);
     }
+  }
+
+  function formatBytes(bytes: string | number) {
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+
+    const bytesNumber = typeof bytes === "string" ? parseInt(bytes, 10) : bytes;
+
+    if (isNaN(bytesNumber)) return "Invalid Size";
+
+    if (bytesNumber === 0) return "0 Byte";
+
+    const i = Math.floor(Math.log(bytesNumber) / Math.log(1024));
+
+    return Math.round(bytesNumber / Math.pow(1024, i)) + " " + sizes[i];
   }
 
   async function getUserData() {
@@ -209,12 +269,17 @@
             >
               <div>
                 <p class="text-lg">
-                  <strong>{document.name}</strong> ({document.size} bytes)
+                  <strong class="text-l">{document.filename}</strong>
+                  <br />
+                  <span class="text-sm">{formatBytes(document.bytes)}</span>
+                  <span class="text-sm"
+                    >Created: {formatDate(document.created_at)}</span
+                  >
                 </p>
               </div>
               <button
                 class="btn btn-error"
-                on:click={() => handleDeleteDocument(document.name)}
+                on:click={() => handleDeleteDocument(assistantId, document.id)}
               >
                 <i class="fas fa-trash white-icon" />
               </button>

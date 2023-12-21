@@ -83,32 +83,6 @@
     // Set the newly created chat as the selected chat
     selectedThreadId = thread.id;
     selectedChatMessages.set([]);
-    // threadID = thread.id;
-    // if (loading) return;
-
-    // if (selectedChatId !== null) {
-    //   // Check if the selected chat has messages
-    //   const { data: messages, error } = await supabaseClient
-    //     .from("chats")
-    //     .select("message")
-    //     .eq("chat_id", selectedChatId);
-
-    //   if (error) {
-    //     errorText = error.message;
-    //     console.error("Error fetching chat messages:", error.message);
-    //     return;
-    //   }
-
-    //   // if (messages.length > 0) {
-    //   //   // If the selected chat has messages, prevent creating a new chat
-    //   //   return;
-    //   // }
-    // }
-
-    // // Create a new chat with a temporary chat_id (not saved to the database yet)
-    // const newChatId = uuidv4();
-
-    // Add the new chat to the userChats store
   }
 
   async function getFirstUserMessage(threadID) {
@@ -174,22 +148,7 @@
       userChats.set(processedChats);
     }
   }
-  // Function to load selected chat messages when a chat is clicked
-  // async function loadChatMessages(chatId) {
-  //   selectedChatId = chatId; // Update the selected chat ID
-  //   // Fetch chat messages from Supabase based on the chat ID
-  //   const { data: messages, error } = await supabaseClient
-  //     .from("chats")
-  //     .select("message, is_user_message, timestamp") // Include 'timestamp' in the selection
-  //     .eq("chat_id", chatId)
-  //     .order("timestamp", { ascending: true });
-  //   if (error) {
-  //     console.error("Error fetching chat messages:", error.message);
-  //     errorText = error.message;
-  //   } else {
-  //     selectedChatMessages.set(messages);
-  //   }
-  // }
+
   async function loadChatMessages(threadID) {
     // console.log("threadID = ", threadID);
     // selectedChatId = chatId; // Update the selected chat ID
@@ -242,78 +201,15 @@
     }
   }
 
-  // async function sendMessage(userId) {
-  //   if (selectedChatId === null) {
-  //     // If there is no selected chat, create a new one first
-  //     await createNewChat();
-  //   }
-
-  //   // Save the user message to Supabase
-  //   await supabaseClient.from("chats").insert([
-  //     {
-  //       user_id: userId,
-  //       chat_id: selectedChatId,
-  //       message: question,
-  //       is_user_message: true,
-  //       timestamp: new Date().toISOString(),
-  //     },
-  //   ]);
-
-  //   // Clear the question input field
-
-  //   // Trigger loading of the updated chat messages
-  //   loadChatMessages(selectedChatId);
-  //   await getAIResponse(userId);
-  // }
-  // Function to send a new message in the chat
-  async function sendMessage(userId) {
-    // Save the user message to Supabase
-    // Make sure to replace 'userId' with the actual user ID or fetch it from your authentication system
-    // await supabaseClient.from("chats").insert([
-    //   {
-    //     user_id: userId,
-    //     chat_id: selectedChatId,
-    //     message: question,
-    //     is_user_message: true,
-    //     timestamp: new Date().toISOString(),
-    //   },
-    // ]);
-    // // Clear the question input field
-    // if ($selectedChatMessages.length === 0) {
-    //   loadUserChats();
-    // }
-    // // Trigger loading of the updated chat messages
-    // loadChatMessages(selectedChatId);
-  }
-
   // Function to load AI response for a chat
   async function sendUserMessageAndAIResponse() {
     if (loading) return; // Prevent sending the message if a previous message is still being sent
     loading = true;
-    const userId = await getCurrentUserId(); // Fetch the authenticated user's ID from Supabase Auth
-    // Send the user message to the chat
-    // Send the user message to the database
-    // Get the AI response and save it to the database
+    const userId = await getCurrentUserId();
     await getAIResponse(userId);
     loading = false;
     question = "";
   }
-
-  // Function to save the AI response to the database
-  // async function saveAIResponse(aiResponse, userId) {
-  //   // Save the AI response to Supabase
-  //   await supabaseClient.from("chats").insert([
-  //     {
-  //       user_id: userId,
-  //       chat_id: selectedThreadId,
-  //       message: aiResponse,
-  //       is_user_message: false,
-  //       timestamp: new Date().toISOString(),
-  //     },
-  //   ]);
-  //   // Trigger loading of the updated chat messages (including the AI response)
-  //   loadChatMessages(selectedThreadId);
-  // }
 
   async function getAssistantID(userID) {
     const { data: userData, error: userError } = await supabaseClient
@@ -336,9 +232,6 @@
   }
 
   async function getAIResponse(userId) {
-    // threadID = "thread_jIBWQaQk9MFLMwPJy2wEWlDj";
-    // console.log("threadID", selectedThreadId);
-
     try {
       let client = new OpenAI({
         apiKey: PUBLIC_OPENAI_API_KEY,
@@ -371,8 +264,7 @@
         //   maxTokens: 10,
         // }
       );
-      // console.log("run", run);
-      // console.log("run status", run.status);
+
       // Check the status of the run instead of using a fixed timeout
       while (
         run.status === "in_progress" ||
@@ -392,61 +284,6 @@
         errorText = "Run failed";
         console.error("Run failed:");
       }
-
-      // Get AI response from the OpenAI thread
-      // let response = await client.beta.threads.messages.list(threadID);
-      // console.log("response", response);
-      // console.log("response", response.data[0].content[0].text.value);
-      // // Loop through response.data
-      // response.data.forEach((message, index) => {
-      //   // Check if the message is from a user or assistant
-      //   const messageType =
-      //     message.role === "user" ? "User Message" : "Assistant Message";
-
-      //   // Output the content and message type
-      //   console.log(
-      //     `Message ${index + 1}: ${
-      //       message.content[0].text.value
-      //     } (${messageType})`
-      //   );
-      // });
-      // response.data.forEach((message) => {
-      //   if (
-      //     message.role === "assistant" &&
-      //     message.content &&
-      //     message.content.length > 0 &&
-      //     message.content[0].type === "text"
-      //   ) {
-      //     // Append assistant's text message to the chat messages
-      //     selectedChatMessages.update((messages) => [
-      //       ...messages,
-      //       { message: message.content[0].text.value, is_user_message: false },
-      //     ]);
-      //   }
-      // });
-      //code that didnt work anyway
-      // await sendMessage(userId);
-      // let aiResponse = response.data[1].content;
-      // console.log("aiResponse", aiResponse);
-      // Display AI response messages on the screen
-      // response.data.forEach((message) => {
-      //   if (message.role === "assistant") {
-      //     if (
-      //       message.content &&
-      //       message.content.length > 0 &&
-      //       message.content[0].type === "text"
-      //     ) {
-      //       // Append assistant's text message to the chat messages
-      //       selectedChatMessages.update((messages) => [
-      //         ...messages,
-      //         {
-      //           message: message.content[0].text.value,
-      //           is_user_message: false,
-      //         },
-      //       ]);
-      //     }
-      //   }
-      // });
     } catch (e) {
       console.error("Error getting AI response:", e);
       // Handle error as needed
