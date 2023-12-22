@@ -1,6 +1,6 @@
 <script lang="ts">
   // Import necessary functions from your existing script
-  import { file_uploader, upload_file, url_uploader } from "$lib/files.js";
+  import { upload_file, url_uploader } from "$lib/files.js";
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
   import { createClient } from "@supabase/supabase-js";
   import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
@@ -95,7 +95,7 @@
 
   async function handleUrlUpload() {
     // try {
-    await url_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, url);
+    await url_uploader(url);
     error = "";
     // } catch (err) {
     //   error = err.message;
