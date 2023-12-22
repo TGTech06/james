@@ -1,12 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { createClient } from "@supabase/supabase-js";
-  import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-  import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
   import {
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
-    PUBLIC_HUGGINGFACE_API_KEY,
     PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import { OpenAIEmbeddings } from "langchain/embeddings/openai";
@@ -18,14 +15,14 @@
   import { OpenAI } from "openai";
   // Initialize the Supabase client and other variables
   let supabase;
-  let vector;
-  // Reactive statement to handle documents list
   let documents = [];
   let userID = "";
   let userIsPremium = false;
   let openAIClient;
   let assistantId;
-  // Bind the functions to the corresponding elements in the forget.html file, if needed
+  let successMessage = "";
+  let deleting = false;
+  let errorMessage = "";
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
@@ -34,22 +31,10 @@
       apiKey: PUBLIC_OPENAI_API_KEY,
       dangerouslyAllowBrowser: true,
     });
-    vector = new SupabaseVectorStore(
-      embeddings,
-      // new HuggingFaceInferenceEmbeddings({
-      //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-      // }),
-      {
-        client: supabase,
-        tableName: "documents",
-      }
-    );
-    //userID = supabase.auth.getUser().id;
     await getUserID();
     await getUserData();
     await createUserDataIfNotExists(userID);
     assistantId = await getAssistantID(userID);
-    console.log(assistantId);
     documents = await getDocuments(openAIClient, assistantId);
   });
 
@@ -65,7 +50,6 @@
     } else {
       if (userData) {
         const assistantId = userData.assistant_id;
-        console.log("Assistant ID:", assistantId);
         return assistantId;
       } else {
         console.log("User not found");
@@ -81,36 +65,6 @@
     }/${createdDate.getFullYear()} ${createdDate.getHours()}:${createdDate.getMinutes()}`;
   }
 
-  export async function handleDeleteDocument(assistantId, fileId) {
-    try {
-      // Use the OpenAI API client to delete the assistant file
-      // const deleteResponse = await openAIClient.beta.assistants.files.delete(
-      //   assistantId,
-      //   fileId
-      // );
-
-      const deletedFromAssistants =
-        await openAIClient.beta.assistants.files.del(assistantId, fileId);
-      const deletedFile = await openAIClient.files.del(fileId);
-      console.log(deletedFile);
-
-      if (
-        deletedFile.deleted === true &&
-        deletedFromAssistants.deleted === true
-      ) {
-        console.log(`Successfully deleted file with ID ${fileId}`);
-        documents = await getDocuments(openAIClient, assistantId);
-        // Add any additional UI logic or state updates as needed
-      } else {
-        console.error(`Error deleting file with ID ${fileId}`);
-        // Handle error as needed
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      // Handle error as needed
-    }
-  }
-
   async function signOutUser() {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -124,13 +78,11 @@
     let assistant = openAIClient.beta.assistants.create({
       name: "James",
       instructions:
-        'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. To ensure the students do not fail their exams you must not make up answers but always end your response with a new and original joke to lighten the mood about exams.',
+        'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. Always cite your sources.',
       model: "gpt-3.5-turbo-1106",
       tools: [{ type: "retrieval" }],
-      // file_ids: [uploadResult.id],
     });
     let assistantID = (await assistant).id;
-    console.log(assistantID);
     return assistantID;
   }
 
@@ -151,7 +103,7 @@
 
     if (isNaN(bytesNumber)) return "Invalid Size";
 
-    if (bytesNumber === 0) return "0 Byte";
+    if (bytesNumber === 0) return "0 Bytes";
 
     const i = Math.floor(Math.log(bytesNumber) / Math.log(1024));
 
@@ -166,12 +118,9 @@
         .select("is_premium")
         .eq("user_id", userID)
         .single();
-
       if (error) {
-        // console.error("Error fetching user data:", error);
         return;
       }
-
       if (data) {
         // Check if the user is premium based on the retrieved data
         userIsPremium = data.is_premium === true;
@@ -183,7 +132,6 @@
 
   async function createUserDataIfNotExists(userId) {
     try {
-      console.log("checking user");
       // Check if user data already exists
       const { data, error } = await supabase
         .from("user_data")
@@ -192,7 +140,6 @@
         .single();
 
       if (!data && userID != null && userID != "") {
-        console.log("creating user");
         let assistantID = await createNewAssistant();
         // User data doesn't exist; create a new row
         const { data: insertedData, error: insertError } = await supabase
@@ -206,10 +153,6 @@
               assistant_id: assistantID,
             },
           ]);
-
-        // if (insertError) {
-        //   console.error("Error creating user data:", insertError);
-        // }
       }
     } catch (e) {
       console.error("Error occurred while creating user data:", e);
@@ -244,7 +187,17 @@
           publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
         />
       {/if}
-
+      <div class="mt-6">
+        {#if errorMessage}
+          <div class="text-red-500 mb-4">{errorMessage}</div>
+        {/if}
+        {#if successMessage}
+          <div class="text-green-500 mb-4">{successMessage}</div>
+        {/if}
+        {#if deleting}
+          <div class="text-grey-500 mb-4">Deleting...</div>
+        {/if}
+      </div>
       <div class="p-8">
         <div class="flex items-center justify-between">
           <h1 class="text-4xl font-bold mb-8">Your James</h1>
@@ -256,12 +209,6 @@
           </button>
         </div>
 
-        <!-- <button
-          class="btn btn-primary btn-md flex items-center"
-          on:click={() => createNewAssistant()}
-        >
-          <i class="fas fa-sign-out-alt" />
-        </button> -->
         <div class="space-y-4">
           {#each documents as document}
             <div
@@ -279,7 +226,26 @@
               </div>
               <button
                 class="btn btn-error"
-                on:click={() => handleDeleteDocument(assistantId, document.id)}
+                on:click={async () => {
+                  if (deleting) return;
+                  deleting = true;
+                  successMessage = "";
+                  errorMessage = "";
+                  let filename = document.filename;
+                  let outcome = await deleteDocument(
+                    openAIClient,
+                    assistantId,
+                    document.id
+                  );
+                  if (outcome === "success") {
+                    documents = await getDocuments(openAIClient, assistantId);
+                    successMessage =
+                      "Successfully deleted " + filename + " from your James";
+                  } else {
+                    errorMessage = outcome;
+                  }
+                  deleting = false;
+                }}
               >
                 <i class="fas fa-trash white-icon" />
               </button>
@@ -291,26 +257,9 @@
   </div>
 </AuthCheck>
 
-<!-- Your forget page content -->
-<!-- ... -->
-
-<!-- Add navigation buttons to move between pages -->
-<!-- ... -->
-
 <style>
   .btn-md {
     padding: 12px 24px; /* Adjust the padding to make the button larger */
     font-size: 16px; /* Adjust the font size to make the icon larger */
-  }
-  nav {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  nav a {
-    padding: 8px 12px;
-  }
-
-  nav a:hover {
-    color: #d1d5db; /* A slightly muted color on hover */
   }
 </style>

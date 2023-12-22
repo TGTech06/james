@@ -1,24 +1,17 @@
 <script lang="ts">
   // Import necessary functions from your existing script
-  import { chatWithDoc } from "$lib/question.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
   import { onMount, onDestroy } from "svelte";
-  import { GoTrueAdminApi, createClient } from "@supabase/supabase-js";
-  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-  import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
+  import { createClient } from "@supabase/supabase-js";
   import { writable } from "svelte/store";
-  import { HuggingFaceInferenceEmbeddings } from "langchain/embeddings/hf";
   import {
     PUBLIC_SUPABASE_KEY,
     PUBLIC_SUPABASE_URL,
-    PUBLIC_HUGGINGFACE_API_KEY,
     PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
-  import { v4 as uuidv4 } from "uuid";
   import { OpenAI } from "openai";
-  import { isEmptyObj } from "openai/core";
-  // Initialize the Supabase client and other variables
+
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   let vector;
   let embeddings;
@@ -27,9 +20,7 @@
   let question = "";
   let loading = false;
   let errorText = null;
-  let responseText = "";
   let client;
-  // let threadID;
 
   // Store to hold list of user chats
   const userChats = writable([]);
@@ -38,58 +29,39 @@
   // Store to hold the currently selected chat ID
   let selectedThreadId = null;
 
-  // async function createNewChat() {
-  //   const userId = await getCurrentUserId();
-  //   // if (selectedChatId !== null) {
-  //   // Check if the selected chat has messages
-  //   const { data: messages, error } = await supabaseClient
-  //     .from("chats")
-  //     .select("message")
-  //     .eq("chat_id", selectedChatId);
-
-  //   if (error) {
-  //     console.error("Error fetching chat messages:", error.message);
-  //     return;
-  //   }
-
-  //   if (messages.length > 0) {
-  //     // If the selected chat has messages, prevent creating a new chat
-  //     return;
-  //   }
-  //   // }
-
-  //   const newChatId = uuidv4(); // Generate a new UUID for the chat_id
-
-  //   // Add the new chat to the userChats store
-  //   userChats.update((chats) => [...chats, { chat_id: newChatId }]);
-  //   // Set the newly created chat as the selected chat
-  //   selectedChatId = newChatId;
-  // }
   async function createNewChat() {
-    let thread = await client.beta.threads.create();
-    console.log("this is what a thread looks like");
-    console.log(thread.id);
-    const userId = await getCurrentUserId();
-    await supabaseClient.from("chats").upsert([
-      {
-        user_id: userId,
-        chat_id: thread.id,
-        message: "New chat created", // Your default or initial message
-        is_user_message: false, // Indicate that it's not a user message
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-    userChats.update((chats) => [...chats, { thread_id: thread.id }]);
-    // Set the newly created chat as the selected chat
-    selectedThreadId = thread.id;
-    selectedChatMessages.set([]);
+    // Check if the first chat in the list is not an empty chat
+    const isFirstChatNotEmpty =
+      $userChats.length > 0 &&
+      $userChats[0].firstUserMessage !== "" &&
+      $userChats[0].firstUserMessage !== null &&
+      $userChats[0].firstUserMessage !== undefined;
+    if (isFirstChatNotEmpty) {
+      let thread = await client.beta.threads.create();
+      const userId = await getCurrentUserId();
+      await supabaseClient.from("chats").upsert([
+        {
+          user_id: userId,
+          chat_id: thread.id,
+          message: "New chat created", // Your default or initial message
+          is_user_message: false, // Indicate that it's not a user message
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+      userChats.update((chats) => [{ chat_id: thread.id }, ...chats]); // Use unshift to add the new chat to the beginning
+      selectedThreadId = thread.id;
+      selectedChatMessages.set([]);
+    } else {
+      selectedThreadId = $userChats[0].chat_id;
+      selectedChatMessages.set([]);
+    }
   }
 
   async function getFirstUserMessage(threadID) {
     try {
       // Get messages from the OpenAI thread
       let response = await client.beta.threads.messages.list(threadID);
-      console.log("response", response);
+      // console.log("response", response);
       // Find the first user message
       for (const message of response.data.reverse()) {
         if (
@@ -118,9 +90,10 @@
 
     // Fetch user chats from Supabase based on the user ID
     const { data: chats, error } = await supabaseClient
-      .from("chats")
-      .select("chat_id")
-      .eq("user_id", userId);
+      .from("chats") // Specify the type of the data
+      .select("chat_id") // Specify the columns as separate arguments
+      .eq("user_id", userId)
+      .order("timestamp", { ascending: false }); // Order the results by timestamp in descending order
 
     if (error) {
       console.error("Error fetching user chats:", error.message);
@@ -143,7 +116,6 @@
           processedChats.push({ ...chat, firstUserMessage });
         }
       }
-
       // Update the userChats store with the processed chats
       userChats.set(processedChats);
     }
@@ -156,7 +128,7 @@
     try {
       // Get messages from the OpenAI thread
       let response = await client.beta.threads.messages.list(threadID);
-      console.log("response", response);
+      // console.log("response", response);
 
       // Display AI response messages on the screen
       let messages = [];
@@ -167,10 +139,10 @@
           message.content[0].type === "text"
         ) {
           let annotations = message.content[0].text.annotations;
-          console.log("annotations", annotations);
-          if (annotations !== undefined) {
-            //   console.log("file citation", annotations[0].file_citation);
-          }
+          // console.log("annotations", annotations);
+          // if (annotations !== undefined) {
+          //   //   console.log("file citation", annotations[0].file_citation);
+          // }
           let fileNames = [];
           for (const annotation of annotations) {
             if (annotation.file_citation !== undefined) {
@@ -223,7 +195,6 @@
     } else {
       if (userData) {
         const assistantId = userData.assistant_id;
-        console.log("Assistant ID:", assistantId);
         return assistantId;
       } else {
         console.log("User not found");
@@ -246,8 +217,7 @@
           content: question,
         }
       );
-      console.log("user message", userMessage);
-
+      await loadChatMessages(selectedThreadId);
       // Get Assistant ID
       let assistantId = await getAssistantID(userId);
 
@@ -279,6 +249,9 @@
 
       if (run.status === "completed") {
         await loadChatMessages(selectedThreadId);
+        if ($selectedChatMessages.length === 2) {
+          loadUserChats();
+        }
         return;
       } else {
         errorText = "Run failed";
@@ -305,6 +278,7 @@
       console.log("It's loading");
       return;
     } // Prevent deleting the chat if a previous deletion is still in progress
+    // loading = true;
     // Check if the deleted chat is the current chat
     const isCurrentChat = selectedThreadId === chatId;
 
@@ -318,26 +292,17 @@
       console.error("Error deleting chat:", error.message);
       errorText = error.message;
     } else {
-      // Fetch the most recent chat ID from the user's chats after deleting the current chat
-      const userId = await getCurrentUserId();
-      const { data: chats } = await supabaseClient
-        .from("chats")
-        .select("chat_id")
-        .eq("user_id", userId)
-        .order("timestamp", { ascending: false })
-        .limit(1);
-
-      const mostRecentChatId = chats.length > 0 ? chats[0].chat_id : null;
-
-      // Fetch and load user chats again to update the chat list with the most recent chat ID
       await loadUserChats();
-
-      // Clear the selected chat messages
-      // selectedChatMessages.set([]);
-
-      // Set the selectedChatId to the most recent chat ID only if the deleted chat was the current chat
-      if (isCurrentChat) {
-        selectedThreadId = mostRecentChatId;
+      // Check if there are no remaining chats after deleting the current chat
+      if ($userChats.length === 0) {
+        // If there is only one chat remaining, create a new chat
+        await createNewChat();
+      } else {
+        // Fetch and load user chats again to update the chat list with the most recent chat ID
+        // Set the selectedThreadId to the most recent chat ID only if the deleted chat was the current chat
+        if (isCurrentChat) {
+          await selectChat($userChats[0].chat_id);
+        }
       }
     }
   }
@@ -346,14 +311,14 @@
     try {
       // Use the OpenAI API client to retrieve file details
       const fileDetails = await client.files.retrieve(fileId);
-      console.log("file details", fileDetails);
+      // console.log("file details", fileDetails);
       // Extract the file name from the file details
       const fileName = fileDetails.filename;
       return fileName;
     } catch (error) {
       console.error("Error retrieving file details:", error);
       // Handle error as needed
-      return "Error retrieving file";
+      return "Deleted file";
     }
   }
 
@@ -439,10 +404,11 @@
 
             <!-- <div class="overflow-y-auto h-96"> -->
             {#each $userChats as chat}
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
               <div
                 class="flex items-center justify-between mb-2"
-                on:click={async () =>
-                  await selectChat(chat.chat_id.slice(0, 36))}
+                on:click={async () => await selectChat(chat.chat_id)}
               >
                 {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
                   <span>{chat.firstUserMessage}</span>
@@ -462,6 +428,8 @@
         </div>
       {/if}
 
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div
         class="sidebar-toggle-btn"
         style=" left: 1rem"
@@ -480,7 +448,7 @@
       >
         <div class="w-full md:w-3/4">
           <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
-          {#if selectedThreadId === null}
+          {#if selectedThreadId === null || selectedThreadId === undefined}
             <p class="text-gray-500">
               Select a chat from the history to view messages.
             </p>
@@ -531,7 +499,7 @@
             on:click={() => sendUserMessageAndAIResponse()}
             disabled={selectedThreadId === null}
           >
-            Ask the AI and Send Message
+            Ask James
           </button>
         </div>
       </div>
@@ -557,9 +525,7 @@
   .annotation-index {
     font-weight: bold;
   }
-  .sidebar.open {
-    display: block;
-  }
+
   .sidebar-toggle-btn {
     position: absolute;
     top: 1rem;
@@ -575,23 +541,11 @@
     z-index: 2;
   }
 
-  .sidebar-toggle-btn-right {
-    right: 1rem;
-  }
-
-  .sidebar-toggle-btn-left {
-    left: 1rem;
-  }
-
   .sidebar-toggle-btn .chevron {
     color: #1f2937;
   }
   .flex {
     display: flex;
-  }
-
-  .flex-1 {
-    flex: 1;
   }
 
   .chat-container {
@@ -609,13 +563,13 @@
 
   /* Responsive layout using media queries */
   @media (max-width: 50px) {
-    .md\:pl-16 {
+    /* .md\:pl-16 {
       padding-left: 16px;
     }
 
     .md\:pr-16 {
       padding-right: 16px;
-    }
+    } */
 
     .md\:flex-row {
       flex-direction: row;
@@ -630,19 +584,6 @@
       transition: transform 0.3s ease-in-out;
       z-index: 1;
       width: 80%; /* Set the width of the sidebar on small screens */
-    }
-
-    .sidebar.open {
-      transform: translateX(0);
-    }
-
-    .middle-section {
-      margin-left: 20%; /* Add margin to the middle section to make space for the sidebar */
-    }
-    .form-control select {
-      width: 100%;
-      padding: 0.5rem;
-      font-size: 14px;
     }
   }
   /* Additional global styles go here */

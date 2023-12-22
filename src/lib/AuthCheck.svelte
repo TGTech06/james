@@ -16,11 +16,9 @@
     if (error) {
       console.log(error);
     } else if (session?.user) {
-      console.log("User is logged in");
       // User is logged in
       isLoggedIn = true;
     } else {
-      console.log("User is logged in");
       // User is not logged in
       isLoggedIn = false;
     }

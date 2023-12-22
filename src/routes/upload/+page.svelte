@@ -1,34 +1,19 @@
 <script lang="ts">
-  // Import necessary functions from your existing script
   import { upload_file, url_uploader } from "$lib/files.js";
-  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-  import { createClient } from "@supabase/supabase-js";
-  import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-  import { onMount } from "svelte";
-  import {
-    PUBLIC_SUPABASE_KEY,
-    PUBLIC_SUPABASE_URL,
-    PUBLIC_HUGGINGFACE_API_KEY,
-    PUBLIC_OPENAI_API_KEY,
-  } from "$env/static/public";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
-  // import { OpenAI } from "langchain/dist";
 
-  // Initialize the Supabase client and other variables
-  let supabase;
-  let vector;
-  let embeddings;
-  let files;
-  let url;
+  let files = "";
+  let url = "";
   let error = "";
-
-  // Add any additional functions specific to the insert page, if needed
-
+  let successMessage = "";
+  let uploading = false;
+  let fileInput;
   // Bind the functions to the corresponding elements in the insert.html file, if needed
   async function upload(e) {
     files = e.target.files[0];
   }
+  //very time consuming to write out - do not delete
   const authorizedExtensions = [
     ".c",
     ".cpp",
@@ -58,48 +43,54 @@
     ".zip",
   ];
 
-  onMount(() => {
-    supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    let embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    // embeddings = new HuggingFaceInferenceEmbeddings({
-    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    // });
-    vector = new SupabaseVectorStore(embeddings, {
-      client: supabase,
-      tableName: "documents",
-    });
-  });
-
   async function handleFileUpload() {
-    // try {
-    // await file_uploader(supabase, PUBLIC_HUGGINGFACE_API_KEY, vector, files);
-    console.log("uploading file");
+    if (uploading || files === "") return;
+    error = "";
+    uploading = true;
+    successMessage = "";
     try {
-      await upload_file(files);
+      let outcome = await upload_file(files);
+      if (outcome === "success") {
+        files = "";
+        fileInput.value = "";
+        error = "";
+        successMessage = "File uploaded successfully!";
+      } else {
+        if (outcome === "" || outcome === undefined || outcome === null) {
+          error =
+            "An error occurred. Please try again. If the problem persists, please let me know.";
+        } else {
+          error = outcome;
+        }
+      }
     } catch (err) {
       error = err.message;
     }
-
-    // let assistant = client.beta.assistants.create(
-    //   instructions="You are a customer support chatbot. Use your knowledge base to best respond to customer queries.",
-    //   model="gpt-3.5",
-    //   tools=[{"type": "retrieval"}],
-    //   file_ids=[file.id]
-    // )
-    error = "";
-    // } catch (err) {
-    //   error = err.message;
-    // }
+    uploading = false;
   }
 
   async function handleUrlUpload() {
-    // try {
-    await url_uploader(url);
+    if (uploading || url === "") return;
     error = "";
-    // } catch (err) {
-    //   error = err.message;
-    // }
+    uploading = true;
+    successMessage = "";
+    try {
+      let outcome = await url_uploader(url);
+      if (outcome === "success") {
+        url = "";
+        successMessage = "URL added successfully!";
+      } else {
+        if (outcome === "" || outcome === undefined || outcome === null) {
+          error =
+            "An error occurred. Please try again. If the problem persists, please let me know.";
+        } else {
+          error = outcome;
+        }
+      }
+    } catch (err) {
+      error = err.message;
+    }
+    uploading = false;
   }
 </script>
 
@@ -115,9 +106,16 @@
         {#if error}
           <div class="text-red-500 mb-4">{error}</div>
         {/if}
+        {#if successMessage}
+          <div class="text-green-500 mb-4">{successMessage}</div>
+        {/if}
+        {#if uploading}
+          <div class="text-grey-500 mb-4">Uploading...</div>
+        {/if}
 
         <!-- File Uploader -->
         <div class="w-full mb-4 md:mb-8">
+          <!-- svelte-ignore a11y-label-has-associated-control -->
           <label class="label mb-2 text-lg font-bold">Upload Files</label>
           <div class="flex flex-col md:flex-row items-center">
             <input
@@ -127,6 +125,7 @@
               accept={authorizedExtensions.join(",")}
               required
               class="input input-accent mr-0 md:mr-4 mb-2 md:mb-0"
+              bind:this={fileInput}
             />
             <button
               class="btn btn-primary text-lg font-bold"
@@ -139,6 +138,7 @@
 
         <!-- URL Uploader -->
         <div class="w-full">
+          <!-- svelte-ignore a11y-label-has-associated-control -->
           <label class="label mb-2 text-lg font-bold"
             >Add the URL to the database</label
           >
@@ -160,6 +160,3 @@
     </div>
   </div>
 </AuthCheck>
-
-<!-- Add navigation buttons to move between pages -->
-<!-- ... -->
