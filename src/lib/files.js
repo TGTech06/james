@@ -63,10 +63,20 @@ export async function upload_file(files) {
       });
       return "success";
     } catch (E) {
-      return E;
+      return E.message;
     }
   } else {
     return "files is null";
+  }
+}
+
+export async function create_file_and_upload(title, text) {
+  try {
+    const txtFile = new File([text], title, { type: "text/plain" });
+    let outcome = await upload_file(txtFile);
+    return outcome;
+  } catch (e) {
+    return e.message;
   }
 }
 
@@ -74,20 +84,15 @@ export async function url_uploader(url) {
   try {
     const htmlContent = await getHtml(url);
     if (htmlContent) {
-      const txtBlob = await convertHtmlToTxt(htmlContent, url);
-      if (txtBlob) {
-        const txtFile = new File([txtBlob], url, { type: "text/plain" });
-        if (txtFile) {
-          let outcome = await upload_file(txtFile);
-          return outcome;
-        } else {
-          return "txtFile is null";
-        }
+      const txtFile = await convertHtmlToTxt(htmlContent, url);
+      if (txtFile) {
+        let outcome = await upload_file(txtFile);
+        return outcome;
       } else {
         return "txtFile is null";
       }
     }
   } catch (error) {
-    return error;
+    return error.message;
   }
 }

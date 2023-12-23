@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { upload_file, url_uploader } from "$lib/files.js";
+  import {
+    upload_file,
+    url_uploader,
+    create_file_and_upload,
+  } from "$lib/files.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
 
@@ -9,11 +13,13 @@
   let successMessage = "";
   let uploading = false;
   let fileInput;
-  // Bind the functions to the corresponding elements in the insert.html file, if needed
+  let textTitle = "";
+  let textContent = "";
+
   async function upload(e) {
     files = e.target.files[0];
   }
-  //very time consuming to write out - do not delete
+
   const authorizedExtensions = [
     ".c",
     ".cpp",
@@ -92,6 +98,26 @@
     }
     uploading = false;
   }
+
+  async function uploadText() {
+    uploading = true;
+    try {
+      if (textTitle === "" || textContent === "") {
+        error = "Please enter both title and content to upload text.";
+        uploading = false;
+        return;
+      }
+      // Add your implementation here to call the function and pass title and content
+      await create_file_and_upload(textTitle, textContent);
+      successMessage = "Text uploaded successfully!";
+      // Clear the input fields after successful upload
+      textTitle = "";
+      textContent = "";
+    } catch (err) {
+      error = err.message;
+    }
+    uploading = false;
+  }
 </script>
 
 <AuthCheck>
@@ -102,7 +128,6 @@
         <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
           Insert Data Page
         </h1>
-        <!-- Error Display -->
         {#if error}
           <div class="text-red-500 mb-4">{error}</div>
         {/if}
@@ -115,7 +140,6 @@
 
         <!-- File Uploader -->
         <div class="w-full mb-4 md:mb-8">
-          <!-- svelte-ignore a11y-label-has-associated-control -->
           <label class="label mb-2 text-lg font-bold">Upload Files</label>
           <div class="flex flex-col md:flex-row items-center">
             <input
@@ -137,8 +161,7 @@
         </div>
 
         <!-- URL Uploader -->
-        <div class="w-full">
-          <!-- svelte-ignore a11y-label-has-associated-control -->
+        <div class="w-full mb-4">
           <label class="label mb-2 text-lg font-bold"
             >Add the URL to the database</label
           >
@@ -153,6 +176,32 @@
               on:click={() => handleUrlUpload()}
             >
               Add URL
+            </button>
+          </div>
+        </div>
+        <!-- Text Uploader -->
+        <div class="w-full">
+          <label class="label mb-2 text-lg font-bold">Upload Text</label>
+          <div class="flex flex-col items-left">
+            <input
+              type="text"
+              bind:value={textTitle}
+              placeholder="Title"
+              class="input input-accent mb-10 md:mb-0"
+            />
+
+            <textarea
+              bind:value={textContent}
+              placeholder="Text content"
+              class="textarea textarea-accent resize-none flex-grow text-lg font-bold mt-5 mb-2 md:mb-0"
+              rows="3"
+            />
+
+            <button
+              class="btn btn-primary text-lg font-bold mt-5"
+              on:click={() => uploadText()}
+            >
+              Upload Text
             </button>
           </div>
         </div>

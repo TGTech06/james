@@ -27,8 +27,8 @@ export async function convertHtmlToTxt(htmlContent, url) {
       const textContent = element.textContent;
 
       // Create a Blob containing the text content
-      const txtBlob = new Blob([textContent], { type: "text/plain" });
-      resolve(txtBlob);
+      const txtFile = new File([textContent], url, { type: "text/plain" });
+      resolve(txtFile);
     } catch (error) {
       console.error("Error converting HTML to TXT:", error);
       reject(error);
