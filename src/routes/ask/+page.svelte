@@ -31,12 +31,7 @@
 
   async function createNewChat() {
     // Check if the first chat in the list is not an empty chat
-    const isFirstChatNotEmpty =
-      $userChats.length > 0 &&
-      $userChats[0].firstUserMessage !== "" &&
-      $userChats[0].firstUserMessage !== null &&
-      $userChats[0].firstUserMessage !== undefined;
-    if (isFirstChatNotEmpty) {
+    if ($userChats.length === 0) {
       let thread = await client.beta.threads.create();
       const userId = await getCurrentUserId();
       await supabaseClient.from("chats").upsert([
@@ -51,9 +46,31 @@
       userChats.update((chats) => [{ chat_id: thread.id }, ...chats]); // Use unshift to add the new chat to the beginning
       selectedThreadId = thread.id;
       selectedChatMessages.set([]);
+      return;
     } else {
-      selectedThreadId = $userChats[0].chat_id;
-      selectedChatMessages.set([]);
+      const isFirstChatNotEmpty =
+        $userChats[0].firstUserMessage !== "" &&
+        $userChats[0].firstUserMessage !== null &&
+        $userChats[0].firstUserMessage !== undefined;
+      if (isFirstChatNotEmpty) {
+        let thread = await client.beta.threads.create();
+        const userId = await getCurrentUserId();
+        await supabaseClient.from("chats").upsert([
+          {
+            user_id: userId,
+            chat_id: thread.id,
+            message: "New chat created", // Your default or initial message
+            is_user_message: false, // Indicate that it's not a user message
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        userChats.update((chats) => [{ chat_id: thread.id }, ...chats]); // Use unshift to add the new chat to the beginning
+        selectedThreadId = thread.id;
+        selectedChatMessages.set([]);
+      } else {
+        selectedThreadId = $userChats[0].chat_id;
+        selectedChatMessages.set([]);
+      }
     }
   }
 

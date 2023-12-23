@@ -9,6 +9,7 @@
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   import { OpenAI } from "openai";
   let errorMessage = "";
+  let loggingIn = false;
 
   async function createNewAssistant(userId) {
     let openAIClient = new OpenAI({
@@ -24,7 +25,7 @@
       // file_ids: [uploadResult.id],
     });
     let assistantID = (await assistant).id;
-    console.log(assistantID);
+    // console.log("assistantID", assistantID);
     return assistantID;
   }
   async function createUserDataIfNotExists(userId) {
@@ -54,31 +55,47 @@
         // if (insertError) {
         //   console.error("Error creating user data:", insertError);
         // }
+      } else {
+        console.log("User data already exists");
       }
+      return "success";
     } catch (e) {
       console.error("Error occurred while creating user data:", e);
+      return e.message;
     }
   }
 
   const loginUser = async (event: Event) => {
-    event.preventDefault();
+    errorMessage = "";
+    loggingIn = true;
+    try {
+      event.preventDefault();
 
-    const email = (event.target as HTMLFormElement).email.value;
-    const password = (event.target as HTMLFormElement).password.value;
+      const email = (event.target as HTMLFormElement).email.value;
+      const password = (event.target as HTMLFormElement).password.value;
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password,
-    });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      errorMessage = error.message;
-    } else {
-      errorMessage = ""; // Clear the error message if there was no error
-      await createUserDataIfNotExists(data.user.id);
-      window.location.href = "/";
-      setTimeout(() => goto("/"), 0);
+      if (error) {
+        errorMessage = error.message;
+      } else {
+        let outcome = await createUserDataIfNotExists(data.user.id);
+        if (outcome === "success") {
+          errorMessage = "";
+        } else {
+          errorMessage = outcome;
+        }
+        window.location.href = "/";
+        setTimeout(() => goto("/"), 0);
+      }
+    } catch (e) {
+      console.error(e);
+      errorMessage = e.message;
     }
+    loggingIn = false;
   };
 
   const toggleView = () => {
@@ -109,6 +126,14 @@
           name="password"
           class="form-input mt-1 block w-full py-2 px-4 rounded-md bg-gray-700 text-white"
         />
+      </div>
+      <div class="text-center">
+        {#if errorMessage}
+          <div class="text-red-500 mb-4">{errorMessage}</div>
+        {/if}
+        {#if loggingIn}
+          <div class="text-grey-500 mb-4">Logging you in...</div>
+        {/if}
       </div>
       <button class="btn btn-primary w-full py-3 rounded-lg">Login</button>
       <div class="mt-4 text-gray-300 text-sm text-center">
