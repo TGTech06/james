@@ -23,6 +23,7 @@
   let successMessage = "";
   let deleting = false;
   let errorMessage = "";
+  let instructions = "";
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
@@ -35,6 +36,7 @@
     await getUserData();
     await createUserDataIfNotExists(userID);
     assistantId = await getAssistantID(userID);
+    instructions = await getAssistantInstructions();
     documents = await getDocuments(openAIClient, assistantId);
   });
 
@@ -76,7 +78,7 @@
 
   async function createNewAssistant() {
     let assistant = openAIClient.beta.assistants.create({
-      name: "James",
+      name: userID,
       instructions:
         'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. Always cite your sources.',
       model: "gpt-3.5-turbo-1106",
@@ -108,6 +110,19 @@
     const i = Math.floor(Math.log(bytesNumber) / Math.log(1024));
 
     return Math.round(bytesNumber / Math.pow(1024, i)) + " " + sizes[i];
+  }
+
+  async function customizeJames() {
+    // let instructions = document.querySelector("textarea").value;
+    let response = await openAIClient.beta.assistants.update(assistantId, {
+      instructions: instructions,
+    });
+    console.log(response);
+  }
+
+  async function getAssistantInstructions() {
+    let assistant = await openAIClient.beta.assistants.retrieve(assistantId);
+    return assistant.instructions;
   }
 
   async function getUserData() {
@@ -178,6 +193,7 @@
           https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288
         </href>
       {/if}
+
       {#if !userIsPremium}
         <script async src="https://js.stripe.com/v3/buy-button.js">
         </script>
@@ -208,7 +224,27 @@
             <i class="fas fa-sign-out-alt" />
           </button>
         </div>
+        <div class="mt-8">
+          <p>
+            Customize your James. Give him personalized instructions that he HAS
+            to follow.
+          </p>
+          <textarea
+            rows="3"
+            bind:value={instructions}
+            id="instructions"
+            class="textarea textarea-accent resize-none w-full mt-2"
+            placeholder="Enter personalized instructions..."
+          ></textarea>
+        </div>
 
+        <!-- Button for customization -->
+        <button class="btn btn-primary mb-4" on:click={() => customizeJames()}>
+          Customize James
+        </button>
+        <h2 class="text-2xl font-semibold mt-4">
+          Files your James has access to:
+        </h2>
         <div class="space-y-4">
           {#each documents as document}
             <div

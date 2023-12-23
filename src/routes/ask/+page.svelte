@@ -21,6 +21,7 @@
   let loading = false;
   let errorText = null;
   let client;
+  let instructions = "";
 
   // Store to hold list of user chats
   const userChats = writable([]);
@@ -244,8 +245,9 @@
         selectedThreadId, // threadId
         {
           assistant_id: assistantId,
-          instructions:
-            "Please address the user as Jane Doe. The user has a premium account.",
+          instructions: instructions,
+          // instructions:
+          //   "Please address the user as Jane Doe. The user has a premium account.",
         }
         // {
         //   maxTokens: 10,
@@ -279,6 +281,18 @@
       // Handle error as needed
     }
   }
+
+  // async function setInstructions() {
+  //   client.beta.threads.update(selectedThreadId, {
+  //     instructions: instructions,
+  //   });
+  // }
+
+  // async function getInstructions() {
+  //   let thread = await client.beta.threads.retrieve(selectedThreadId);
+  //   console.log("thread", thread);
+  //   return thread.instructions;
+  // }
 
   async function getCurrentUserId() {
     const user = await supabaseClient.auth.getUser();
@@ -348,6 +362,7 @@
 
     await loadUserChats();
     await createNewChat();
+    // instructions = await getInstructions();
   });
 
   let isChatHistorySidebarOpen = false;
@@ -460,10 +475,27 @@
       </div>
 
       <!-- Middle Section - Chat Messages -->
-      <div
-        class="flex flex-col items-center justify-center w-full md:w-3/4 mx-auto"
-      >
+      <div class="flex flex-col items-center w-full md:w-3/4 mx-auto">
         <div class="w-full md:w-3/4">
+          <div class="mb-8">
+            <h2 class="text-2xl font-semibold mt-4">
+              Custom Instructions (overrides everything else):
+            </h2>
+            <textarea
+              rows="1"
+              bind:value={instructions}
+              id="instructions"
+              class="textarea textarea-accent resize-none w-full mt-2"
+              placeholder="Enter personalized instructions... (overriding all other instructions)"
+            ></textarea>
+            <!-- <button
+              class="btn btn-primary mb-4"
+              on:click={() => setInstructions()}
+              disabled={selectedThreadId === null}
+            >
+              Set Instructions for this thread
+            </button> -->
+          </div>
           <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
           {#if selectedThreadId === null || selectedThreadId === undefined}
             <p class="text-gray-500">
@@ -509,7 +541,6 @@
               disabled={selectedThreadId === null || loading}
             />
           </div>
-
           <!-- Combined button to send user message and get AI response -->
           <button
             class="btn btn-primary mb-4"
