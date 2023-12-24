@@ -37,16 +37,16 @@
     ".tex",
     ".txt",
     ".css",
-    ".jpeg",
-    ".jpg",
+    // ".jpeg",
+    // ".jpg",
     ".js",
     ".gif",
-    ".png",
+    // ".png",
     ".tar",
     ".ts",
     ".xlsx",
     ".xml",
-    ".zip",
+    // ".zip",
   ];
 
   async function handleFileUpload() {
@@ -140,6 +140,7 @@
 
         <!-- File Uploader -->
         <div class="w-full mb-4 md:mb-8">
+          <!-- svelte-ignore a11y-label-has-associated-control -->
           <label class="label mb-2 text-lg font-bold">Upload Files</label>
           <div class="flex flex-col md:flex-row items-center">
             <input
@@ -181,6 +182,7 @@
         </div>
         <!-- Text Uploader -->
         <div class="w-full">
+          <!-- svelte-ignore a11y-label-has-associated-control -->
           <label class="label mb-2 text-lg font-bold">Upload Text</label>
           <div class="flex flex-col items-left">
             <input
