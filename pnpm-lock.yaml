@@ -14,6 +14,12 @@ dependencies:
   esbuild:
     specifier: ^0.19.10
     version: 0.19.10
+  highlight:
+    specifier: ^0.2.4
+    version: 0.2.4
+  highlight.js:
+    specifier: ^11.9.0
+    version: 11.9.0
   html2pdf.js:
     specifier: ^0.10.1
     version: 0.10.1
@@ -23,6 +29,9 @@ dependencies:
   langchain:
     specifier: ^0.0.110
     version: 0.0.110(@huggingface/inference@1.8.0)(@supabase/supabase-js@2.39.1)(cheerio@1.0.0-rc.12)
+  marked:
+    specifier: ^11.1.0
+    version: 11.1.0
   openai:
     specifier: ^4.24.1
     version: 4.24.1
@@ -1940,6 +1949,16 @@ packages:
       function-bind: 1.1.2
     dev: true
 
+  /highlight.js@11.9.0:
+    resolution: {integrity: sha512-fJ7cW7fQGCYAkgv4CPfwFHrfd/cLS4Hau96JuJ+ZTOWhjnhoeN1ub1tFmALm/+lW5z4WCAuAV9bm05AP0mS6Gw==}
+    engines: {node: '>=12.0.0'}
+    dev: false
+
+  /highlight@0.2.4:
+    resolution: {integrity: sha512-TEcWU6BolpDYIaVD91KmaYe/kRZwOmQlLWZGO8DK+Cs555+7mawk2KUnF/dBwcLnrvlCDk/xC+BXfz7Zva+Jfg==}
+    deprecated: Not maintained anymore
+    dev: false
+
   /html2canvas@1.4.1:
     resolution: {integrity: sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==}
     engines: {node: '>=8.0.0'}
@@ -2441,6 +2460,12 @@ packages:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
+
+  /marked@11.1.0:
+    resolution: {integrity: sha512-fvKJWAPEafVj1dwGwcPI5mBB/0pvViL6NlCbNDG1HOIRwwAU/jeMoFxfbRLuirO1wRH7m4yPvBqD/O1wyWvayw==}
+    engines: {node: '>= 18'}
+    hasBin: true
+    dev: false
 
   /md5@2.3.0:
     resolution: {integrity: sha512-T1GITYmFaKuO91vxyoQMFETst+O71VUPEU3ze5GNzDm0OWdP8v1ziTaAEPUr/3kLsY3Sftgz242A1SetQiDL7g==}
