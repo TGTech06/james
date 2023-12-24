@@ -11,6 +11,10 @@
     PUBLIC_OPENAI_API_KEY,
   } from "$env/static/public";
   import { OpenAI } from "openai";
+  import hljs from "highlight.js";
+  import "highlight.js/styles/panda-syntax-dark.css"; // choose a style that fits your app
+
+  import { marked } from "marked";
 
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   let vector;
@@ -22,7 +26,7 @@
   let errorText = null;
   let client;
   let instructions = "";
-
+  let copyButtonText = "Copy Code";
   // Store to hold list of user chats
   const userChats = writable([]);
   // Store to hold selected chat messages
@@ -371,6 +375,51 @@
   function toggleSidebar() {
     isChatHistorySidebarOpen = !isChatHistorySidebarOpen;
   }
+
+  // let messages = [
+  //   "This is some **bold** text.",
+  //   "```javascript\nconsole.log('Hello, world!');\n```",
+  //   "This is another paragraph. ```python\nprint('Hello from Python!')\n```",
+  //   "Hi ",
+  // ];
+
+  function formatMessage(message) {
+    let formattedMessage = [];
+    let inCodeBlock = false;
+    let codeLanguage = "";
+
+    message.split("```").forEach((segment, index) => {
+      if (index % 2 === 0) {
+        formattedMessage.push({ type: "markdown", content: marked(segment) });
+      } else {
+        codeLanguage = segment.trim().split("\n")[0];
+        const codeWithoutFirstLine = segment.split("\n").slice(1).join("\n");
+        const highlightedCode = hljs.highlightAuto(codeWithoutFirstLine, [
+          codeLanguage,
+        ]);
+        formattedMessage.push({
+          type: "code",
+          content: highlightedCode.value,
+          language: codeLanguage,
+          originalCode: codeWithoutFirstLine,
+        });
+      }
+    });
+
+    return formattedMessage;
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text);
+    showMessageCopied();
+  }
+  function showMessageCopied() {
+    const copyButton = document.querySelector(`#copy-button`);
+    copyButtonText = "Copied!";
+    setTimeout(() => {
+      copyButtonText = "Copy Code";
+    }, 1000);
+  }
 </script>
 
 <link
@@ -478,77 +527,84 @@
       <div class="flex flex-col items-center w-full md:w-3/4 mx-auto">
         <div class="w-full md:w-3/4">
           <div class="mb-8">
-            <h2 class="text-2xl font-semibold mt-4">
-              Custom Instructions (overrides everything else):
-            </h2>
-            <textarea
-              rows="1"
-              bind:value={instructions}
-              id="instructions"
-              class="textarea textarea-accent resize-none w-full mt-2"
-              placeholder="Enter personalized instructions... (overriding all other instructions)"
-            ></textarea>
-            <!-- <button
-              class="btn btn-primary mb-4"
-              on:click={() => setInstructions()}
-              disabled={selectedThreadId === null}
-            >
-              Set Instructions for this thread
-            </button> -->
-          </div>
-          <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
-          {#if selectedThreadId === null || selectedThreadId === undefined}
-            <p class="text-gray-500">
-              Select a chat from the history to view messages.
-            </p>
-          {:else}
-            <div class="chat-container overflow-y-auto h-96">
-              {#each $selectedChatMessages as message}
-                <div
-                  class="chat-message"
-                  class:is-user-message={message.is_user_message}
-                >
-                  {message.message}
-                </div>
-                {#if message.annotations !== undefined}
-                  <div class="file-citations">
-                    {#each message.annotations as annotation}
-                      <!-- {#if annotation.file_citation} -->
-                      <p class="file-citation">
-                        <span class="annotation-index">{annotation.text}</span>
-                        Lines {annotation.start_index} to {annotation.end_index}
-                        "{annotation.file_citation.quote.substring(0, 50)}..."
-                        from {message.file_names[
-                          message.annotations.indexOf(annotation)
-                        ]}
-                      </p>
-                      <!-- {/if} -->
+            <!-- Your custom instructions section -->
+
+            <!-- Chat Messages Section -->
+            <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
+            {#if selectedThreadId === null || selectedThreadId === undefined}
+              <p class="text-gray-500">
+                Select a chat from the history to view messages.
+              </p>
+            {:else}
+              <div class="chat-container overflow-y-auto h-96">
+                {#each $selectedChatMessages as message, index (index)}
+                  <div
+                    class="chat-message"
+                    class:is-user-message={message.is_user_message}
+                  >
+                    {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
+                      {#if type === "markdown"}
+                        {@html content}
+                      {/if}
+                      {#if type === "code"}
+                        <div class="code-block-container">
+                          <div class="code-block-banner">
+                            {language}
+                            <button
+                              class="copy-button"
+                              on:click={() => copyToClipboard(originalCode)}
+                              >{copyButtonText}</button
+                            >
+                          </div>
+                          <pre class="code-block">{@html content}</pre>
+                        </div>
+                      {/if}
+                      {#if message.annotations !== undefined}
+                        <div class="file-citations">
+                          {#each message.annotations as annotation}
+                            <!-- {#if annotation.file_citation} -->
+                            <p class="file-citation">
+                              <span class="annotation-index"
+                                >{annotation.text}</span
+                              >
+                              Lines {annotation.start_index} to {annotation.end_index}
+                              "{annotation.file_citation.quote.substring(
+                                0,
+                                50
+                              )}..." from {message.file_names[
+                                message.annotations.indexOf(annotation)
+                              ]}
+                            </p>
+                            <!-- {/if} -->
+                          {/each}
+                        </div>
+                      {/if}
                     {/each}
                   </div>
-                {/if}
-              {/each}
-            </div>
-          {/if}
-        </div>
-
-        <!-- Ask AI Box -->
-        <div class="w-full md:w-3/4 mt-4">
-          <div class="form-control mb-4">
-            <textarea
-              bind:value={question}
-              id="question"
-              class="textarea textarea-primary"
-              disabled={selectedThreadId === null || loading}
-            />
+                {/each}
+              </div>
+            {/if}
           </div>
-          <!-- Combined button to send user message and get AI response -->
-          <button
-            class="btn btn-primary mb-4"
-            on:click={() => sendUserMessageAndAIResponse()}
-            disabled={selectedThreadId === null}
-          >
-            Ask James
-          </button>
+
+          <!-- Ask AI Box Section -->
+          <div class="w-full md:w-3/4 mt-4">
+            <div class="form-control mb-4">
+              <textarea
+                bind:value={question}
+                id="question"
+                class="textarea textarea-primary"
+                disabled={selectedThreadId === null || loading}
+              />
+            </div>
+            <!-- Combined button to send user message and get AI response -->
+            <button
+              class="btn btn-primary mb-4"
+              on:click={() => sendUserMessageAndAIResponse()}
+              disabled={selectedThreadId === null}
+            >
+              Ask James
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -569,7 +625,29 @@
     margin-top: 8px;
     font-size: small;
   }
+  .code-block {
+    background-color: black;
+    padding: 10px;
+    border-radius: 0px 0px 8px 8px;
+  }
+  .code-block-container {
+    overflow-x: auto;
+    margin-top: 10px;
+  }
 
+  .code-block-banner {
+    background-color: #5616c6;
+    padding: 5px;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .copy-button {
+    padding-right: 5px;
+    cursor: pointer;
+  }
   .annotation-index {
     font-weight: bold;
   }
@@ -602,6 +680,7 @@
   }
 
   .chat-message {
+    white-space: pre-line;
     margin-bottom: 8px;
   }
 

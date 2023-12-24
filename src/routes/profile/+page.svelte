@@ -242,51 +242,53 @@
         <button class="btn btn-primary mb-4" on:click={() => customizeJames()}>
           Customize James
         </button>
-        <h2 class="text-2xl font-semibold mt-4">
-          Files your James has access to:
-        </h2>
-        <div class="space-y-4">
-          {#each documents as document}
-            <div
-              class="bg-gray-800 p-4 rounded-lg flex items-center justify-between"
-            >
-              <div>
-                <p class="text-lg">
-                  <strong class="text-l">{document.filename}</strong>
-                  <br />
-                  <span class="text-sm">{formatBytes(document.bytes)}</span>
-                  <span class="text-sm"
-                    >Created: {formatDate(document.created_at)}</span
-                  >
-                </p>
-              </div>
-              <button
-                class="btn btn-error"
-                on:click={async () => {
-                  if (deleting) return;
-                  deleting = true;
-                  successMessage = "";
-                  errorMessage = "";
-                  let filename = document.filename;
-                  let outcome = await deleteDocument(
-                    openAIClient,
-                    assistantId,
-                    document.id
-                  );
-                  if (outcome === "success") {
-                    documents = await getDocuments(openAIClient, assistantId);
-                    successMessage =
-                      "Successfully deleted " + filename + " from your James";
-                  } else {
-                    errorMessage = outcome;
-                  }
-                  deleting = false;
-                }}
+        <div class="files-container">
+          <h2 class="text-2xl font-semibold mt-4 mb-4">
+            Files your James has access to:
+          </h2>
+          <div class="space-y-4">
+            {#each documents as document}
+              <div
+                class="bg-gray-800 p-4 rounded-lg flex items-center justify-between"
               >
-                <i class="fas fa-trash white-icon" />
-              </button>
-            </div>
-          {/each}
+                <div>
+                  <p class="text-lg">
+                    <strong class="text-l">{document.filename}</strong>
+                    <br />
+                    <span class="text-sm">{formatBytes(document.bytes)}</span>
+                    <span class="text-sm"
+                      >Created: {formatDate(document.created_at)}</span
+                    >
+                  </p>
+                </div>
+                <button
+                  class="btn btn-error"
+                  on:click={async () => {
+                    if (deleting) return;
+                    deleting = true;
+                    successMessage = "";
+                    errorMessage = "";
+                    let filename = document.filename;
+                    let outcome = await deleteDocument(
+                      openAIClient,
+                      assistantId,
+                      document.id
+                    );
+                    if (outcome === "success") {
+                      documents = await getDocuments(openAIClient, assistantId);
+                      successMessage =
+                        "Successfully deleted " + filename + " from your James";
+                    } else {
+                      errorMessage = outcome;
+                    }
+                    deleting = false;
+                  }}
+                >
+                  <i class="fas fa-trash white-icon" />
+                </button>
+              </div>
+            {/each}
+          </div>
         </div>
       </div>
     </div>
@@ -294,6 +296,10 @@
 </AuthCheck>
 
 <style>
+  .files-container {
+    max-height: 80vh; /* Adjust the value based on your layout */
+    overflow: auto;
+  }
   .btn-md {
     padding: 12px 24px; /* Adjust the padding to make the button larger */
     font-size: 16px; /* Adjust the font size to make the icon larger */
