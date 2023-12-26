@@ -27,6 +27,7 @@
   let client;
   let instructions = "";
   let copyButtonText = "Copy Code";
+  let screenHeight = 0;
   // Store to hold list of user chats
   const userChats = writable([]);
   // Store to hold selected chat messages
@@ -363,6 +364,7 @@
       apiKey: PUBLIC_OPENAI_API_KEY,
       dangerouslyAllowBrowser: true,
     });
+    screenHeight = window.innerHeight;
 
     await loadUserChats();
     await createNewChat();
@@ -428,115 +430,111 @@
 />
 <AuthCheck>
   <div class="flex flex-col bg-gray-900 text-white p-4">
-    <NavBar />
-    <div class="relative flex flex-col md:flex-row min-h-screen">
+    <div class="relative flex flex-col min-h-screen min-w-screen">
       <!-- Combined Sidebar - Chat History and Configuration -->
 
-      {#if isChatHistorySidebarOpen}
-        <div class="absolute left-0 top-0 bg-gray-800 rounded-lg p-4 sidebar">
-          <div class="overflow-y-auto max-h-96">
-            <div class="w-full md:w-3/4 mt-14">
-              <!-- <div class="mb-4">
-                <label class="block text-lg font-semibold" for="model"
-                  >Select Model</label
-                >
-                <select
-                  id="model"
-                  bind:value={model}
-                  style="width: 200px;"
-                  class="select select-sm select-primary"
-                >
-                  <option value="tiiuae/falcon-7b-instruct"
-                    >tiiuae/falcon-7b-instruct</option
-                  >
-                  <option value="meta-llama/Llama-2-70b-chat-hf"
-                    >meta-llama/Llama-2-70b-chat-hf</option
-                  >
-                  <option value="OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5"
-                    >OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5</option
-                  >
-                </select>
-              </div> -->
-              <div class="mb-4">
-                <label class="block text-lg font-semibold" for="temperature"
-                  >Temperature</label
-                >
-                <input
-                  type="range"
-                  id="temperature"
-                  min="0.1"
-                  max="1.0"
-                  step="0.2"
-                  bind:value={temperature}
-                  class="input input-sm input-primary"
-                />
-                <span class="text-sm ml-2">{temperature}</span>
-              </div>
-            </div>
-
-            <h2 class="text-2xl font-bold mb-4">Chat History</h2>
-            <!-- Add a button to create a new chat -->
-            <button
-              class="btn btn-primary btn-sm mb-2"
-              on:click={createNewChat}
-            >
-              <i class="fas fa-plus" /> New Chat
-            </button>
-
-            <!-- <div class="overflow-y-auto h-96"> -->
-            {#each $userChats as chat}
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
-              <div
-                class="flex items-center justify-between mb-2"
-                on:click={async () => await selectChat(chat.chat_id)}
-              >
-                {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
-                  <span>{chat.firstUserMessage}</span>
-                {:else}
-                  <span>New Chat</span>
-                {/if}
-                <!-- Add a button to delete the chat -->
-                <button
-                  class="btn btn-error btn-sm"
-                  on:click={() => deleteChat(chat.chat_id)}
-                >
-                  <i class="fas fa-trash-alt" />
-                </button>
-              </div>
-            {/each}
-          </div>
-        </div>
-      {/if}
-
-      <!-- svelte-ignore a11y-no-static-element-interactions -->
-      <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div
-        class="sidebar-toggle-btn"
-        style=" left: 1rem"
-        on:click={() => toggleSidebar()}
+        class={`absolute left-0 top-0 bg-gray-800 rounded-lg p-4 sidebar ${
+          isChatHistorySidebarOpen ? "sidebar-open" : ""
+        }`}
       >
-        {#if isChatHistorySidebarOpen}
-          <i class="chevron fas fa-chevron-left text-2xl" />
-        {:else}
-          <i class="chevron fas fa-chevron-right text-2xl" />
-        {/if}
+        <div class="overflow-y-auto max-h-96">
+          <div class="w-full md:w-3/4 mt-14">
+            <div class="mb-4">
+              <label class="block text-lg font-semibold" for="temperature"
+                >Temperature</label
+              >
+              <input
+                type="range"
+                id="temperature"
+                min="0.1"
+                max="1.0"
+                step="0.2"
+                bind:value={temperature}
+                class="input input-sm input-primary"
+              />
+              <span class="text-sm ml-2">{temperature}</span>
+            </div>
+          </div>
+
+          <h2 class="text-2xl font-bold mb-4">Chat History</h2>
+          <button class="btn btn-primary btn-sm mb-2" on:click={createNewChat}>
+            <i class="fas fa-plus" /> New Chat
+          </button>
+
+          <!-- <div class="overflow-y-auto h-96"> -->
+          {#each $userChats as chat}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div
+              class="flex items-center justify-between mb-2"
+              on:click={async () => await selectChat(chat.chat_id)}
+            >
+              {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
+                <span>{chat.firstUserMessage}</span>
+              {:else}
+                <span>New Chat</span>
+              {/if}
+              <!-- Add a button to delete the chat -->
+              <button
+                class="btn btn-error btn-sm"
+                on:click={() => deleteChat(chat.chat_id)}
+              >
+                <i class="fas fa-trash-alt" />
+              </button>
+            </div>
+          {/each}
+        </div>
       </div>
 
-      <!-- Middle Section - Chat Messages -->
-      <div class="flex flex-col items-center w-full md:w-3/4 mx-auto">
-        <div class="w-full md:w-3/4">
-          <div class="mb-8">
-            <!-- Your custom instructions section -->
+      <div
+        class={`main-content ${
+          isChatHistorySidebarOpen ? "main-content-shifted" : ""
+        }`}
+      >
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div class="sidebar-toggle-btn" on:click={toggleSidebar}>
+          {#if isChatHistorySidebarOpen}
+            <i class="chevron fas fa-chevron-left text-2xl" />
+          {:else}
+            <i class="chevron fas fa-chevron-right text-2xl" />
+          {/if}
+        </div>
 
-            <!-- Chat Messages Section -->
+        <NavBar />
+        <!-- Middle Section - Chat Messages -->
+        <div
+          class={`items-center w-full h-screen chat-container  ${
+            isChatHistorySidebarOpen ? "main-content-shifted" : ""
+          }`}
+        >
+          <div class="mb-8">
+            <h2 class="text-2xl font-semibold mt-4">
+              Custom Instructions (overrides everything else):
+            </h2>
+            <textarea
+              rows="1"
+              bind:value={instructions}
+              id="instructions"
+              class="textarea textarea-accent resize-none w-full mt-2"
+              placeholder="Enter personalized instructions... (overriding all other instructions)"
+            ></textarea>
+            <!-- <button
+              class="btn btn-primary mb-4"
+              on:click={() => setInstructions()}
+              disabled={selectedThreadId === null}
+            >
+              Set Instructions for this thread
+            </button> -->
+
             <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
             {#if selectedThreadId === null || selectedThreadId === undefined}
-              <p class="text-gray-500">
+              <p class="text-gray-500 h-[80%]">
                 Select a chat from the history to view messages.
               </p>
             {:else}
-              <div class="chat-container overflow-y-auto h-96">
+              <div class="messages-container">
                 {#each $selectedChatMessages as message, index (index)}
                   <div
                     class="chat-message"
@@ -587,7 +585,7 @@
           </div>
 
           <!-- Ask AI Box Section -->
-          <div class="w-full md:w-3/4 mt-4">
+          <div class="mt-4">
             <div class="form-control mb-4">
               <textarea
                 bind:value={question}
@@ -607,19 +605,50 @@
           </div>
         </div>
       </div>
+      {#if errorText !== null}
+        <div
+          class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
+        >
+          {errorText}
+        </div>
+      {/if}
     </div>
-    {#if errorText !== null}
-      <div
-        class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
-      >
-        {errorText}
-      </div>
-    {/if}
-    <!-- Toggle button to open the combined sidebar -->
   </div>
 </AuthCheck>
 
 <style>
+  .main-content {
+    /* Your existing styles for the main content */
+
+    /* Additional styles when the sidebar is open */
+    &.main-content-shifted {
+      /* Adjust margin or padding to create space for the open sidebar */
+      margin-left: 300px; /* Adjust as needed */
+    }
+
+    /* Adjust padding based 
+  on screen size */
+  }
+
+  .messages-container {
+    height: 300px; /* Set a fixed height for chat messages display area */
+    overflow-y: auto; /* Enable vertical scrolling if the messages overflow */
+  }
+
+  .chat-container {
+    /* Your existing styles for the chat container */
+    &.main-content-shifted {
+      /* Apply this style when .main-content-shifted is present */
+      width: 75%;
+      margin: 0 auto; /* Center the content horizontally */
+    }
+
+    &:not(.main-content-shifted) {
+      /* Apply this style when .main-content-shifted is not present */
+      width: 50%;
+      margin: 0 auto; /* Center the content horizontally */
+    }
+  }
   .file-citations {
     /* color: blue; Change the color to your preference */
     margin-top: 8px;
@@ -670,14 +699,11 @@
   .sidebar-toggle-btn .chevron {
     color: #1f2937;
   }
-  .flex {
-    display: flex;
-  }
 
-  .chat-container {
+  /* .chat-container {
     height: 300px; /* Set a fixed height for chat messages display area */
-    overflow-y: auto; /* Enable vertical scrolling if the messages overflow */
-  }
+  /* overflow-y: auto; /* Enable vertical scrolling if the messages overflow */ /*
+  } */
 
   .chat-message {
     white-space: pre-line;
@@ -689,29 +715,40 @@
   }
 
   /* Responsive layout using media queries */
-  @media (max-width: 50px) {
-    /* .md\:pl-16 {
-      padding-left: 16px;
-    }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 300px;
+    background-color: #2d3748;
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(-100%);
+    z-index: 1;
+  }
 
-    .md\:pr-16 {
-      padding-right: 16px;
-    } */
+  .sidebar-open {
+    transform: translateX(0);
+  }
 
-    .md\:flex-row {
-      flex-direction: row;
-    }
+  .sidebar-toggle-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 2;
+  }
 
-    /* Adjust the sidebar and middle section layout on small screens */
-    .sidebar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease-in-out;
-      z-index: 1;
-      width: 80%; /* Set the width of the sidebar on small screens */
-    }
+  .sidebar-toggle-btn .chevron {
+    color: #1f2937;
   }
   /* Additional global styles go here */
 </style>
