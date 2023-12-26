@@ -27,7 +27,7 @@
   let client;
   let instructions = "";
   let copyButtonText = "Copy Code";
-  let screenHeight = 0;
+  const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
   // Store to hold selected chat messages
@@ -51,6 +51,7 @@
       ]);
       userChats.update((chats) => [{ chat_id: thread.id }, ...chats]); // Use unshift to add the new chat to the beginning
       selectedThreadId = thread.id;
+      $highlightedChatIDs = [thread.id];
       selectedChatMessages.set([]);
       return;
     } else {
@@ -72,9 +73,11 @@
         ]);
         userChats.update((chats) => [{ chat_id: thread.id }, ...chats]); // Use unshift to add the new chat to the beginning
         selectedThreadId = thread.id;
+        $highlightedChatIDs = [thread.id];
         selectedChatMessages.set([]);
       } else {
         selectedThreadId = $userChats[0].chat_id;
+        $highlightedChatIDs = [$userChats[0].chat_id];
         selectedChatMessages.set([]);
       }
     }
@@ -306,6 +309,7 @@
 
   async function selectChat(chatId) {
     selectedThreadId = chatId;
+    $highlightedChatIDs = [chatId];
     await loadChatMessages(selectedThreadId);
   }
 
@@ -364,8 +368,6 @@
       apiKey: PUBLIC_OPENAI_API_KEY,
       dangerouslyAllowBrowser: true,
     });
-    screenHeight = window.innerHeight;
-
     await loadUserChats();
     await createNewChat();
     // instructions = await getInstructions();
@@ -432,18 +434,17 @@
   <div class="flex flex-col bg-gray-900 text-white p-4">
     <div class="relative flex flex-col min-h-screen min-w-screen">
       <!-- Combined Sidebar - Chat History and Configuration -->
-
       <div
-        class={`absolute left-0 top-0 bg-gray-800 rounded-lg p-4 sidebar ${
+        class={`absolute left-0 top-0 bg-black rounded-lg p-4 sidebar ${
           isChatHistorySidebarOpen ? "sidebar-open" : ""
         }`}
       >
-        <div class="overflow-y-auto max-h-96">
+        <div class="overflow-y-auto">
           <div class="w-full md:w-3/4 mt-14">
             <div class="mb-4">
-              <label class="block text-lg font-semibold" for="temperature"
-                >Temperature</label
-              >
+              <label class="block text-lg font-semibold" for="temperature">
+                Temperature
+              </label>
               <input
                 type="range"
                 id="temperature"
@@ -466,21 +467,63 @@
           {#each $userChats as chat}
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <!-- svelte-ignore a11y-mouse-events-have-key-events -->
             <div
-              class="flex items-center justify-between mb-2"
+              class="flex items-center justify-between mb-2 chat-box"
+              style="{$highlightedChatIDs.includes(chat.chat_id)
+                ? 'background-color: #f2f2f242'
+                : ''} "
               on:click={async () => await selectChat(chat.chat_id)}
+              on:mouseover={() => {
+                if (
+                  $highlightedChatIDs.length < 2 &&
+                  !$highlightedChatIDs.includes(chat.chat_id)
+                )
+                  $highlightedChatIDs = [...$highlightedChatIDs, chat.chat_id];
+              }}
+              on:mouseout={() => {
+                if (chat.chat_id !== selectedThreadId) {
+                  $highlightedChatIDs = $highlightedChatIDs.filter(
+                    (id) => id !== chat.chat_id
+                  );
+                }
+              }}
             >
               {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
-                <span>{chat.firstUserMessage}</span>
+                <span
+                  style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                >
+                  {chat.firstUserMessage}
+                </span>
               {:else}
-                <span>New Chat</span>
+                <span class="chat-message">New Chat</span>
               {/if}
               <!-- Add a button to delete the chat -->
               <button
-                class="btn btn-error btn-sm"
+                class="delete-button"
                 on:click={() => deleteChat(chat.chat_id)}
+                on:mouseover={() => {
+                  if (
+                    $highlightedChatIDs.length < 2 &&
+                    !$highlightedChatIDs.includes(chat.chat_id)
+                  )
+                    $highlightedChatIDs = [
+                      ...$highlightedChatIDs,
+                      chat.chat_id,
+                    ];
+                }}
+                on:mouseout={() => {
+                  if (chat.chat_id !== selectedThreadId) {
+                    $highlightedChatIDs = $highlightedChatIDs.filter(
+                      (id) => id !== chat.chat_id
+                    );
+                  }
+                }}
+                style="visibility: {$highlightedChatIDs.includes(chat.chat_id)
+                  ? 'visible'
+                  : 'hidden'}"
               >
-                <i class="fas fa-trash-alt" />
+                <i class="fas fa-trash-alt" style="color: white" />
               </button>
             </div>
           {/each}
@@ -517,7 +560,7 @@
               rows="1"
               bind:value={instructions}
               id="instructions"
-              class="textarea textarea-accent resize-none w-full mt-2"
+              class="textarea textarea-accent resize-none w-full mt-2 mb-5"
               placeholder="Enter personalized instructions... (overriding all other instructions)"
             ></textarea>
             <!-- <button
@@ -591,6 +634,7 @@
                 bind:value={question}
                 id="question"
                 class="textarea textarea-primary"
+                placeholder="Ask James anything..."
                 disabled={selectedThreadId === null || loading}
               />
             </div>
@@ -598,7 +642,7 @@
             <button
               class="btn btn-primary mb-4"
               on:click={() => sendUserMessageAndAIResponse()}
-              disabled={selectedThreadId === null}
+              disabled={selectedThreadId === null || loading || question === ""}
             >
               Ask James
             </button>
@@ -617,6 +661,33 @@
 </AuthCheck>
 
 <style>
+  .chat-box {
+    position: relative;
+    border-radius: 8px;
+    padding-left: 10px;
+    padding-right: 35px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    align-items: left;
+  }
+  /* .chat-box:hover {
+    background-color: #f2f2f242;
+  } */
+  .chat-message {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .delete-button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: visibility 0.3s;
+  }
   .main-content {
     /* Your existing styles for the main content */
 
@@ -721,7 +792,7 @@
     left: 0;
     height: 100%;
     width: 300px;
-    background-color: #2d3748;
+    /* background-color: #2d3748; */
     transition: transform 0.3s ease-in-out;
     transform: translateX(-100%);
     z-index: 1;
