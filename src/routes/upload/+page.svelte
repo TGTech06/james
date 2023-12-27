@@ -159,6 +159,9 @@
               Upload Files
             </button>
           </div>
+          <p class=" text-gray-500 mt-2" style="font-size: xx-small;">
+            Accepts: {authorizedExtensions.join(", ")}
+          </p>
         </div>
 
         <!-- URL Uploader -->

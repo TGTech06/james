@@ -13,7 +13,8 @@
   import { OpenAI } from "openai";
   import hljs from "highlight.js";
   import "highlight.js/styles/panda-syntax-dark.css"; // choose a style that fits your app
-
+  import katex from "katex";
+  import "katex/dist/katex.min.css";
   import { marked } from "marked";
 
   const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
@@ -412,14 +413,36 @@
   //   "Hi ",
   // ];
 
+  function replaceMathDelimiters(inputString) {
+    // Use regular expression to replace all occurrences of \[ and \]
+    let replacedString = inputString.replace(/\\\[|\\\]/g, "$$$$");
+
+    return replacedString;
+  }
+
   function formatMessage(message) {
     let formattedMessage = [];
-    let inCodeBlock = false;
     let codeLanguage = "";
-
     message.split("```").forEach((segment, index) => {
+      console.log("segment", segment);
       if (index % 2 === 0) {
-        formattedMessage.push({ type: "markdown", content: marked(segment) });
+        message = replaceMathDelimiters(message);
+        console.log("message", message);
+        message.split("$$").forEach((segment, index) => {
+          if (index % 2 === 0) {
+            formattedMessage.push({
+              type: "markdown",
+              content: marked(segment),
+            });
+          } else {
+            const latex = katex.renderToString(segment, {
+              throwOnError: false,
+            });
+            formattedMessage.push({ type: "latex", content: latex });
+          }
+        });
+
+        // formattedMessage.push({ type: "markdown", content: marked(segment) });
       } else {
         codeLanguage = segment.trim().split("\n")[0];
         const codeWithoutFirstLine = segment.split("\n").slice(1).join("\n");
@@ -436,6 +459,11 @@
     });
 
     return formattedMessage;
+  }
+
+  function decodeHTML(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.documentElement.textContent;
   }
 
   function copyToClipboard(text) {
@@ -581,9 +609,13 @@
           }`}
         >
           <div class="mb-8">
-            <h2 class="text-2xl font-semibold mt-4">
+            <!-- <h2 class="text-2xl font-semibold mt-4">
               Custom Instructions (overrides everything else):
+            </h2> -->
+            <h2 class="text-l sm:text-xl font-semibold mt-4">
+              Custom Instructions (overrides everything else)
             </h2>
+
             <textarea
               rows="1"
               bind:value={instructions}
@@ -599,7 +631,19 @@
               Set Instructions for this thread
             </button> -->
 
-            <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
+            <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
+              Chat Messages
+            </h1>
+            <script
+              src="https://polyfill.io/v3/polyfill.min.js?features=es6"
+            ></script>
+            <script
+              id="MathJax-script"
+              async
+              src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+            ></script>
+
             {#if selectedThreadId === null || selectedThreadId === undefined}
               <div style="overflow-y: auto; height:{screenHeight * 0.485}px">
                 <p class="text-gray-500 h-[80%]">
@@ -615,6 +659,9 @@
                   >
                     {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
                       {#if type === "markdown"}
+                        {@html content}
+                      {/if}
+                      {#if type === "latex"}
                         {@html content}
                       {/if}
                       {#if type === "code"}
