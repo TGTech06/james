@@ -24,6 +24,7 @@
   let deleting = false;
   let errorMessage = "";
   let instructions = "";
+  let totalFileSize = 0;
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     const openAIApiKey = PUBLIC_OPENAI_API_KEY;
@@ -38,7 +39,15 @@
     assistantId = await getAssistantID(userID);
     instructions = await getAssistantInstructions();
     documents = await getDocuments(openAIClient, assistantId);
+    calculateTotalFileSize();
   });
+
+  function calculateTotalFileSize() {
+    totalFileSize = documents.reduce(
+      (total, document) => total + parseInt(document.bytes, 10),
+      0
+    );
+  }
 
   async function getAssistantID(userID) {
     const { data: userData, error: userError } = await supabase
@@ -242,6 +251,9 @@
         <button class="btn btn-primary mb-4" on:click={() => customizeJames()}>
           Customize James
         </button>
+        <h2 class="text-2xl font-semibold mt-4 mb-4">
+          Total File Size: {formatBytes(totalFileSize)}
+        </h2>
         <div class="files-container">
           <h2 class="text-2xl font-semibold mt-4 mb-4">
             Files your James has access to:
