@@ -419,6 +419,7 @@
   function replaceMathDelimiters(inputString) {
     // Use regular expression to replace all occurrences of \[ and \]
     let replacedString = inputString.replace(/\\\[|\\\]/g, "$$$$");
+    replacedString = inputString.replace(/\\\(|\\\)/g, "$$$$");
     return replacedString;
   }
 
