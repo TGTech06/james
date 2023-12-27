@@ -416,7 +416,6 @@
   function replaceMathDelimiters(inputString) {
     // Use regular expression to replace all occurrences of \[ and \]
     let replacedString = inputString.replace(/\\\[|\\\]/g, "$$$$");
-
     return replacedString;
   }
 
@@ -424,10 +423,8 @@
     let formattedMessage = [];
     let codeLanguage = "";
     message.split("```").forEach((segment, index) => {
-      console.log("segment", segment);
       if (index % 2 === 0) {
         message = replaceMathDelimiters(message);
-        console.log("message", message);
         message.split("$$").forEach((segment, index) => {
           if (index % 2 === 0) {
             formattedMessage.push({
@@ -441,8 +438,6 @@
             formattedMessage.push({ type: "latex", content: latex });
           }
         });
-
-        // formattedMessage.push({ type: "markdown", content: marked(segment) });
       } else {
         codeLanguage = segment.trim().split("\n")[0];
         const codeWithoutFirstLine = segment.split("\n").slice(1).join("\n");
@@ -459,11 +454,6 @@
     });
 
     return formattedMessage;
-  }
-
-  function decodeHTML(html) {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return doc.documentElement.textContent;
   }
 
   function copyToClipboard(text) {
@@ -657,47 +647,51 @@
                     class="chat-message"
                     class:is-user-message={message.is_user_message}
                   >
-                    {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
-                      {#if type === "markdown"}
-                        {@html content}
-                      {/if}
-                      {#if type === "latex"}
-                        {@html content}
-                      {/if}
-                      {#if type === "code"}
-                        <div class="code-block-container">
-                          <div class="code-block-banner">
-                            {language}
-                            <button
-                              class="copy-button"
-                              on:click={() => copyToClipboard(originalCode)}
-                              >{copyButtonText}</button
-                            >
-                          </div>
-                          <pre class="code-block">{@html content}</pre>
-                        </div>
-                      {/if}
-                      {#if message.annotations !== undefined}
-                        <div class="file-citations">
-                          {#each message.annotations as annotation}
-                            <!-- {#if annotation.file_citation} -->
-                            <p class="file-citation">
-                              <span class="annotation-index"
-                                >{annotation.text}</span
+                    {#if message.is_user_message}
+                      <pre>{message.message}</pre>
+                    {:else}
+                      {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
+                        {#if type === "markdown"}
+                          {@html content}
+                        {/if}
+                        {#if type === "latex"}
+                          {@html content}
+                        {/if}
+                        {#if type === "code"}
+                          <div class="code-block-container">
+                            <div class="code-block-banner">
+                              {language}
+                              <button
+                                class="copy-button"
+                                on:click={() => copyToClipboard(originalCode)}
+                                >{copyButtonText}</button
                               >
-                              Lines {annotation.start_index} to {annotation.end_index}
-                              "{annotation.file_citation.quote.substring(
-                                0,
-                                50
-                              )}..." from {message.file_names[
-                                message.annotations.indexOf(annotation)
-                              ]}
-                            </p>
-                            <!-- {/if} -->
-                          {/each}
-                        </div>
-                      {/if}
-                    {/each}
+                            </div>
+                            <pre class="code-block">{@html content}</pre>
+                          </div>
+                        {/if}
+                        {#if message.annotations !== undefined}
+                          <div class="file-citations">
+                            {#each message.annotations as annotation}
+                              <!-- {#if annotation.file_citation} -->
+                              <p class="file-citation">
+                                <span class="annotation-index"
+                                  >{annotation.text}</span
+                                >
+                                Lines {annotation.start_index} to {annotation.end_index}
+                                "{annotation.file_citation.quote.substring(
+                                  0,
+                                  50
+                                )}..." from {message.file_names[
+                                  message.annotations.indexOf(annotation)
+                                ]}
+                              </p>
+                              <!-- {/if} -->
+                            {/each}
+                          </div>
+                        {/if}
+                      {/each}
+                    {/if}
                   </div>
                 {/each}
               </div>
@@ -814,6 +808,8 @@
     background-color: black;
     padding: 10px;
     border-radius: 0px 0px 8px 8px;
+    overflow-x: auto;
+    word-wrap: break-word; /* Add this line to prevent overflow of long words */
   }
   .code-block-container {
     overflow-x: auto;
