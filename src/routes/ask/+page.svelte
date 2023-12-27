@@ -247,6 +247,7 @@
         }
       );
       await loadChatMessages(selectedThreadId);
+      scrollToBottom();
       // Get Assistant ID
       let assistantId = await getAssistantID(userId);
 
@@ -279,6 +280,7 @@
 
       if (run.status === "completed") {
         await loadChatMessages(selectedThreadId);
+        scrollToBottom();
         if ($selectedChatMessages.length === 2) {
           loadUserChats();
         }
@@ -314,6 +316,7 @@
     selectedThreadId = chatId;
     $highlightedChatIDs = [chatId];
     await loadChatMessages(selectedThreadId);
+    scrollToBottom();
   }
 
   async function deleteChat(chatId) {
@@ -466,6 +469,13 @@
     setTimeout(() => {
       copyButtonText = "Copy Code";
     }, 1000);
+  }
+  $: scrollToBottom();
+  function scrollToBottom() {
+    const chatContainer = document.getElementById("messages-section");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
   }
 </script>
 
@@ -641,7 +651,10 @@
                 </p>
               </div>
             {:else}
-              <div style="overflow-y: auto; height:{screenHeight * 0.485}px">
+              <div
+                id="messages-section"
+                style="overflow-y: auto; height:{screenHeight * 0.485}px"
+              >
                 {#each $selectedChatMessages as message, index (index)}
                   <div
                     class="chat-message"
