@@ -290,6 +290,7 @@
                       documents = await getDocuments(openAIClient, assistantId);
                       successMessage =
                         "Successfully deleted " + filename + " from your James";
+                      calculateTotalFileSize();
                     } else {
                       errorMessage = outcome;
                     }
