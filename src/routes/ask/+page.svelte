@@ -27,6 +27,8 @@
   let client;
   let instructions = "";
   let copyButtonText = "Copy Code";
+  let screenWidth = window.innerWidth;
+  let screenHeight = window.innerHeight;
   const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
@@ -368,11 +370,34 @@
       apiKey: PUBLIC_OPENAI_API_KEY,
       dangerouslyAllowBrowser: true,
     });
+
     await loadUserChats();
     await createNewChat();
+
     // instructions = await getInstructions();
   });
 
+  onMount(() => {
+    const updateScreenWidth = () => {
+      screenWidth = window.innerWidth;
+    };
+
+    window.addEventListener("resize", updateScreenWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateScreenWidth);
+    };
+
+    const updateScreenHeight = () => {
+      screenHeight = window.innerHeight;
+    };
+
+    window.addEventListener("resize", updateScreenHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateScreenHeight);
+    };
+  });
   let isChatHistorySidebarOpen = false;
 
   // Function to toggle the combined sidebar visibility
@@ -431,8 +456,8 @@
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
 />
 <AuthCheck>
-  <div class="flex flex-col bg-gray-900 text-white p-4">
-    <div class="relative flex flex-col min-h-screen min-w-screen">
+  <div class="flex flex-col min-w-screen bg-gray-900 text-white p-4">
+    <div class="flex flex-col h-full">
       <!-- Combined Sidebar - Chat History and Configuration -->
       <div
         class={`absolute left-0 top-0 bg-black rounded-lg p-4 sidebar ${
@@ -459,7 +484,7 @@
           </div>
 
           <h2 class="text-2xl font-bold mb-4">Chat History</h2>
-          <button class="btn btn-primary btn-sm mb-2" on:click={createNewChat}>
+          <button class="btn btn-primary btn-sm mb-5" on:click={createNewChat}>
             <i class="fas fa-plus" /> New Chat
           </button>
 
@@ -490,13 +515,11 @@
               }}
             >
               {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
-                <span
-                  style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                >
+                <span class="chat-title">
                   {chat.firstUserMessage}
                 </span>
               {:else}
-                <span class="chat-message">New Chat</span>
+                <span class="chat-title">New Chat</span>
               {/if}
               <!-- Add a button to delete the chat -->
               <button
@@ -535,6 +558,11 @@
           isChatHistorySidebarOpen ? "main-content-shifted" : ""
         }`}
       >
+        {#if isChatHistorySidebarOpen && screenWidth >= 300 && screenWidth <= 768}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div class="overlay" on:click={toggleSidebar}></div>
+        {/if}
         <!-- svelte-ignore a11y-no-static-element-interactions -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class="sidebar-toggle-btn" on:click={toggleSidebar}>
@@ -548,7 +576,7 @@
         <NavBar />
         <!-- Middle Section - Chat Messages -->
         <div
-          class={`items-center w-full h-screen chat-container  ${
+          class={`items-center w-full h-full chat-container  ${
             isChatHistorySidebarOpen ? "main-content-shifted" : ""
           }`}
         >
@@ -573,11 +601,13 @@
 
             <h1 class="text-4xl font-bold mb-8">Chat Messages</h1>
             {#if selectedThreadId === null || selectedThreadId === undefined}
-              <p class="text-gray-500 h-[80%]">
-                Select a chat from the history to view messages.
-              </p>
+              <div style="overflow-y: auto; height:{screenHeight * 0.485}px">
+                <p class="text-gray-500 h-[80%]">
+                  Select a chat from the history to view messages.
+                </p>
+              </div>
             {:else}
-              <div class="messages-container">
+              <div style="overflow-y: auto; height:{screenHeight * 0.485}px">
                 {#each $selectedChatMessages as message, index (index)}
                   <div
                     class="chat-message"
@@ -649,6 +679,7 @@
           </div>
         </div>
       </div>
+
       {#if errorText !== null}
         <div
           class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
@@ -673,7 +704,7 @@
   /* .chat-box:hover {
     background-color: #f2f2f242;
   } */
-  .chat-message {
+  .chat-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -688,36 +719,43 @@
     cursor: pointer;
     transition: visibility 0.3s;
   }
-  .main-content {
-    /* Your existing styles for the main content */
 
-    /* Additional styles when the sidebar is open */
-    &.main-content-shifted {
-      /* Adjust margin or padding to create space for the open sidebar */
-      margin-left: 300px; /* Adjust as needed */
-    }
-
-    /* Adjust padding based 
-  on screen size */
-  }
-
-  .messages-container {
-    height: 300px; /* Set a fixed height for chat messages display area */
-    overflow-y: auto; /* Enable vertical scrolling if the messages overflow */
-  }
+  /* .messages-container {
+    height: 300px;
+    overflow-y: auto;
+  } */
 
   .chat-container {
     /* Your existing styles for the chat container */
+
     &.main-content-shifted {
       /* Apply this style when .main-content-shifted is present */
-      width: 75%;
+      width: 85%;
       margin: 0 auto; /* Center the content horizontally */
     }
 
     &:not(.main-content-shifted) {
       /* Apply this style when .main-content-shifted is not present */
-      width: 50%;
+      width: 70%;
       margin: 0 auto; /* Center the content horizontally */
+    }
+
+    @media screen and (max-width: 800px) {
+      /* Additional styles for screens smaller than 800px */
+      &.main-content-shifted {
+        width: 100%;
+      }
+
+      &:not(.main-content-shifted) {
+        width: 100%;
+      }
+    }
+
+    @media screen and (min-width: 800px) and (max-width: 1100px) {
+      /* Additional styles for screens between 800px and 1100px */
+      &:not(.main-content-shifted) {
+        width: 90%;
+      }
     }
   }
   .file-citations {
@@ -804,8 +842,8 @@
 
   .sidebar-toggle-btn {
     position: fixed;
-    top: 1rem;
-    left: 1rem;
+    top: 1.5rem;
+    left: 2rem;
     width: 2.5rem;
     height: 2.5rem;
     display: flex;
@@ -820,6 +858,54 @@
 
   .sidebar-toggle-btn .chevron {
     color: #1f2937;
+  }
+
+  @media screen and (max-width: 768px) {
+    .sidebar {
+      width: 100%; /* Set to 100% on very small screens */
+      max-width: 300px; /* Set your preferred fixed width, but not exceeding 100% */
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .sidebar-open {
+      transform: translateX(0);
+    }
+
+    .main-content {
+      transition: margin-left 0.3s ease-in-out;
+    }
+
+    .main-content.main-content-shifted {
+      margin-left: 0; /* Set to 0 when the sidebar is open on screens smaller than 800px */
+    }
+
+    .chat-container.main-content-shifted {
+      margin-left: 0; /* Set to 0 when the sidebar is open on screens smaller than 800px */
+    }
+
+    /* Overlay to dismiss the sidebar */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
+      display: block;
+    }
+  }
+
+  @media screen and (min-width: 769px) {
+    /* Adjust styles for screens larger than 768px (800px in this case) */
+    .main-content.main-content-shifted {
+      margin-left: 300px; /* Set to 300px when the sidebar is open on screens larger than 800px */
+    }
   }
   /* Additional global styles go here */
 </style>

@@ -163,6 +163,7 @@
 
         <!-- URL Uploader -->
         <div class="w-full mb-4">
+          <!-- svelte-ignore a11y-label-has-associated-control -->
           <label class="label mb-2 text-lg font-bold"
             >Add the URL to the database</label
           >
