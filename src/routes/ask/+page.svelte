@@ -478,6 +478,16 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   }
+
+  function handleTextareaKeyDown(event: KeyboardEvent) {
+    // Check if the pressed key is Enter (key code 13)
+    if (event.key === "Enter" && !event.shiftKey) {
+      // Prevent the default behavior (e.g., adding a new line)
+      event.preventDefault();
+      // Call the sendUserMessageAndAIResponse function
+      sendUserMessageAndAIResponse();
+    }
+  }
 </script>
 
 <link
@@ -516,44 +526,18 @@
           <button class="btn btn-primary btn-sm mb-5" on:click={createNewChat}>
             <i class="fas fa-plus" /> New Chat
           </button>
-
-          <!-- <div class="overflow-y-auto h-96"> -->
-          {#each $userChats as chat}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
-            <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-            <div
-              class="flex items-center justify-between mb-2 chat-box"
-              style="{$highlightedChatIDs.includes(chat.chat_id)
-                ? 'background-color: #f2f2f242'
-                : ''} "
-              on:click={async () => await selectChat(chat.chat_id)}
-              on:mouseover={() => {
-                if (
-                  $highlightedChatIDs.length < 2 &&
-                  !$highlightedChatIDs.includes(chat.chat_id)
-                )
-                  $highlightedChatIDs = [...$highlightedChatIDs, chat.chat_id];
-              }}
-              on:mouseout={() => {
-                if (chat.chat_id !== selectedThreadId) {
-                  $highlightedChatIDs = $highlightedChatIDs.filter(
-                    (id) => id !== chat.chat_id
-                  );
-                }
-              }}
-            >
-              {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
-                <span class="chat-title">
-                  {chat.firstUserMessage}
-                </span>
-              {:else}
-                <span class="chat-title">New Chat</span>
-              {/if}
-              <!-- Add a button to delete the chat -->
-              <button
-                class="delete-button"
-                on:click={() => deleteChat(chat.chat_id)}
+          {#if $userChats.length > 0}
+            <!-- <div class="overflow-y-auto h-96"> -->
+            {#each $userChats as chat}
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <!-- svelte-ignore a11y-mouse-events-have-key-events -->
+              <div
+                class="flex items-center justify-between mb-2 chat-box"
+                style="{$highlightedChatIDs.includes(chat.chat_id)
+                  ? 'background-color: #f2f2f242'
+                  : ''} "
+                on:click={async () => await selectChat(chat.chat_id)}
                 on:mouseover={() => {
                   if (
                     $highlightedChatIDs.length < 2 &&
@@ -571,14 +555,49 @@
                     );
                   }
                 }}
-                style="visibility: {$highlightedChatIDs.includes(chat.chat_id)
-                  ? 'visible'
-                  : 'hidden'}"
               >
-                <i class="fas fa-trash-alt" style="color: white" />
-              </button>
+                {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
+                  <span class="chat-title">
+                    {chat.firstUserMessage}
+                  </span>
+                {:else}
+                  <span class="chat-title">New Chat</span>
+                {/if}
+                <!-- Add a button to delete the chat -->
+                <button
+                  class="delete-button"
+                  on:click={() => deleteChat(chat.chat_id)}
+                  on:mouseover={() => {
+                    if (
+                      $highlightedChatIDs.length < 2 &&
+                      !$highlightedChatIDs.includes(chat.chat_id)
+                    )
+                      $highlightedChatIDs = [
+                        ...$highlightedChatIDs,
+                        chat.chat_id,
+                      ];
+                  }}
+                  on:mouseout={() => {
+                    if (chat.chat_id !== selectedThreadId) {
+                      $highlightedChatIDs = $highlightedChatIDs.filter(
+                        (id) => id !== chat.chat_id
+                      );
+                    }
+                  }}
+                  style="visibility: {$highlightedChatIDs.includes(chat.chat_id)
+                    ? 'visible'
+                    : 'hidden'}"
+                >
+                  <i class="fas fa-trash-alt" style="color: white" />
+                </button>
+              </div>
+            {/each}
+          {:else}
+            <!-- Loading indicator when there are no chats -->
+            <div class="text-left text-gray-500 mt-5 ml-2">
+              <i class="fas fa-spinner fa-spin mr-3"></i> Loading Chats...
             </div>
-          {/each}
+          {/if}
         </div>
       </div>
 
@@ -646,7 +665,7 @@
             ></script>
 
             {#if selectedThreadId === null || selectedThreadId === undefined}
-              <div style="overflow-y: auto; height:{screenHeight * 0.485}px">
+              <div style="overflow-y: auto; height:{screenHeight * 0.58}px">
                 <p class="text-gray-500 h-[80%]">
                   Select a chat from the history to view messages.
                 </p>
@@ -654,7 +673,7 @@
             {:else}
               <div
                 id="messages-section"
-                style="overflow-y: auto; height:{screenHeight * 0.485}px"
+                style="overflow-y: auto; height:{screenHeight * 0.58}px"
               >
                 {#each $selectedChatMessages as message, index (index)}
                   <div
@@ -714,23 +733,28 @@
 
           <!-- Ask AI Box Section -->
           <div class="mt-4">
-            <div class="form-control mb-4">
-              <textarea
-                bind:value={question}
-                id="question"
-                class="textarea textarea-primary"
-                placeholder="Ask James anything..."
-                disabled={selectedThreadId === null || loading}
-              />
+            <div class="flex items-center">
+              <div class="flex-1 form-control mb-4">
+                <textarea
+                  bind:value={question}
+                  id="question"
+                  class="textarea textarea-primary"
+                  placeholder="Ask James anything..."
+                  disabled={selectedThreadId === null || loading}
+                  on:keydown={handleTextareaKeyDown}
+                />
+              </div>
+              <!-- Combined button to send user message and get AI response -->
+              <button
+                class="btn btn-primary ml-2"
+                on:click={() => sendUserMessageAndAIResponse()}
+                disabled={selectedThreadId === null ||
+                  loading ||
+                  question === ""}
+              >
+                Ask James
+              </button>
             </div>
-            <!-- Combined button to send user message and get AI response -->
-            <button
-              class="btn btn-primary mb-4"
-              on:click={() => sendUserMessageAndAIResponse()}
-              disabled={selectedThreadId === null || loading || question === ""}
-            >
-              Ask James
-            </button>
           </div>
         </div>
       </div>
