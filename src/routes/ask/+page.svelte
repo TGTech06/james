@@ -489,14 +489,38 @@
     }
   }
 
+  // function handleTextareaInput() {
+  //   const textarea = document.getElementById("question") as HTMLTextAreaElement;
+  //   textarea.style.height = "auto";
+  //   textarea.style.height = `${Math.min(
+  //     textarea.scrollHeight,
+  //     5 * parseFloat(getComputedStyle(textarea).lineHeight)
+  //   )}px`;
+  // }
+
   function handleTextareaInput() {
-    const textarea = document.getElementById("question") as HTMLTextAreaElement;
+    const textarea = document.getElementById("question");
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(
       textarea.scrollHeight,
       5 * parseFloat(getComputedStyle(textarea).lineHeight)
     )}px`;
+
+    // Get height difference
+    const origHeight = 46; // original height
+    const newHeight = textarea.style.height.replace("px", "");
+    const heightDiff = parseInt(newHeight) - origHeight;
+    // Update messages section height
+    const spacing = document.getElementById("spacing");
+    spacing.style.height = `${heightDiff}px`;
   }
+
+  // function handleTextareaBlur() {
+  //   // Reset heights when focus lost
+  //   console.log("blur");
+  //   const messages = document.getElementById("spacing");
+  //   messages.style.height = "400px";
+  // }
 </script>
 
 <link
@@ -505,7 +529,7 @@
 />
 <AuthCheck>
   <div
-    class=" bg-gray-900 text-white h-full w-full flex"
+    class=" bg-gray-900 text-white h-full w-full flex p-4"
     style=" postion: relative;  overflow: hidden;"
   >
     <!-- Combined Sidebar - Chat History and Configuration -->
@@ -677,11 +701,11 @@
             >
               {#each $selectedChatMessages as message, index (index)}
                 <div
-                  class="chat-message"
+                  class="chat-message text-wrap"
                   class:is-user-message={message.is_user_message}
                 >
                   {#if message.is_user_message}
-                    <pre>{message.message}</pre>
+                    <pre class="text-wrap">{message.message}</pre>
                   {:else}
                     {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
                       {#if type === "markdown"}
@@ -727,6 +751,7 @@
                   {/if}
                 </div>
               {/each}
+              <div id="spacing"></div>
             </div>
           {/if}
         </div>
@@ -778,7 +803,7 @@
     bottom: 0;
     z-index: 2;
     width: 100%;
-    height: 1em; /* Initial height as one line */
+    height: "46px"; /* Initial height as one line */
     overflow-y: auto; /* Enable vertical scrolling if content exceeds height */
     resize: none; /* Disable manual resizing */
   }
