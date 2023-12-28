@@ -417,9 +417,9 @@
   // ];
 
   function replaceMathDelimiters(inputString) {
-    // Use regular expression to replace all occurrences of \[ and \]
+    // Use regular expression to replace all occurrences of \[ and \] with $$ and \( and \) with $$
     let replacedString = inputString.replace(/\\\[|\\\]/g, "$$$$");
-    replacedString = inputString.replace(/\\\(|\\\)/g, "$$$$");
+    replacedString = replacedString.replace(/\\\(|\\\)/g, "$$$$");
     return replacedString;
   }
 
@@ -465,7 +465,7 @@
     showMessageCopied();
   }
   function showMessageCopied() {
-    const copyButton = document.querySelector(`#copy-button`);
+    // const copyButton = document.querySelector(`#copy-button`);
     copyButtonText = "Copied!";
     setTimeout(() => {
       copyButtonText = "Copy Code";
@@ -488,6 +488,15 @@
       sendUserMessageAndAIResponse();
     }
   }
+
+  function handleTextareaInput() {
+    const textarea = document.getElementById("question") as HTMLTextAreaElement;
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(
+      textarea.scrollHeight,
+      5 * parseFloat(getComputedStyle(textarea).lineHeight)
+    )}px`;
+  }
 </script>
 
 <link
@@ -495,49 +504,77 @@
   href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
 />
 <AuthCheck>
-  <div class="flex flex-col min-w-screen bg-gray-900 text-white p-4">
-    <div class="flex flex-col h-full">
-      <!-- Combined Sidebar - Chat History and Configuration -->
-      <div
-        class={`absolute left-0 top-0 bg-black rounded-lg p-4 sidebar ${
-          isChatHistorySidebarOpen ? "sidebar-open" : ""
-        }`}
-      >
-        <div class="overflow-y-auto">
-          <div class="w-full md:w-3/4 mt-14">
-            <div class="mb-4">
-              <label class="block text-lg font-semibold" for="temperature">
-                Temperature
-              </label>
-              <input
-                type="range"
-                id="temperature"
-                min="0.1"
-                max="1.0"
-                step="0.2"
-                bind:value={temperature}
-                class="input input-sm input-primary"
-              />
-              <span class="text-sm ml-2">{temperature}</span>
-            </div>
+  <div
+    class="min-w-screen bg-gray-900 text-white p-4"
+    style="height: 100vh; overflow: hidden; position: fixed; top: 0; left: 0; width: 100%;"
+  >
+    <!-- Combined Sidebar - Chat History and Configuration -->
+    <div
+      class={`absolute left-0 top-0 bg-black rounded-lg p-4 sidebar ${
+        isChatHistorySidebarOpen ? "sidebar-open" : ""
+      }`}
+    >
+      <div class="overflow-y-auto">
+        <div class="w-full md:w-3/4 mt-14">
+          <div class="mb-4">
+            <label class="block text-lg font-semibold" for="temperature">
+              Temperature
+            </label>
+            <input
+              type="range"
+              id="temperature"
+              min="0.1"
+              max="1.0"
+              step="0.2"
+              bind:value={temperature}
+              class="input input-sm input-primary"
+            />
+            <span class="text-sm ml-2">{temperature}</span>
           </div>
+        </div>
 
-          <h2 class="text-2xl font-bold mb-4">Chat History</h2>
-          <button class="btn btn-primary btn-sm mb-5" on:click={createNewChat}>
-            <i class="fas fa-plus" /> New Chat
-          </button>
-          {#if $userChats.length > 0}
-            <!-- <div class="overflow-y-auto h-96"> -->
-            {#each $userChats as chat}
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
-              <!-- svelte-ignore a11y-mouse-events-have-key-events -->
-              <div
-                class="flex items-center justify-between mb-2 chat-box"
-                style="{$highlightedChatIDs.includes(chat.chat_id)
-                  ? 'background-color: #f2f2f242'
-                  : ''} "
-                on:click={async () => await selectChat(chat.chat_id)}
+        <h2 class="text-2xl font-bold mb-4">Chat History</h2>
+        <button class="btn btn-primary btn-sm mb-5" on:click={createNewChat}>
+          <i class="fas fa-plus" /> New Chat
+        </button>
+        {#if $userChats.length > 0}
+          <!-- <div class="overflow-y-auto h-96"> -->
+          {#each $userChats as chat}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <!-- svelte-ignore a11y-mouse-events-have-key-events -->
+            <div
+              class="flex items-center justify-between mb-2 chat-box"
+              style="{$highlightedChatIDs.includes(chat.chat_id)
+                ? 'background-color: #f2f2f242'
+                : ''} "
+              on:click={async () => await selectChat(chat.chat_id)}
+              on:mouseover={() => {
+                if (
+                  $highlightedChatIDs.length < 2 &&
+                  !$highlightedChatIDs.includes(chat.chat_id)
+                )
+                  $highlightedChatIDs = [...$highlightedChatIDs, chat.chat_id];
+              }}
+              on:mouseout={() => {
+                if (chat.chat_id !== selectedThreadId) {
+                  $highlightedChatIDs = $highlightedChatIDs.filter(
+                    (id) => id !== chat.chat_id
+                  );
+                }
+              }}
+            >
+              {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
+                <span class="chat-title">
+                  {chat.firstUserMessage}
+                </span>
+              {:else}
+                <span class="chat-title">New Chat</span>
+              {/if}
+              <!-- Add a button to delete the chat -->
+              <button
+                class="delete-button"
+                on:click={() => deleteChat(chat.chat_id)}
                 on:mouseover={() => {
                   if (
                     $highlightedChatIDs.length < 2 &&
@@ -555,95 +592,66 @@
                     );
                   }
                 }}
+                style="visibility: {$highlightedChatIDs.includes(chat.chat_id)
+                  ? 'visible'
+                  : 'hidden'}"
               >
-                {#if chat.firstUserMessage !== "" && chat.firstUserMessage !== null && chat.firstUserMessage !== undefined}
-                  <span class="chat-title">
-                    {chat.firstUserMessage}
-                  </span>
-                {:else}
-                  <span class="chat-title">New Chat</span>
-                {/if}
-                <!-- Add a button to delete the chat -->
-                <button
-                  class="delete-button"
-                  on:click={() => deleteChat(chat.chat_id)}
-                  on:mouseover={() => {
-                    if (
-                      $highlightedChatIDs.length < 2 &&
-                      !$highlightedChatIDs.includes(chat.chat_id)
-                    )
-                      $highlightedChatIDs = [
-                        ...$highlightedChatIDs,
-                        chat.chat_id,
-                      ];
-                  }}
-                  on:mouseout={() => {
-                    if (chat.chat_id !== selectedThreadId) {
-                      $highlightedChatIDs = $highlightedChatIDs.filter(
-                        (id) => id !== chat.chat_id
-                      );
-                    }
-                  }}
-                  style="visibility: {$highlightedChatIDs.includes(chat.chat_id)
-                    ? 'visible'
-                    : 'hidden'}"
-                >
-                  <i class="fas fa-trash-alt" style="color: white" />
-                </button>
-              </div>
-            {/each}
-          {:else}
-            <!-- Loading indicator when there are no chats -->
-            <div class="text-left text-gray-500 mt-5 ml-2">
-              <i class="fas fa-spinner fa-spin mr-3"></i> Loading Chats...
+                <i class="fas fa-trash-alt" style="color: white" />
+              </button>
             </div>
-          {/if}
-        </div>
+          {/each}
+        {:else}
+          <!-- Loading indicator when there are no chats -->
+          <div class="text-left text-gray-500 mt-5 ml-2">
+            <i class="fas fa-spinner fa-spin mr-3"></i> Loading Chats...
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <div
+      class={`main-content ${
+        isChatHistorySidebarOpen ? "main-content-shifted" : ""
+      }`}
+    >
+      {#if isChatHistorySidebarOpen && screenWidth >= 300 && screenWidth <= 768}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="overlay" on:click={toggleSidebar}></div>
+      {/if}
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <div class="sidebar-toggle-btn" on:click={toggleSidebar}>
+        {#if isChatHistorySidebarOpen}
+          <i class="chevron fas fa-chevron-left text-2xl" />
+        {:else}
+          <i class="chevron fas fa-chevron-right text-2xl" />
+        {/if}
       </div>
 
+      <NavBar />
+      <!-- Middle Section - Chat Messages -->
       <div
-        class={`main-content ${
+        class={`items-center w-full h-full chat-container  ${
           isChatHistorySidebarOpen ? "main-content-shifted" : ""
         }`}
       >
-        {#if isChatHistorySidebarOpen && screenWidth >= 300 && screenWidth <= 768}
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <!-- svelte-ignore a11y-no-static-element-interactions -->
-          <div class="overlay" on:click={toggleSidebar}></div>
-        {/if}
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="sidebar-toggle-btn" on:click={toggleSidebar}>
-          {#if isChatHistorySidebarOpen}
-            <i class="chevron fas fa-chevron-left text-2xl" />
-          {:else}
-            <i class="chevron fas fa-chevron-right text-2xl" />
-          {/if}
-        </div>
-
-        <NavBar />
-        <!-- Middle Section - Chat Messages -->
-        <div
-          class={`items-center w-full h-full chat-container  ${
-            isChatHistorySidebarOpen ? "main-content-shifted" : ""
-          }`}
-        >
-          <div class="mb-8">
-            <!-- <h2 class="text-2xl font-semibold mt-4">
+        <div class="mb-8">
+          <!-- <h2 class="text-2xl font-semibold mt-4">
               Custom Instructions (overrides everything else):
             </h2> -->
-            <h2 class="text-l sm:text-xl font-semibold mt-4">
-              Custom Instructions (overrides everything else)
-            </h2>
+          <h2 class="text-l sm:text-xl font-semibold mt-4">
+            Custom Instructions (overrides everything else)
+          </h2>
 
-            <textarea
-              rows="1"
-              bind:value={instructions}
-              id="instructions"
-              class="textarea textarea-accent resize-none w-full mt-2 mb-5"
-              placeholder="Enter personalized instructions... (overriding all other instructions)"
-            ></textarea>
-            <!-- <button
+          <textarea
+            rows="1"
+            bind:value={instructions}
+            id="instructions"
+            class="textarea textarea-accent resize-none w-full mt-2 mb-5"
+            placeholder="Enter personalized instructions... (overriding all other instructions)"
+          ></textarea>
+          <!-- <button
               class="btn btn-primary mb-4"
               on:click={() => setInstructions()}
               disabled={selectedThreadId === null}
@@ -651,110 +659,112 @@
               Set Instructions for this thread
             </button> -->
 
-            <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
-              Chat Messages
-            </h1>
-            <script
-              src="https://polyfill.io/v3/polyfill.min.js?features=es6"
-            ></script>
-            <script
-              id="MathJax-script"
-              async
-              src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-            ></script>
+          <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
+          <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
+            Chat Messages
+          </h1>
+          <script
+            src="https://polyfill.io/v3/polyfill.min.js?features=es6"
+          ></script>
+          <script
+            id="MathJax-script"
+            async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+          ></script>
 
-            {#if selectedThreadId === null || selectedThreadId === undefined}
-              <div style="overflow-y: auto; height:{screenHeight * 0.58}px">
-                <p class="text-gray-500 h-[80%]">
-                  Select a chat from the history to view messages.
-                </p>
-              </div>
-            {:else}
-              <div
-                id="messages-section"
-                style="overflow-y: auto; height:{screenHeight * 0.58}px"
-              >
-                {#each $selectedChatMessages as message, index (index)}
-                  <div
-                    class="chat-message"
-                    class:is-user-message={message.is_user_message}
-                  >
-                    {#if message.is_user_message}
-                      <pre>{message.message}</pre>
-                    {:else}
-                      {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
-                        {#if type === "markdown"}
-                          {@html content}
-                        {/if}
-                        {#if type === "latex"}
-                          {@html content}
-                        {/if}
-                        {#if type === "code"}
-                          <div class="code-block-container">
-                            <div class="code-block-banner">
-                              {language}
-                              <button
-                                class="copy-button"
-                                on:click={() => copyToClipboard(originalCode)}
-                                >{copyButtonText}</button
-                              >
-                            </div>
-                            <pre class="code-block">{@html content}</pre>
-                          </div>
-                        {/if}
-                        {#if message.annotations !== undefined}
-                          <div class="file-citations">
-                            {#each message.annotations as annotation}
-                              <!-- {#if annotation.file_citation} -->
-                              <p class="file-citation">
-                                <span class="annotation-index"
-                                  >{annotation.text}</span
-                                >
-                                Lines {annotation.start_index} to {annotation.end_index}
-                                "{annotation.file_citation.quote.substring(
-                                  0,
-                                  50
-                                )}..." from {message.file_names[
-                                  message.annotations.indexOf(annotation)
-                                ]}
-                              </p>
-                              <!-- {/if} -->
-                            {/each}
-                          </div>
-                        {/if}
-                      {/each}
-                    {/if}
-                  </div>
-                {/each}
-              </div>
-            {/if}
-          </div>
-
-          <!-- Ask AI Box Section -->
-          <div class="mt-4">
-            <div class="flex items-center">
-              <div class="flex-1 form-control mb-4">
-                <textarea
-                  bind:value={question}
-                  id="question"
-                  class="textarea textarea-primary"
-                  placeholder="Ask James anything..."
-                  disabled={selectedThreadId === null || loading}
-                  on:keydown={handleTextareaKeyDown}
-                />
-              </div>
-              <!-- Combined button to send user message and get AI response -->
-              <button
-                class="btn btn-primary ml-2"
-                on:click={() => sendUserMessageAndAIResponse()}
-                disabled={selectedThreadId === null ||
-                  loading ||
-                  question === ""}
-              >
-                Ask James
-              </button>
+          {#if selectedThreadId === null || selectedThreadId === undefined}
+            <div style="overflow-y: auto; height:{screenHeight * 0.58}px">
+              <p class="text-gray-500 h-[80%]">
+                Select a chat from the history to view messages.
+              </p>
             </div>
+          {:else}
+            <div
+              id="messages-section"
+              style="overflow-y: auto; height:{screenHeight * 0.58}px"
+            >
+              {#each $selectedChatMessages as message, index (index)}
+                <div
+                  class="chat-message"
+                  class:is-user-message={message.is_user_message}
+                >
+                  {#if message.is_user_message}
+                    <pre>{message.message}</pre>
+                  {:else}
+                    {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
+                      {#if type === "markdown"}
+                        {@html content}
+                      {/if}
+                      {#if type === "latex"}
+                        {@html content}
+                      {/if}
+                      {#if type === "code"}
+                        <div class="code-block-container">
+                          <div class="code-block-banner">
+                            {language}
+                            <button
+                              class="copy-button"
+                              on:click={() => copyToClipboard(originalCode)}
+                              >{copyButtonText}</button
+                            >
+                          </div>
+                          <pre class="code-block">{@html content}</pre>
+                        </div>
+                      {/if}
+                      {#if message.annotations !== undefined}
+                        <div class="file-citations">
+                          {#each message.annotations as annotation}
+                            <!-- {#if annotation.file_citation} -->
+                            <p class="file-citation">
+                              <span class="annotation-index"
+                                >{annotation.text}</span
+                              >
+                              Lines {annotation.start_index} to {annotation.end_index}
+                              "{annotation.file_citation.quote.substring(
+                                0,
+                                50
+                              )}..." from {message.file_names[
+                                message.annotations.indexOf(annotation)
+                              ]}
+                            </p>
+                            <!-- {/if} -->
+                          {/each}
+                        </div>
+                      {/if}
+                    {/each}
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+        <!-- Ask AI Box Section -->
+        <div
+          class="mt-4 mr-30 ml-30"
+          style="position: relative; width: 100%; height: 100px"
+        >
+          <div class="flex items-bottom">
+            <div class="flex-1 form-control" style="position: relative;">
+              <textarea
+                bind:value={question}
+                id="question"
+                rows="1"
+                class="textarea textarea-primary resizeable-textarea"
+                placeholder="Ask James anything..."
+                disabled={selectedThreadId === null || loading}
+                on:input={handleTextareaInput}
+                on:keydown={handleTextareaKeyDown}
+              />
+            </div>
+            <!-- Combined button to send user message and get AI response -->
+            <button
+              class="btn btn-primary ml-2"
+              on:click={() => sendUserMessageAndAIResponse()}
+              disabled={selectedThreadId === null || loading || question === ""}
+            >
+              Ask James
+            </button>
           </div>
         </div>
       </div>
@@ -767,10 +777,19 @@
         </div>
       {/if}
     </div>
-  </div>
-</AuthCheck>
+  </div></AuthCheck
+>
 
 <style>
+  .resizeable-textarea {
+    position: absolute;
+    bottom: 0;
+    z-index: 2;
+    width: 100%;
+    height: 1em; /* Initial height as one line */
+    overflow-y: auto; /* Enable vertical scrolling if content exceeds height */
+    resize: none; /* Disable manual resizing */
+  }
   .chat-box {
     position: relative;
     border-radius: 8px;
@@ -883,7 +902,7 @@
     background-color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    z-index: 2;
+    z-index: 5;
   }
 
   .sidebar-toggle-btn .chevron {
@@ -914,7 +933,7 @@
     /* background-color: #2d3748; */
     transition: transform 0.3s ease-in-out;
     transform: translateX(-100%);
-    z-index: 1;
+    z-index: 3;
   }
 
   .sidebar-open {
@@ -934,7 +953,7 @@
     background-color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    z-index: 2;
+    z-index: 5;
   }
 
   .sidebar-toggle-btn .chevron {
@@ -951,7 +970,7 @@
       top: 0;
       left: 0;
       height: 100%;
-      z-index: 1;
+      z-index: 3;
     }
 
     .sidebar-open {

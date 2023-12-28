@@ -1,4 +1,7 @@
-<nav class="w-full bg-gray-900 rounded-lg mb-6 shadow-md">
+<nav
+  class="w-full bg-gray-900 rounded-lg mb-6 shadow-md"
+  style="position: relative;"
+>
   <div
     class="navbar p-4 bg-gray-900 text-white rounded-t-lg rounded-b-lg border border-white"
   >
