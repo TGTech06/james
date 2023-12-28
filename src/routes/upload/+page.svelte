@@ -101,6 +101,8 @@
 
   async function uploadText() {
     uploading = true;
+    successMessage = "";
+    error = "";
     try {
       if (textTitle === "" || textContent === "") {
         error = "Please enter both title and content to upload text.";
