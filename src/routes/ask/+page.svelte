@@ -505,8 +505,8 @@
 />
 <AuthCheck>
   <div
-    class="min-w-screen bg-gray-900 text-white p-4"
-    style="height: 100vh; overflow: hidden; position: fixed; top: 0; left: 0; width: 100%;"
+    class=" bg-gray-900 text-white h-full w-full flex"
+    style=" postion: relative;  overflow: hidden;"
   >
     <!-- Combined Sidebar - Chat History and Configuration -->
     <div
@@ -610,7 +610,7 @@
     </div>
 
     <div
-      class={`main-content ${
+      class={`w-full main-content ${
         isChatHistorySidebarOpen ? "main-content-shifted" : ""
       }`}
     >
@@ -630,6 +630,7 @@
       </div>
 
       <NavBar />
+
       <!-- Middle Section - Chat Messages -->
       <div
         class={`items-center w-full h-full chat-container  ${
@@ -663,15 +664,6 @@
           <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
             Chat Messages
           </h1>
-          <script
-            src="https://polyfill.io/v3/polyfill.min.js?features=es6"
-          ></script>
-          <script
-            id="MathJax-script"
-            async
-            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-          ></script>
-
           {#if selectedThreadId === null || selectedThreadId === undefined}
             <div style="overflow-y: auto; height:{screenHeight * 0.58}px">
               <p class="text-gray-500 h-[80%]">
@@ -777,8 +769,8 @@
         </div>
       {/if}
     </div>
-  </div></AuthCheck
->
+  </div>
+</AuthCheck>
 
 <style>
   .resizeable-textarea {
