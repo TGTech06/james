@@ -786,30 +786,39 @@
                 disabled={selectedThreadId === null || loading}
                 on:input={handleTextareaInput}
                 on:keydown={handleTextareaKeyDown}
-              />
+                style="padding-right: 65px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;"
+              ></textarea>
+              <button
+                class="add-attachment-btn"
+                style="position: absolute; right: 55px; bottom: 12px; z-index: 3; "
+              >
+                <i class="fa fa-paperclip"></i>
+              </button>
+              <button
+                class="send-msg-btn"
+                style="position: absolute; right: 15px; bottom: 12px; z-index: 3; "
+                on:click={() => sendUserMessageAndAIResponse()}
+                disabled={selectedThreadId === null ||
+                  loading ||
+                  question === ""}
+              >
+                <i class="fa fa-paper-plane"></i>
+              </button>
             </div>
-            <!-- Combined button to send user message and get AI response -->
-            <button
-              class="btn btn-primary ml-2"
-              on:click={() => sendUserMessageAndAIResponse()}
-              disabled={selectedThreadId === null || loading || question === ""}
-            >
-              Ask James
-            </button>
           </div>
         </div>
-      </div>
 
-      {#if errorText !== null}
-        <div
-          class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
-        >
-          {errorText}
-        </div>
-      {/if}
+        {#if errorText !== null}
+          <div
+            class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
+          >
+            {errorText}
+          </div>
+        {/if}
+      </div>
     </div>
-  </div>
-</AuthCheck>
+  </div></AuthCheck
+>
 
 <style>
   .resizeable-textarea {
