@@ -529,8 +529,8 @@
 />
 <AuthCheck>
   <div
-    class=" bg-gray-900 text-white h-full w-full flex p-4"
-    style=" postion: relative;  overflow: hidden;"
+    class=" bg-gray-900 text-white w-full flex p-4"
+    style=" postion: relative;  overflow: scroll; height:100vh"
   >
     <!-- Combined Sidebar - Chat History and Configuration -->
     <div
@@ -634,9 +634,11 @@
     </div>
 
     <div
-      class={`w-full main-content ${
+      class={`w-full h-full main-content ${
         isChatHistorySidebarOpen ? "main-content-shifted" : ""
       }`}
+      style="display: flex;
+      flex-direction: column;"
     >
       {#if isChatHistorySidebarOpen && screenWidth >= 300 && screenWidth <= 768}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -657,26 +659,27 @@
 
       <!-- Middle Section - Chat Messages -->
       <div
-        class={`items-center w-full h-full chat-container  ${
+        class={`w-full h-full chat-container  ${
           isChatHistorySidebarOpen ? "main-content-shifted" : ""
         }`}
+        style="display: flex;
+      flex-direction: column; flex: 1;"
       >
-        <div class="mb-8">
-          <!-- <h2 class="text-2xl font-semibold mt-4">
+        <!-- <h2 class="text-2xl font-semibold mt-4">
               Custom Instructions (overrides everything else):
             </h2> -->
-          <h2 class="text-l sm:text-xl font-semibold mt-4">
-            Custom Instructions (overrides everything else)
-          </h2>
+        <h2 class="text-l sm:text-xl font-semibold mt-4">
+          Custom Instructions (overrides everything else)
+        </h2>
 
-          <textarea
-            rows="1"
-            bind:value={instructions}
-            id="instructions"
-            class="textarea textarea-accent resize-none w-full mt-2 mb-5"
-            placeholder="Enter personalized instructions... (overriding all other instructions)"
-          ></textarea>
-          <!-- <button
+        <textarea
+          rows="1"
+          bind:value={instructions}
+          id="instructions"
+          class="textarea textarea-accent resize-none w-full mt-2 mb-5"
+          placeholder="Enter personalized instructions... (overriding all other instructions)"
+        ></textarea>
+        <!-- <button
               class="btn btn-primary mb-4"
               on:click={() => setInstructions()}
               disabled={selectedThreadId === null}
@@ -684,28 +687,31 @@
               Set Instructions for this thread
             </button> -->
 
-          <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
-          <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
-            Chat Messages
-          </h1>
-          {#if selectedThreadId === null || selectedThreadId === undefined}
-            <div style="overflow-y: auto; height:{screenHeight * 0.58}px">
-              <p class="text-gray-500 h-[80%]">
-                Select a chat from the history to view messages.
-              </p>
-            </div>
-          {:else}
-            <div
-              id="messages-section"
-              style="overflow-y: auto; height:{screenHeight * 0.58}px"
-            >
+        <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
+          Chat Messages
+        </h1>
+        {#if selectedThreadId === null || selectedThreadId === undefined}
+          <div style="overflow-y: auto; flex: 1; height: 100%; width:100%">
+            <p class="text-gray-500 h-[80%]">
+              Select a chat from the history to view messages.
+            </p>
+          </div>
+        {:else}
+          <div
+            id="messages-section"
+            style="overflow: auto; flex: 1; height: 100%; width:100%; resize: none;"
+          >
+            <div style="height: 10px; width:100%">
               {#each $selectedChatMessages as message, index (index)}
                 <div
-                  class="chat-message text-wrap"
+                  class="chat-message"
+                  style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%"
                   class:is-user-message={message.is_user_message}
                 >
                   {#if message.is_user_message}
-                    <pre class="text-wrap">{message.message}</pre>
+                    <pre
+                      style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%">{message.message}</pre>
                   {:else}
                     {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
                       {#if type === "markdown"}
@@ -715,8 +721,14 @@
                         {@html content}
                       {/if}
                       {#if type === "code"}
-                        <div class="code-block-container">
-                          <div class="code-block-banner">
+                        <div
+                          class="code-block-container"
+                          style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%"
+                        >
+                          <div
+                            class="code-block-banner"
+                            style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%"
+                          >
                             {language}
                             <button
                               class="copy-button"
@@ -724,7 +736,9 @@
                               >{copyButtonText}</button
                             >
                           </div>
-                          <pre class="code-block">{@html content}</pre>
+                          <pre
+                            class="code-block"
+                            style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%">{@html content}</pre>
                         </div>
                       {/if}
                       {#if message.annotations !== undefined}
@@ -753,8 +767,8 @@
               {/each}
               <div id="spacing"></div>
             </div>
-          {/if}
-        </div>
+          </div>
+        {/if}
 
         <!-- Ask AI Box Section -->
         <div
@@ -947,6 +961,7 @@
     left: 0;
     height: 100%;
     width: 300px;
+    overflow: scroll;
     /* background-color: #2d3748; */
     transition: transform 0.3s ease-in-out;
     transform: translateX(-100%);
