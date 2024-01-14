@@ -1,23 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createClient } from "@supabase/supabase-js";
   import NavBar from "$lib/NavBar.svelte";
   import { supabaseClient } from "$lib/supabase.js";
-  // Initialize the Supabase client and other variables
-  // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
-  // const supabase_key =
-  //   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxZmFuZGN4Y2V6dGVidHB3enhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkzNzI0NzUsImV4cCI6MjAwNDk0ODQ3NX0.MXs4u_1XMM-foNe08LLYHQLENjmwTF3jqUmNXCSbOU4";
-  // const openai_api_key = "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";
-  // const openAIApiKey = "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";
-  // const huggingfacehub_api_token = "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";
   /**
    * @type {null}
    */
   let supabase;
-  let vector;
-  let embeddings;
-
-  let retrievedText = "";
   let userLoggedIn = false;
   async function signOutUser() {
     const { error } = await supabase.auth.signOut();
@@ -27,30 +15,7 @@
       window.location.reload();
     }
   }
-
-  // async function getAIResponse() {
-  //   let response = await chatWithDoc(
-  //     PUBLIC_HUGGINGFACE_API_KEY,
-  //     vector,
-  //     model,
-  //     temperature,
-  //     question
-  //   );
-
-  //   const displayTextContainer = document.getElementById(
-  //     "displayTextContainer"
-  //   );
-
-  //   // Set the content of the div element to the retrieved text
-  //   displayTextContainer.textContent = response;
-  // }
-
   const getSessionData = async () => {
-    // const supabaseClient = createClient(
-    //   PUBLIC_SUPABASE_URL,
-    //   PUBLIC_SUPABASE_KEY
-    // );
-
     const {
       data: { session },
       error,
@@ -71,12 +36,6 @@
 
   onMount(() => {
     getSessionData();
-    // if (data.session) {
-    //   console.log(data.session.data.session);
-    // }
-    // Initialize the Supabase client
-    // @ts-ignore
-    // supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   });
 </script>
 

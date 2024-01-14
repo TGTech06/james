@@ -2,7 +2,6 @@ import { getHtml, convertHtmlToTxt } from "./loaders/html";
 // import { _upload_file } from "../routes/api/+server";
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
 import { createClient } from "@supabase/supabase-js";
-import { OpenAI } from "openai";
 
 const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 let userID;
