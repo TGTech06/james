@@ -2,34 +2,33 @@
   // Import necessary functions from your existing script
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
-  import { onMount, onDestroy } from "svelte";
-  import { createClient } from "@supabase/supabase-js";
+  import { onMount } from "svelte";
   import { writable } from "svelte/store";
-  import {
-    PUBLIC_SUPABASE_KEY,
-    PUBLIC_SUPABASE_URL,
-    PUBLIC_OPENAI_API_KEY,
-  } from "$env/static/public";
-  import { OpenAI } from "openai";
   import hljs from "highlight.js";
   import "highlight.js/styles/panda-syntax-dark.css"; // choose a style that fits your app
   import katex from "katex";
   import "katex/dist/katex.min.css";
   import { marked } from "marked";
+  import { supabaseClient } from "$lib/supabase.js";
+  import { getDocuments } from "$lib/brain";
 
-  const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-  let vector;
-  let embeddings;
-  let model = "tiiuae/falcon-7b-instruct";
   let temperature = 0.2;
   let question = "";
   let loading = false;
   let errorText = null;
-  let client;
   let instructions = "";
   let copyButtonText = "Copy Code";
+  let assistantId = "";
+  let userId = "";
+  let addedFileIds = [];
+  let addedFileNames = [];
+  let allFiles = [];
+  let isProcessing = false;
   let screenWidth = window.innerWidth;
   let screenHeight = window.innerHeight;
+  let errorMessage = "";
+  let successMessage = "";
+  let statusMessage = "";
   const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
@@ -41,7 +40,8 @@
   async function createNewChat() {
     // Check if the first chat in the list is not an empty chat
     if ($userChats.length === 0) {
-      let thread = await client.beta.threads.create();
+      // let thread = await client.beta.threads.create();
+      let thread = await createThread();
       const userId = await getCurrentUserId();
       await supabaseClient.from("chats").upsert([
         {
@@ -63,7 +63,8 @@
         $userChats[0].firstUserMessage !== null &&
         $userChats[0].firstUserMessage !== undefined;
       if (isFirstChatNotEmpty) {
-        let thread = await client.beta.threads.create();
+        // let thread = await client.beta.threads.create();
+        let thread = await createThread();
         const userId = await getCurrentUserId();
         await supabaseClient.from("chats").upsert([
           {
@@ -86,11 +87,21 @@
     }
   }
 
+  async function createThread() {
+    let jsonThread = await fetch("/api/ask/createThread", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    let thread = await jsonThread.json();
+    return thread;
+  }
+
   async function getFirstUserMessage(threadID) {
     try {
-      // Get messages from the OpenAI thread
-      let response = await client.beta.threads.messages.list(threadID);
-      // console.log("response", response);
+      //let response = await client.beta.threads.messages.list(threadID);
+      let response = await getMessagesFromThread(threadID);
       // Find the first user message
       for (const message of response.data.reverse()) {
         if (
@@ -111,9 +122,7 @@
       return "";
     }
   }
-
   // Function to load user chats with the first user message
-
   async function loadUserChats() {
     const userId = await getCurrentUserId();
 
@@ -150,16 +159,23 @@
     }
   }
 
+  async function getMessagesFromThread(threadID) {
+    let jsonResponse = await fetch("/api/ask/getMessagesFromThread", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        threadID: threadID,
+      }),
+    });
+    let response = await jsonResponse.json();
+    return response;
+  }
   async function loadChatMessages(threadID) {
-    // console.log("threadID = ", threadID);
-    // selectedChatId = chatId; // Update the selected chat ID
-    // threadID = "thread_jIBWQaQk9MFLMwPJy2wEWlDj";
     try {
-      // Get messages from the OpenAI thread
-      let response = await client.beta.threads.messages.list(threadID);
-      // console.log("response", response);
-
-      // Display AI response messages on the screen
+      // let response = await client.beta.threads.messages.list(threadID);
+      let response = await getMessagesFromThread(threadID);
       let messages = [];
       for (const message of response.data) {
         if (
@@ -201,12 +217,10 @@
       // Handle error as needed
     }
   }
-
   // Function to load AI response for a chat
   async function sendUserMessageAndAIResponse() {
     if (loading) return; // Prevent sending the message if a previous message is still being sent
     loading = true;
-    const userId = await getCurrentUserId();
     await getAIResponse(userId);
     loading = false;
     question = "";
@@ -233,38 +247,39 @@
 
   async function getAIResponse(userId) {
     try {
-      let client = new OpenAI({
-        apiKey: PUBLIC_OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true,
+      let sendMessage = await fetch("/api/ask/sendMessage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selectedThreadId: selectedThreadId,
+          question: question,
+        }),
       });
 
-      // Send user message to the OpenAI thread
-      let userMessage = await client.beta.threads.messages.create(
-        selectedThreadId,
-        {
-          role: "user",
-          content: question,
-        }
-      );
       await loadChatMessages(selectedThreadId);
       scrollToBottom();
-      // Get Assistant ID
-      let assistantId = await getAssistantID(userId);
 
-      // Run the OpenAI thread
-
-      let run = await client.beta.threads.runs.create(
-        selectedThreadId, // threadId
-        {
-          assistant_id: assistantId,
+      // let run = await client.beta.threads.runs.create(
+      //   selectedThreadId, // threadId
+      //   {
+      //     assistant_id: assistantId,
+      //     instructions: instructions,
+      //   }
+      // );
+      let jsonRun = await fetch("/api/ask/runThread", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selectedThreadId: selectedThreadId,
+          assistantId: assistantId,
           instructions: instructions,
-          // instructions:
-          //   "Please address the user as Jane Doe. The user has a premium account.",
-        }
-        // {
-        //   maxTokens: 10,
-        // }
-      );
+        }),
+      });
+      let run = await jsonRun.json();
 
       // Check the status of the run instead of using a fixed timeout
       while (
@@ -274,7 +289,18 @@
       ) {
         // Wait for a short interval before checking again
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        run = await client.beta.threads.runs.retrieve(selectedThreadId, run.id);
+        // run = await client.beta.threads.runs.retrieve(selectedThreadId, run.id);
+        jsonRun = await fetch("/api/ask/retrieveRun", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            selectedThreadId: selectedThreadId,
+            runID: run.id,
+          }),
+        });
+        run = await jsonRun.json();
         console.log("new run status", run.status);
       }
 
@@ -356,9 +382,17 @@
   async function retrieveFileName(fileId) {
     try {
       // Use the OpenAI API client to retrieve file details
-      const fileDetails = await client.files.retrieve(fileId);
-      // console.log("file details", fileDetails);
-      // Extract the file name from the file details
+      // const fileDetails = await client.files.retrieve(fileId);
+      let jsonfileDetails = await fetch("/api/ask/retrieveFileDetails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId: fileId,
+        }),
+      });
+      let fileDetails = await jsonfileDetails.json();
       const fileName = fileDetails.filename;
       return fileName;
     } catch (error) {
@@ -368,15 +402,40 @@
     }
   }
 
+  async function getFileNames(fileIds) {
+    let fileNames = [];
+    for (const fileId of fileIds) {
+      let fileName = await retrieveFileName(fileId);
+      fileNames.push(fileName);
+    }
+    return fileNames;
+  }
+
   onMount(async () => {
     // Fetch and load user chats on component mount
-    client = new OpenAI({
-      apiKey: PUBLIC_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
+    try {
+      userId = await getCurrentUserId();
+      assistantId = await getAssistantID(userId);
+      await loadUserChats();
+      await createNewChat();
+      // const addedFiles = await client.beta.assistants.files.list(assistantId);
+      const addedFiles = await getCurrentFilesFromAssistant();
+      addedFileIds = addedFiles.data.map((file) => file.id);
+      addedFileNames = await getFileNames(addedFileIds);
+      document
+        .getElementById("popupContainer")
+        .addEventListener("click", function (event) {
+          event.stopPropagation(); // Prevent the click event from propagating to the overlay
+        });
 
-    await loadUserChats();
-    await createNewChat();
+      document
+        .getElementById("popupOverlay")
+        .addEventListener("click", function () {
+          closePopup();
+        });
+    } catch (e) {
+      console.log(e);
+    }
 
     // instructions = await getInstructions();
   });
@@ -408,13 +467,6 @@
   function toggleSidebar() {
     isChatHistorySidebarOpen = !isChatHistorySidebarOpen;
   }
-
-  // let messages = [
-  //   "This is some **bold** text.",
-  //   "```javascript\nconsole.log('Hello, world!');\n```",
-  //   "This is another paragraph. ```python\nprint('Hello from Python!')\n```",
-  //   "Hi ",
-  // ];
 
   function replaceMathDelimiters(inputString) {
     // Use regular expression to replace all occurrences of \[ and \] with $$ and \( and \) with $$
@@ -498,6 +550,173 @@
   //   )}px`;
   // }
 
+  // function handleTextareaInput() {
+  //   const textarea = document.getElementById("question");
+  //   textarea.style.height = "auto";
+  //   textarea.style.height = `${Math.min(
+  //     textarea.scrollHeight,
+  //     5 * parseFloat(getComputedStyle(textarea).lineHeight)
+  //   )}px`;
+
+  //   // Get height difference
+  //   const origHeight = 400; // original height
+  //   const newHeight = textarea.style.height.replace("px", "");
+  //   const heightDiff = parseInt(newHeight) - origHeight;
+  //   // Update messages section height
+  //   const spacing = document.getElementById("spacing");
+  //   spacing.style.height = `${heightDiff}px`;
+  // }
+
+  // function handleTextareaBlur() {
+  //   // Reset heights when focus lost
+  //   console.log("blur");
+  //   const messages = document.getElementById("spacing");
+  //   messages.style.height = "400px";
+  // }
+
+  async function addFiles() {
+    await updateUI();
+    showPopup();
+  }
+
+  function closePopup() {
+    const popupContainer = document.getElementById("popupOverlay");
+    popupContainer.style.display = "none";
+  }
+
+  function showPopup() {
+    const popupContainer = document.getElementById("popupOverlay");
+    popupContainer.style.display = "flex";
+  }
+
+  async function getCurrentFilesFromAssistant() {
+    let currentFilesResponse = await fetch(
+      "/api/ask/retrieveFilesFromAssistant",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistantId: assistantId, // Replace with your actual assistant ID
+        }),
+      }
+    );
+    let currentFiles = await currentFilesResponse.json();
+    return currentFiles;
+  }
+
+  async function addFileToAssistant(fileId, filename) {
+    if (isProcessing) return;
+
+    try {
+      isProcessing = true;
+      displayStatusMessage(`Adding "${filename}" to this chat...`);
+      //gets the current files
+      let currentFiles = await getCurrentFilesFromAssistant();
+      let file_ids = currentFiles.data.map((file) => file.id);
+      file_ids.push(fileId);
+
+      // await client.beta.assistants.update(assistantId, {
+      //   file_ids: file_ids,
+      // });
+      //const addedFiles = await client.beta.assistants.files.list(assistantId);
+
+      //does the update and returns the new list of files
+      const addFilesResponse = await fetch("/api/ask/updateAssistantFiles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistantId: assistantId, // Replace with your actual assistant ID
+          files: file_ids,
+        }),
+      });
+      const addedFiles = await addFilesResponse.json();
+      // console.log("addedFiles", addedFiles);
+      addedFileIds = addedFiles.data.map((file) => file.id);
+      addedFileNames = await getFileNames(addedFileIds);
+
+      displaySuccessMessage(`File "${filename}" added to this chat.`);
+    } catch (error) {
+      displayErrorMessage(
+        `Error adding "${filename}" to this chat: ${error.message}`
+      );
+    } finally {
+      isProcessing = false;
+      await updateUI();
+    }
+  }
+
+  async function removeFileFromAssistant(fileId, filename) {
+    if (isProcessing) return;
+    try {
+      isProcessing = true;
+      displayStatusMessage(`Removing "${filename}" from this chat...`);
+
+      // let currentFiles = await client.beta.assistants.files.list(assistantId);
+      let currentFiles = await getCurrentFilesFromAssistant();
+      let file_ids = currentFiles.data
+        .map((file) => file.id)
+        .filter((id) => id !== fileId);
+
+      // await client.beta.assistants.update(assistantId, {
+      //   file_ids: file_ids,
+      // });
+      // const addedFiles = await client.beta.assistants.files.list(assistantId);
+
+      //does the update and returns the new list of files
+      const addFilesResponse = await fetch("/api/ask/updateAssistantFiles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistantId: assistantId,
+          files: file_ids,
+        }),
+      });
+      const addedFiles = await addFilesResponse.json();
+      addedFileIds = addedFiles.data.map((file) => file.id);
+      addedFileNames = await getFileNames(addedFileIds);
+
+      displaySuccessMessage(
+        `File "${filename}" has been removed from this chat.`
+      );
+    } catch (error) {
+      displayErrorMessage(
+        `Error removing "${filename}" from this chat: ${error.message}`
+      );
+    } finally {
+      isProcessing = false;
+      await updateUI();
+    }
+  }
+
+  function displaySuccessMessage(message) {
+    successMessage = message;
+    errorMessage = "";
+    statusMessage = "";
+  }
+  function displayErrorMessage(message) {
+    errorMessage = message;
+    successMessage = "";
+    statusMessage = "";
+  }
+  function displayStatusMessage(message) {
+    statusMessage = message;
+    errorMessage = "";
+    successMessage = "";
+  }
+  async function updateUI() {
+    // allFiles = [];
+    // const addedFIles = getDocuments();
+    allFiles = await getDocuments(supabaseClient, userId);
+  }
+
+  let textareaRows = 1;
+
   function handleTextareaInput() {
     const textarea = document.getElementById("question");
     textarea.style.height = "auto";
@@ -507,20 +726,19 @@
     )}px`;
 
     // Get height difference
-    const origHeight = 46; // original height
+    const origHeight = 400; // original height
     const newHeight = textarea.style.height.replace("px", "");
     const heightDiff = parseInt(newHeight) - origHeight;
     // Update messages section height
     const spacing = document.getElementById("spacing");
     spacing.style.height = `${heightDiff}px`;
-  }
 
-  // function handleTextareaBlur() {
-  //   // Reset heights when focus lost
-  //   console.log("blur");
-  //   const messages = document.getElementById("spacing");
-  //   messages.style.height = "400px";
-  // }
+    // Manually set rows
+    const newRows = Math.ceil(
+      textarea.scrollHeight / parseFloat(getComputedStyle(textarea).lineHeight)
+    );
+    textareaRows = newRows;
+  }
 </script>
 
 <link
@@ -665,6 +883,93 @@
         style="display: flex;
       flex-direction: column; flex: 1;"
       >
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div
+          id="popupOverlay"
+          class="popup-overlay"
+          on:click={() => closePopup()}
+        >
+          <div id="popupContainer" class="dark-mode-popup-container">
+            <button class="close-btn" on:click={() => closePopup()}
+              >&times;</button
+            >
+            <div style="padding-left: 20px">
+              <h2 class="popup-title">Your Uploaded Files</h2>
+              {#if statusMessage !== "" || successMessage !== "" || errorMessage !== ""}
+                <div
+                  style="margin-bottom: 10px; font-size: 16px; padding: 5px; text-align: center; border-radius: 8px; font-weight:700"
+                >
+                  <div id="statusMessage" style="color: white;">
+                    {statusMessage}
+                  </div>
+                  <div id="successMessage" style="color: green;">
+                    {successMessage}
+                  </div>
+                  <div id="errorMessage" style="color: red;">
+                    {errorMessage}
+                  </div>
+                </div>
+              {/if}
+              <ul id="fileList" class="file-list">
+                {#each allFiles as file}
+                  <li style="margin-bottom: 10px">
+                    <div class="file-info">
+                      <span>{file.filename}</span>
+                      <button
+                        class="btn btn-square"
+                        on:click={() => {
+                          if (addedFileIds.includes(file.id)) {
+                            removeFileFromAssistant(file.id, file.filename);
+                          } else {
+                            addFileToAssistant(file.id, file.filename);
+                          }
+                        }}
+                      >
+                        {#if addedFileIds.includes(file.id)}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="red"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        {:else}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="green"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 6v12M6 12h12"
+                            />
+                          </svg>
+                        {/if}
+                      </button>
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+              <button
+                class="btn btn-primary"
+                on:click={() => (window.location.href = "/upload")}
+                >Upload More Files</button
+              >
+            </div>
+          </div>
+        </div>
         <!-- <h2 class="text-2xl font-semibold mt-4">
               Custom Instructions (overrides everything else):
             </h2> -->
@@ -771,43 +1076,137 @@
         {/if}
 
         <!-- Ask AI Box Section -->
-        <div
-          class="mt-4 mr-30 ml-30"
-          style="position: relative; width: 100%; height: 100px"
-        >
+        <!-- <div class="mt-4 mx-30" style="position: relative; width: 100%;">
           <div class="flex items-bottom">
             <div class="flex-1 form-control" style="position: relative;">
               <textarea
                 bind:value={question}
                 id="question"
-                rows="1"
                 class="textarea textarea-primary resizeable-textarea"
                 placeholder="Ask James anything..."
                 disabled={selectedThreadId === null || loading}
                 on:input={handleTextareaInput}
                 on:keydown={handleTextareaKeyDown}
-                style="padding-right: 65px; padding-left: 10px; padding-top: 10px; padding-bottom: 10px;"
+                style="padding-right: 100px; padding-left: 10px; padding-top: 10px; max-height: 200px; overflow-y: auto;"
               ></textarea>
-              <button
-                class="add-attachment-btn"
-                style="position: absolute; right: 55px; bottom: 12px; z-index: 3; "
+              {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
+                <div class="file-box m-2">
+                  {#each addedFileNames as filename, index (index)}
+                    <div
+                      class="bg-gray-800 rounded-lg flex items-center relative mr-2 ml-2 mb-1 mt-1"
+                      style="overflow-x: visible; white-space: nowrap;"
+                    >
+                      <p class="text-sm text-white m-2">{filename}</p>
+                      <button
+                        class="remove-file-btn bg-red-500 absolute top-0 right-0 transform"
+                        on:click={() =>
+                          removeFileFromAssistant(
+                            addedFileIds[index],
+                            filename
+                          )}
+                      >
+                        <i
+                          class="fa fa-times absolute top-0.5 right-1 transform text-white text-xs"
+                        ></i>
+                      </button>
+                    </div>
+                  {/each}
+                </div>
+              {:else}
+                <div class="no-files-text">
+                  You have no files in this conversation. Click the paperclip to
+                  add files.
+                </div>
+              {/if}
+              <div
+                class="button-container"
+                style="position: absolute; right: 15px; z-index: 3; bottom: 64px; display: flex; gap: 10px;"
               >
-                <i class="fa fa-paperclip"></i>
-              </button>
-              <button
-                class="send-msg-btn"
-                style="position: absolute; right: 15px; bottom: 12px; z-index: 3; "
-                on:click={() => sendUserMessageAndAIResponse()}
-                disabled={selectedThreadId === null ||
-                  loading ||
-                  question === ""}
+                <button class="add-attachment-btn" on:click={() => addFiles()}>
+                  <i class="fa fa-paperclip"></i>
+                </button>
+                <button
+                  class="send-msg-btn"
+                  on:click={() => sendUserMessageAndAIResponse()}
+                  disabled={selectedThreadId === null ||
+                    loading ||
+                    question === ""}
+                >
+                  <i class="fa fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div> -->
+        <div class="mt-4 mx-30" style="position: relative; width: 100%;">
+          <div class="flex items-bottom">
+            <div class="flex-1 form-control" style="position: relative;">
+              <textarea
+                bind:value={question}
+                id="question"
+                class="textarea textarea-primary resizeable-textarea"
+                placeholder="Ask James anything..."
+                disabled={selectedThreadId === null || loading}
+                on:input={handleTextareaInput}
+                on:keydown={handleTextareaKeyDown}
+                style="padding-right: 100px; padding-left: 10px; padding-top: 10px; max-height: 200px; overflow-y: auto;"
+              ></textarea>
+
+              {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
+                <div
+                  class="file-box mt-2"
+                  style="position: relative; left: 0; right: 0; z-index: 3;"
+                >
+                  {#each addedFileNames as filename, index (index)}
+                    <div
+                      class="bg-gray-800 rounded-lg flex items-center relative mr-2 ml-2 mb-1 mt-1"
+                      style="overflow-x: visible; white-space: nowrap;"
+                    >
+                      <p class="text-sm text-white m-2">{filename}</p>
+                      <button
+                        class="remove-file-btn bg-red-500 absolute top-0 right-0 transform"
+                        on:click={() =>
+                          removeFileFromAssistant(
+                            addedFileIds[index],
+                            filename
+                          )}
+                      >
+                        <i
+                          class="fa fa-times absolute top-0.5 right-1 transform text-white text-xs"
+                        ></i>
+                      </button>
+                    </div>
+                  {/each}
+                </div>
+              {:else}
+                <div
+                  class="no-files-text"
+                  style="position: relative; left: 5px; top: 5px; z-index: 3;"
+                >
+                  You have no files in this conversation. Click the paperclip to
+                  add files.
+                </div>
+              {/if}
+              <div
+                class="button-container"
+                style="position: absolute; right: 15px; z-index: 3; display: flex; gap: 10px;"
               >
-                <i class="fa fa-paper-plane"></i>
-              </button>
+                <button class="add-attachment-btn" on:click={() => addFiles()}>
+                  <i class="fa fa-paperclip"></i>
+                </button>
+                <button
+                  class="send-msg-btn"
+                  on:click={() => sendUserMessageAndAIResponse()}
+                  disabled={selectedThreadId === null ||
+                    loading ||
+                    question === ""}
+                >
+                  <i class="fa fa-paper-plane"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-
         {#if errorText !== null}
           <div
             class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
@@ -817,19 +1216,43 @@
         {/if}
       </div>
     </div>
-  </div></AuthCheck
->
+  </div>
+</AuthCheck>
 
 <style>
   .resizeable-textarea {
-    position: absolute;
-    bottom: 0;
+    position: relative;
     z-index: 2;
     width: 100%;
-    height: "46px"; /* Initial height as one line */
-    overflow-y: auto; /* Enable vertical scrolling if content exceeds height */
-    resize: none; /* Disable manual resizing */
+    resize: none;
   }
+
+  .no-files-text {
+    position: relative;
+    bottom: 7px;
+    left: 10px;
+    z-index: 3;
+    padding: 5px;
+    /* background-color: #f0f0f0; Change to desired color */
+    border-radius: 5px;
+    font-size: 12px;
+    color: #7e7d7d; /* Change to desired color */
+  }
+
+  .button-container {
+    position: absolute;
+    display: flex;
+    justify-content: flex-end; /* Adjust alignment to the right */
+    right: 15px;
+    z-index: 3;
+    top: 15px; /* Adjusted to match the bottom spacing */
+  }
+
+  .add-attachment-btn,
+  .send-msg-btn {
+    margin-left: 5px; /* Adjusted margin for spacing */
+  }
+
   .chat-box {
     position: relative;
     border-radius: 8px;
@@ -839,6 +1262,95 @@
     padding-bottom: 2px;
     align-items: left;
   }
+
+  .file-box {
+    position: relative;
+    border-radius: 8px;
+    /* padding-left: 10px;
+    padding-right: 35px; */
+    padding-top: 2px;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    align-items: left;
+    display: flex;
+    bottom: 2px; /* Adjusted to leave space for buttons */
+    left: 0;
+    right: 0;
+    z-index: 3;
+  }
+
+  /* Adjust the positioning of the close button */
+  .remove-file-btn {
+    border-radius: 50%;
+    height: 15px;
+    width: 15px;
+  }
+
+  .close-btn {
+    border: none;
+    background: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+    font-size: 1.5em;
+  }
+
+  .popup-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 1em;
+  }
+
+  .popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+
+  .dark-mode-popup-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2c3e50;
+    color: white;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    padding-top: 5px;
+    padding-left: 12px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 2;
+  }
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .btn.btn-square {
+    border-radius: 4px;
+    padding: 10px;
+    color: green;
+  }
+
+  .file-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 5px;
+  }
+
   /* .chat-box:hover {
     background-color: #f2f2f242;
   } */

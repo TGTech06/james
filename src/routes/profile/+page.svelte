@@ -1,16 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { createClient } from "@supabase/supabase-js";
-  import {
-    PUBLIC_SUPABASE_KEY,
-    PUBLIC_SUPABASE_URL,
-    PUBLIC_OPENAI_API_KEY,
-  } from "$env/static/public";
-  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+  import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
   import { getDocuments, deleteDocument } from "$lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import NavBar from "$lib/NavBar.svelte";
-  import { get } from "svelte/store";
   import { goto } from "$app/navigation";
   import { OpenAI } from "openai";
   // Initialize the Supabase client and other variables
@@ -27,18 +21,12 @@
   let totalFileSize = 0;
   onMount(async () => {
     supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    let embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    openAIClient = new OpenAI({
-      apiKey: PUBLIC_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true,
-    });
     await getUserID();
     await getUserData();
     await createUserDataIfNotExists(userID);
     assistantId = await getAssistantID(userID);
     instructions = await getAssistantInstructions();
-    documents = await getDocuments(openAIClient, assistantId);
+    documents = await getDocuments(supabase, userID);
     calculateTotalFileSize();
   });
 
@@ -86,15 +74,18 @@
   }
 
   async function createNewAssistant() {
-    let assistant = openAIClient.beta.assistants.create({
-      name: userID,
-      instructions:
-        'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. Always cite your sources.',
-      model: "gpt-3.5-turbo-1106",
-      tools: [{ type: "retrieval" }],
+    const formData = new FormData();
+    formData.append("userID", userID);
+    const response = await fetch("/api/general/createAssistant", {
+      method: "POST",
+      body: formData,
     });
-    let assistantID = (await assistant).id;
-    return assistantID;
+    const assistantID = await response.text();
+    if (response.status === 200) {
+      return assistantID;
+    } else {
+      return null;
+    }
   }
 
   async function getUserID() {
@@ -122,16 +113,26 @@
   }
 
   async function customizeJames() {
-    // let instructions = document.querySelector("textarea").value;
-    let response = await openAIClient.beta.assistants.update(assistantId, {
-      instructions: instructions,
+    const formData = new FormData();
+    formData.append("instructions", instructions);
+    formData.append("assistantId", assistantId);
+    const response = await fetch("/api/general/customizeJames", {
+      method: "POST",
+      body: formData,
     });
-    console.log(response);
+    const message = await response.text();
+    // console.log(message);
   }
 
   async function getAssistantInstructions() {
-    let assistant = await openAIClient.beta.assistants.retrieve(assistantId);
-    return assistant.instructions;
+    const formData = new FormData();
+    formData.append("assistantId", assistantId);
+    const response = await fetch("/api/general/getAssistantInstructions", {
+      method: "POST",
+      body: formData,
+    });
+    const message = await response.text();
+    return message;
   }
 
   async function getUserData() {
@@ -165,6 +166,10 @@
 
       if (!data && userID != null && userID != "") {
         let assistantID = await createNewAssistant();
+        if (assistantID === null) {
+          console.error("Error creating assistant");
+          return "Error creating assistant";
+        }
         // User data doesn't exist; create a new row
         const { data: insertedData, error: insertError } = await supabase
           .from("user_data")
@@ -282,12 +287,12 @@
                     errorMessage = "";
                     let filename = document.filename;
                     let outcome = await deleteDocument(
-                      openAIClient,
-                      assistantId,
-                      document.id
+                      supabase,
+                      document.id,
+                      userID
                     );
                     if (outcome === "success") {
-                      documents = await getDocuments(openAIClient, assistantId);
+                      documents = await getDocuments(supabase, userID);
                       successMessage =
                         "Successfully deleted " + filename + " from your James";
                       calculateTotalFileSize();

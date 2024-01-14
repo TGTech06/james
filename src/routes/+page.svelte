@@ -1,51 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  // Add your imports here
-  // import {
-  //   file_uploader,
-  //   url_uploader,
-  // } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/files.js";
-  // import { chatWithDoc } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/question.js";
-  // import { brain } from "/Users/tommasogiovannini/VSCode Projects/james/src/lib/brain.js";
   import { createClient } from "@supabase/supabase-js";
-  import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-  import { SupabaseVectorStore } from "langchain/vectorstores/supabase";
-  import { writable } from "svelte/store";
-
-  import {
-    PUBLIC_SUPABASE_KEY,
-    PUBLIC_SUPABASE_URL,
-    PUBLIC_HUGGINGFACE_API_KEY,
-    PUBLIC_OPENAI_API_KEY,
-  } from "$env/static/public";
-  import AuthCheck from "$lib/AuthCheck.svelte";
-
   import NavBar from "$lib/NavBar.svelte";
-
-  //import { enhance, type SubmitFunction } from '$app/forms';
-
-  // import type { PageData } from "./$types";
-
-  /// export let data: PageData;
-
-  // const submitLogout: SubmitFunction = async ({ cancel }) => {
-  // 	const { error } = await supabaseClient.auth.signOut();
-  // 	if (error) {
-  // 		console.log(error);
-  // 	}
-  // 	cancel();
-  // };
-
-  let mode = writable("Add Knowledge");
-  let model = writable("tiiuae/falcon-7b-instruct");
-  let temperature = writable(0.2);
-  let chunkSize = writable(500);
-  let chunkOverlap = writable(0);
-
-  let files;
-  let url;
-  let question = "";
-
+  import { supabaseClient } from "$lib/supabase.js";
   // Initialize the Supabase client and other variables
   // const supabase_url = "https://jqfandcxceztebtpwzxd.supabase.co";
   // const supabase_key =
@@ -89,10 +46,10 @@
   // }
 
   const getSessionData = async () => {
-    const supabaseClient = createClient(
-      PUBLIC_SUPABASE_URL,
-      PUBLIC_SUPABASE_KEY
-    );
+    // const supabaseClient = createClient(
+    //   PUBLIC_SUPABASE_URL,
+    //   PUBLIC_SUPABASE_KEY
+    // );
 
     const {
       data: { session },
@@ -119,28 +76,8 @@
     // }
     // Initialize the Supabase client
     // @ts-ignore
-    supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    //   embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    //   vector = new SupabaseVectorStore(embeddings,  {
-    //   supabase,
-    //   tableName: "documents",
-    // });
-
-    const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    const openAIApiKey = PUBLIC_OPENAI_API_KEY;
-    embeddings = new OpenAIEmbeddings({ openAIApiKey });
-    // embeddings = new HuggingFaceInferenceEmbeddings({
-    //   apiKey: PUBLIC_HUGGINGFACE_API_KEY,
-    // });
-    vector = new SupabaseVectorStore(embeddings, {
-      client,
-      tableName: "documents",
-    });
-    // console.log(fetchRandomValue());
+    // supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
   });
-  async function upload(e: any) {
-    files = e.target.files[0];
-  }
 </script>
 
 <div class="flex flex-col min-h-screen bg-gray-900 text-white p-4">

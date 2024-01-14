@@ -1,33 +1,25 @@
 <script lang="ts">
   import { createClient } from "@supabase/supabase-js";
   import { goto } from "$app/navigation";
-  import {
-    PUBLIC_OPENAI_API_KEY,
-    PUBLIC_SUPABASE_KEY,
-    PUBLIC_SUPABASE_URL,
-  } from "$env/static/public";
-  const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-  import { OpenAI } from "openai";
+  import { supabaseClient } from "$lib/supabase.js";
+
   let errorMessage = "";
   let successMessage = "";
   let loggingIn = false;
 
-  async function createNewAssistant(userId) {
-    let openAIClient = new OpenAI({
-      apiKey: PUBLIC_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true,
+  async function createNewAssistant(userID) {
+    const formData = new FormData();
+    formData.append("userID", userID);
+    const response = await fetch("/api/general/createAssistant", {
+      method: "POST",
+      body: formData,
     });
-    let assistant = openAIClient.beta.assistants.create({
-      name: userId,
-      instructions:
-        'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. To ensure the students do not fail their exams you must not make up answers but always end your response with a new and original joke to lighten the mood about exams.',
-      model: "gpt-3.5-turbo-1106",
-      tools: [{ type: "retrieval" }],
-      // file_ids: [uploadResult.id],
-    });
-    let assistantID = (await assistant).id;
-    // console.log("assistantID", assistantID);
-    return assistantID;
+    const assistantID = await response.text();
+    if (response.status === 200) {
+      return assistantID;
+    } else {
+      return null;
+    }
   }
   async function createUserDataIfNotExists(userId) {
     try {
@@ -40,6 +32,10 @@
 
       if (!data && userId != null && userId != "") {
         let assistantID = await createNewAssistant(userId);
+        if (assistantID === null) {
+          console.error("Error creating assistant");
+          return "Error creating assistant";
+        }
         // User data doesn't exist; create a new row
         const { data: insertedData, error: insertError } = await supabaseClient
           .from("user_data")
