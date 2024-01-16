@@ -343,6 +343,7 @@
     $highlightedChatIDs = [chatId];
     await loadChatMessages(selectedThreadId);
     scrollToBottom();
+    await getFilesForAssistant(chatId);
   }
 
   async function deleteChat(chatId) {
@@ -411,6 +412,37 @@
     return fileNames;
   }
 
+  async function getFilesForAssistant(chatId) {
+    try {
+      addedFileIds = [];
+      addedFileNames = [];
+      let existingFileIds = await getFileIdsForChat(userId, chatId);
+      for (const fileId of existingFileIds) {
+        if (!addedFileIds.includes(fileId)) {
+          addedFileIds.push(fileId);
+        }
+      }
+      const addFilesResponse = await fetch("/api/ask/updateAssistantFiles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assistantId: assistantId, // Replace with your actual assistant ID
+          files: addedFileIds,
+        }),
+      });
+      const addedFiles = await addFilesResponse.json();
+      // console.log("addedFiles", addedFiles);
+      addedFileIds = addedFiles.data.map((file) => file.id);
+      addedFileNames = await getFileNames(addedFileIds);
+    } catch (e) {
+      addedFileIds = [];
+      addedFileNames = [];
+      console.log(e);
+    }
+  }
+
   onMount(async () => {
     // Fetch and load user chats on component mount
     try {
@@ -419,9 +451,10 @@
       await loadUserChats();
       await createNewChat();
       // const addedFiles = await client.beta.assistants.files.list(assistantId);
-      const addedFiles = await getCurrentFilesFromAssistant();
-      addedFileIds = addedFiles.data.map((file) => file.id);
-      addedFileNames = await getFileNames(addedFileIds);
+      await getFilesForAssistant(selectedThreadId);
+      // const addedFiles = await getCurrentFilesFromAssistant();
+      // addedFileIds = addedFiles.data.map((file) => file.id);
+      // addedFileNames = await getFileNames(addedFileIds);
       document
         .getElementById("popupContainer")
         .addEventListener("click", function (event) {
@@ -541,39 +574,6 @@
     }
   }
 
-  // function handleTextareaInput() {
-  //   const textarea = document.getElementById("question") as HTMLTextAreaElement;
-  //   textarea.style.height = "auto";
-  //   textarea.style.height = `${Math.min(
-  //     textarea.scrollHeight,
-  //     5 * parseFloat(getComputedStyle(textarea).lineHeight)
-  //   )}px`;
-  // }
-
-  // function handleTextareaInput() {
-  //   const textarea = document.getElementById("question");
-  //   textarea.style.height = "auto";
-  //   textarea.style.height = `${Math.min(
-  //     textarea.scrollHeight,
-  //     5 * parseFloat(getComputedStyle(textarea).lineHeight)
-  //   )}px`;
-
-  //   // Get height difference
-  //   const origHeight = 400; // original height
-  //   const newHeight = textarea.style.height.replace("px", "");
-  //   const heightDiff = parseInt(newHeight) - origHeight;
-  //   // Update messages section height
-  //   const spacing = document.getElementById("spacing");
-  //   spacing.style.height = `${heightDiff}px`;
-  // }
-
-  // function handleTextareaBlur() {
-  //   // Reset heights when focus lost
-  //   console.log("blur");
-  //   const messages = document.getElementById("spacing");
-  //   messages.style.height = "400px";
-  // }
-
   async function addFiles() {
     await updateUI();
     showPopup();
@@ -606,12 +606,60 @@
     return currentFiles;
   }
 
+  async function addFileToChat(userId, chatId, fileId) {
+    try {
+      // Get the current chat record
+      const existingFileIds = await getFileIdsForChat(userId, chatId);
+      existingFileIds.push(fileId);
+      const { data: updateData, error: updateError } = await supabaseClient
+        .from("chats")
+        .update({ file_ids: existingFileIds })
+        .eq("chat_id", chatId);
+      if (updateError) {
+        console.error("Error updating user data:", updateError);
+      }
+    } catch (error) {
+      console.error(`Error adding file to chat: ${error.message}`);
+    }
+  }
+  async function getFileIdsForChat(userId, chatId) {
+    try {
+      // Get the current chat record
+      const { data: currentChat } = await supabaseClient
+        .from("chats")
+        .select("file_ids")
+        .eq("user_id", userId)
+        .eq("chat_id", chatId)
+        .single();
+      const existingFileIds = currentChat ? currentChat.file_ids || [] : [];
+      return existingFileIds;
+    } catch (error) {
+      console.error(`Error getting file ids for chat: ${error.message}`);
+      return [];
+    }
+  }
+  async function removeFileFromChat(userId, chatId, fileId) {
+    try {
+      // Get the current chat record
+      const existingFileIds = await getFileIdsForChat(userId, chatId);
+      const updatedFileIds = existingFileIds.filter((id) => id !== fileId);
+      const { data: updateData, error: updateError } = await supabaseClient
+        .from("chats")
+        .update({ file_ids: updatedFileIds })
+        .eq("chat_id", chatId);
+      if (updateError) {
+        console.error("Error updating user data:", updateError);
+      }
+    } catch (error) {
+      console.error(`Error removing file from chat: ${error.message}`);
+    }
+  }
   async function addFileToAssistant(fileId, filename) {
     if (isProcessing) return;
-
     try {
       isProcessing = true;
       displayStatusMessage(`Adding "${filename}" to this chat...`);
+      await addFileToChat(userId, selectedThreadId, fileId);
       //gets the current files
       let currentFiles = await getCurrentFilesFromAssistant();
       let file_ids = currentFiles.data.map((file) => file.id);
@@ -654,7 +702,7 @@
     try {
       isProcessing = true;
       displayStatusMessage(`Removing "${filename}" from this chat...`);
-
+      await removeFileFromChat(userId, selectedThreadId, fileId);
       // let currentFiles = await client.beta.assistants.files.list(assistantId);
       let currentFiles = await getCurrentFilesFromAssistant();
       let file_ids = currentFiles.data
