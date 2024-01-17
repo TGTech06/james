@@ -1,9 +1,5 @@
 import { getHtml, convertHtmlToTxt } from "./loaders/html";
-// import { _upload_file } from "../routes/api/+server";
-import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
+import { supabaseClient } from "./supabase";
 let userID;
 export async function create_file_and_upload(title, text) {
   try {
@@ -34,8 +30,7 @@ export async function url_uploader(url) {
 
 async function getUserID() {
   try {
-    let supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
-    let user = await supabase.auth.getUser();
+    let user = await supabaseClient.auth.getUser();
     userID = await user.data.user.id;
     return userID;
   } catch (e) {

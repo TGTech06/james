@@ -23,6 +23,7 @@
   let addedFileIds = [];
   let addedFileNames = [];
   let allFiles = [];
+  let savedPrompts = [];
   let isProcessing = false;
   let screenWidth = window.innerWidth;
   let screenHeight = window.innerHeight;
@@ -339,11 +340,13 @@
   }
 
   async function selectChat(chatId) {
+    instructions = "";
     selectedThreadId = chatId;
     $highlightedChatIDs = [chatId];
     await loadChatMessages(selectedThreadId);
     scrollToBottom();
     await getFilesForAssistant(chatId);
+    instructions = await getCurrentInstructions(chatId);
   }
 
   async function deleteChat(chatId) {
@@ -442,7 +445,24 @@
       console.log(e);
     }
   }
-
+  async function getCurrentInstructions(chatId) {
+    try {
+      // Get the current chat record
+      const { data: currentChat } = await supabaseClient
+        .from("chats")
+        .select("current_instruction")
+        .eq("user_id", userId)
+        .eq("chat_id", chatId)
+        .single();
+      const instructions = currentChat
+        ? currentChat.current_instruction || null
+        : "";
+      return instructions;
+    } catch (error) {
+      console.error(`Error getting instructions for chat: ${error.message}`);
+      return "";
+    }
+  }
   onMount(async () => {
     // Fetch and load user chats on component mount
     try {
@@ -452,6 +472,8 @@
       await createNewChat();
       // const addedFiles = await client.beta.assistants.files.list(assistantId);
       await getFilesForAssistant(selectedThreadId);
+      instructions = await getCurrentInstructions(selectedThreadId);
+      savedPrompts = await getSavedPrompts(selectedThreadId);
       // const addedFiles = await getCurrentFilesFromAssistant();
       // addedFileIds = addedFiles.data.map((file) => file.id);
       // addedFileNames = await getFileNames(addedFileIds);
@@ -587,6 +609,61 @@
   function showPopup() {
     const popupContainer = document.getElementById("popupOverlay");
     popupContainer.style.display = "flex";
+  }
+  async function setInstructions(chatId) {
+    try {
+      if (savedPrompts.includes(instructions)) {
+        return;
+      }
+      const { data: updateData, error: updateError } = await supabaseClient
+        .from("chats")
+        .update({ current_instruction: instructions })
+        .eq("chat_id", chatId);
+      await addPromptToListOfSavedPrompts(chatId);
+      savedPrompts = await getSavedPrompts(chatId);
+      if (updateError) {
+        console.error("Error updating user data:", updateError);
+        return false;
+      } else {
+        return true;
+      }
+    } catch (error) {
+      console.error(`Error adding file to chat: ${error.message}`);
+      return false;
+    }
+  }
+
+  async function getSavedPrompts(chatId) {
+    try {
+      // Get the current chat record
+      const { data: currentChat } = await supabaseClient
+        .from("user_data")
+        .select("saved_prompts")
+        .eq("user_id", userId)
+        .single();
+      const savedPrompts = currentChat ? currentChat.saved_prompts || [] : [];
+      return savedPrompts;
+    } catch (error) {
+      console.error(`Error getting file ids for chat: ${error.message}`);
+      return [];
+    }
+  }
+
+  async function addPromptToListOfSavedPrompts(chatId) {
+    try {
+      // Get the current chat record
+      const existingPrompts = await getSavedPrompts(chatId);
+      existingPrompts.push(instructions);
+      const { data: updateData, error: updateError } = await supabaseClient
+        .from("user_data")
+        .update({ saved_prompts: existingPrompts })
+        .eq("user_id", userId);
+      if (updateError) {
+        console.error("Error updating user data:", updateError);
+      }
+    } catch (error) {
+      console.error(`Error adding file to chat: ${error.message}`);
+    }
   }
 
   async function getCurrentFilesFromAssistant() {
@@ -787,6 +864,30 @@
     );
     textareaRows = newRows;
   }
+
+  let menuOpen = false;
+
+  async function selectPrompt(prompt) {
+    instructions = prompt;
+    menuOpen = false;
+    document.removeEventListener("click", handleOutsideClick);
+    const { data: updateData, error: updateError } = await supabaseClient
+      .from("chats")
+      .update({ current_instruction: instructions })
+      .eq("chat_id", selectedThreadId);
+  }
+  const handleOutsideClick = (event) => {
+    const dropdown = document.getElementById("promptOptions");
+    const toggleButton = document.querySelector(".dropdown-toggle-btn");
+    if (
+      dropdown &&
+      !dropdown.contains(event.target) &&
+      !toggleButton.contains(event.target)
+    ) {
+      menuOpen = false;
+      document.removeEventListener("click", handleOutsideClick);
+    }
+  };
 </script>
 
 <link
@@ -1021,27 +1122,83 @@
         <!-- <h2 class="text-2xl font-semibold mt-4">
               Custom Instructions (overrides everything else):
             </h2> -->
-        <h2 class="text-l sm:text-xl font-semibold mt-4">
+
+        <h2 class="text-l sm:text-xl font-semibold mb-2">
           Custom Instructions (overrides everything else)
         </h2>
 
-        <textarea
-          rows="1"
-          bind:value={instructions}
-          id="instructions"
-          class="textarea textarea-accent resize-none w-full mt-2 mb-5"
-          placeholder="Enter personalized instructions... (overriding all other instructions)"
-        ></textarea>
-        <!-- <button
-              class="btn btn-primary mb-4"
-              on:click={() => setInstructions()}
+        <section class="relative">
+          <div class="textarea-wrapper relative flex">
+            <div class="textarea-container relative flex-grow">
+              <textarea
+                rows="1"
+                bind:value={instructions}
+                id="instructions"
+                class="textarea textarea-accent resize-none w-full"
+                placeholder="Enter personalized instructions... (overriding all other instructions)"
+              ></textarea>
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <div
+                class="dropdown-toggle-btn"
+                on:click={() => {
+                  if (menuOpen === true) {
+                    menuOpen = false;
+                    document.removeEventListener("click", handleOutsideClick);
+                  } else {
+                    menuOpen = true;
+                    setTimeout(() => {
+                      document.addEventListener("click", handleOutsideClick);
+                    }, 500);
+                  }
+                }}
+                aria-haspopup="true"
+                aria-controls="promptOptions"
+              >
+                {#if menuOpen}
+                  <i
+                    class="chevron fas fa-chevron-down text-l"
+                    style="color: #333;"
+                  />
+                {:else}
+                  <i
+                    class="chevron fas fa-chevron-left text-l"
+                    style="color: #333;"
+                  />
+                {/if}
+              </div>
+              {#if menuOpen && savedPrompts.length > 0}
+                <div
+                  id="promptOptions"
+                  class="dropdown-options dark-bg rounded w-full max-h-[40vh] overflow-auto"
+                >
+                  {#each savedPrompts as item}
+                    {#if item !== instructions}
+                      <!-- svelte-ignore a11y-click-events-have-key-events -->
+                      <!-- svelte-ignore a11y-no-static-element-interactions -->
+                      <div
+                        on:click={() => selectPrompt(item)}
+                        class="dropdown-item cursor-pointer"
+                      >
+                        {item}
+                      </div>
+                    {/if}
+                  {/each}
+                </div>
+              {/if}
+            </div>
+            <button
+              class="btn btn-primary ml-4"
+              on:click={() => setInstructions(selectedThreadId)}
               disabled={selectedThreadId === null}
             >
-              Set Instructions for this thread
-            </button> -->
+              Save
+            </button>
+          </div>
+        </section>
 
         <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8 mt-5">
           Chat Messages
         </h1>
         {#if selectedThreadId === null || selectedThreadId === undefined}
@@ -1123,69 +1280,7 @@
           </div>
         {/if}
 
-        <!-- Ask AI Box Section -->
-        <!-- <div class="mt-4 mx-30" style="position: relative; width: 100%;">
-          <div class="flex items-bottom">
-            <div class="flex-1 form-control" style="position: relative;">
-              <textarea
-                bind:value={question}
-                id="question"
-                class="textarea textarea-primary resizeable-textarea"
-                placeholder="Ask James anything..."
-                disabled={selectedThreadId === null || loading}
-                on:input={handleTextareaInput}
-                on:keydown={handleTextareaKeyDown}
-                style="padding-right: 100px; padding-left: 10px; padding-top: 10px; max-height: 200px; overflow-y: auto;"
-              ></textarea>
-              {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
-                <div class="file-box m-2">
-                  {#each addedFileNames as filename, index (index)}
-                    <div
-                      class="bg-gray-800 rounded-lg flex items-center relative mr-2 ml-2 mb-1 mt-1"
-                      style="overflow-x: visible; white-space: nowrap;"
-                    >
-                      <p class="text-sm text-white m-2">{filename}</p>
-                      <button
-                        class="remove-file-btn bg-red-500 absolute top-0 right-0 transform"
-                        on:click={() =>
-                          removeFileFromAssistant(
-                            addedFileIds[index],
-                            filename
-                          )}
-                      >
-                        <i
-                          class="fa fa-times absolute top-0.5 right-1 transform text-white text-xs"
-                        ></i>
-                      </button>
-                    </div>
-                  {/each}
-                </div>
-              {:else}
-                <div class="no-files-text">
-                  You have no files in this conversation. Click the paperclip to
-                  add files.
-                </div>
-              {/if}
-              <div
-                class="button-container"
-                style="position: absolute; right: 15px; z-index: 3; bottom: 64px; display: flex; gap: 10px;"
-              >
-                <button class="add-attachment-btn" on:click={() => addFiles()}>
-                  <i class="fa fa-paperclip"></i>
-                </button>
-                <button
-                  class="send-msg-btn"
-                  on:click={() => sendUserMessageAndAIResponse()}
-                  disabled={selectedThreadId === null ||
-                    loading ||
-                    question === ""}
-                >
-                  <i class="fa fa-paper-plane"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div> -->
+        <!-- Bottom Section - Textarea and Send Button -->
         <div class="mt-4 mx-30" style="position: relative; width: 100%;">
           <div class="flex items-bottom">
             <div class="flex-1 form-control" style="position: relative;">
@@ -1203,7 +1298,7 @@
               {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
                 <div
                   class="file-box mt-2"
-                  style="position: relative; left: 0; right: 0; z-index: 3;"
+                  style="position: relative; left: 0; right: 0; z-index: 2;"
                 >
                   {#each addedFileNames as filename, index (index)}
                     <div
@@ -1229,7 +1324,7 @@
               {:else}
                 <div
                   class="no-files-text"
-                  style="position: relative; left: 5px; top: 5px; z-index: 3;"
+                  style="position: relative; left: 5px; top: 5px; z-index: 2;"
                 >
                   You have no files in this conversation. Click the paperclip to
                   add files.
@@ -1237,7 +1332,7 @@
               {/if}
               <div
                 class="button-container"
-                style="position: absolute; right: 15px; z-index: 3; display: flex; gap: 10px;"
+                style="position: absolute; right: 15px; z-index: 2; display: flex; gap: 10px;"
               >
                 <button class="add-attachment-btn" on:click={() => addFiles()}>
                   <i class="fa fa-paperclip"></i>
@@ -1268,6 +1363,48 @@
 </AuthCheck>
 
 <style>
+  .textarea-container {
+    position: relative;
+    display: flex;
+  }
+
+  .dropdown-toggle-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .dropdown-options {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    width: 100%;
+    top: 110%;
+    right: 0;
+    background-color: #333; /* Dark mode background color */
+    /* border: 1px solid #ddd; */
+    z-index: 2;
+  }
+
+  .dropdown-item {
+    padding: 8px;
+    color: #fff; /* Text color for dark mode */
+    transition: background-color 0.3s;
+  }
+
+  .dropdown-item:hover {
+    background-color: #555; /* Darker color on hover */
+  }
   .resizeable-textarea {
     position: relative;
     z-index: 2;
