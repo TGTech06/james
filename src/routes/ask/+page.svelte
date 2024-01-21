@@ -171,6 +171,7 @@
       }),
     });
     let response = await jsonResponse.json();
+    // console.log("response", response);
     return response;
   }
   async function loadChatMessages(threadID) {
@@ -186,8 +187,8 @@
         ) {
           let annotations = message.content[0].text.annotations;
           // console.log("annotations", annotations);
-          // if (annotations !== undefined) {
-          //   //   console.log("file citation", annotations[0].file_citation);
+          // if (annotations !== undefined)  {
+          //   console.log("file citation", annotations[0].file_citation);
           // }
           let fileNames = [];
           for (const annotation of annotations) {
@@ -536,18 +537,22 @@
     message.split("```").forEach((segment, index) => {
       if (index % 2 === 0) {
         message = replaceMathDelimiters(message);
+        let messageWithMaths = "";
         message.split("$$").forEach((segment, index) => {
           if (index % 2 === 0) {
-            formattedMessage.push({
-              type: "markdown",
-              content: marked(segment),
-            });
+            messageWithMaths += segment;
           } else {
             const latex = katex.renderToString(segment, {
               throwOnError: false,
             });
-            formattedMessage.push({ type: "latex", content: latex });
+            messageWithMaths += latex;
+            // formattedMessage.push({ type: "latex", content: latex });
           }
+        });
+        let messageWithMarkdown = marked(messageWithMaths);
+        formattedMessage.push({
+          type: "markdown",
+          content: messageWithMarkdown,
         });
       } else {
         codeLanguage = segment.trim().split("\n")[0];
@@ -563,7 +568,6 @@
         });
       }
     });
-
     return formattedMessage;
   }
 
@@ -1225,10 +1229,7 @@
                   {:else}
                     {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
                       {#if type === "markdown"}
-                        {@html content}
-                      {/if}
-                      {#if type === "latex"}
-                        {@html content}
+                        <span>{@html content}</span>
                       {/if}
                       {#if type === "code"}
                         <div
@@ -1251,27 +1252,30 @@
                             style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%">{@html content}</pre>
                         </div>
                       {/if}
-                      {#if message.annotations !== undefined}
-                        <div class="file-citations">
-                          {#each message.annotations as annotation}
-                            <!-- {#if annotation.file_citation} -->
-                            <p class="file-citation">
-                              <span class="annotation-index"
-                                >{annotation.text}</span
-                              >
-                              Lines {annotation.start_index} to {annotation.end_index}
-                              "{annotation.file_citation.quote.substring(
-                                0,
-                                50
-                              )}..." from {message.file_names[
-                                message.annotations.indexOf(annotation)
-                              ]}
-                            </p>
-                            <!-- {/if} -->
-                          {/each}
-                        </div>
-                      {/if}
                     {/each}
+                    {#if message.annotations !== undefined}
+                      <div class="file-citations">
+                        {#each message.annotations as annotation}
+                          <!-- {#if annotation.file_citation} -->
+                          <p class="file-citation">
+                            <span class="annotation-index"
+                              >{annotation.text}</span
+                            >
+                            Lines {annotation.start_index} to {annotation.end_index}
+                          </p>
+                          <pre>
+                            "{annotation.file_citation.quote.substring(
+                              0,
+                              30
+                            )}..." from {message.file_names[
+                              message.annotations.indexOf(annotation)
+                            ]}
+                            </pre>
+
+                          <!-- {/if} -->
+                        {/each}
+                      </div>
+                    {/if}
                   {/if}
                 </div>
               {/each}
@@ -1608,6 +1612,7 @@
   .code-block-container {
     overflow-x: auto;
     margin-top: 10px;
+    margin-bottom: 10px;
   }
 
   .code-block-banner {
