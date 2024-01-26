@@ -30,6 +30,9 @@
   let errorMessage = "";
   let successMessage = "";
   let statusMessage = "";
+  let retrievalEnabled = true;
+  let codeInterpreterEnabled = false;
+
   const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
@@ -270,6 +273,8 @@
       //     instructions: instructions,
       //   }
       // );
+      console.log("retrievalEnabled", retrievalEnabled);
+      console.log("codeInterpreterEnabled", codeInterpreterEnabled);
       let jsonRun = await fetch("/api/ask/runThread", {
         method: "POST",
         headers: {
@@ -279,6 +284,8 @@
           selectedThreadId: selectedThreadId,
           assistantId: assistantId,
           instructions: instructions,
+          enableRetrieval: retrievalEnabled,
+          enableCodeInterpreter: codeInterpreterEnabled,
         }),
       });
       let run = await jsonRun.json();
@@ -1123,10 +1130,6 @@
             </div>
           </div>
         </div>
-        <!-- <h2 class="text-2xl font-semibold mt-4">
-              Custom Instructions (overrides everything else):
-            </h2> -->
-
         <h2 class="text-l sm:text-xl font-semibold mb-2">
           Custom Instructions (overrides everything else)
         </h2>
@@ -1285,7 +1288,34 @@
         {/if}
 
         <!-- Bottom Section - Textarea and Send Button -->
-        <div class="mt-4 mx-30" style="position: relative; width: 100%;">
+        <div class="flex flex-row">
+          <!-- Toggle 1 -->
+          <div class="form-control mr-5">
+            <label class="cursor-pointer label">
+              <span class="label-text mr-5">Retrieval</span>
+              <input
+                type="checkbox"
+                class="toggle toggle-sm toggle-accent"
+                on:click={() => (retrievalEnabled = !retrievalEnabled)}
+                checked={retrievalEnabled}
+              />
+            </label>
+          </div>
+          <!-- Toggle 2 -->
+          <div class="form-control">
+            <label class="cursor-pointer label">
+              <span class="label-text mr-5">Code Interpreter</span>
+              <input
+                type="checkbox"
+                class="toggle toggle-sm toggle-accent"
+                checked={codeInterpreterEnabled}
+                on:click={() =>
+                  (codeInterpreterEnabled = !codeInterpreterEnabled)}
+              />
+            </label>
+          </div>
+        </div>
+        <div class="mx-30" style="position: relative; width: 100%;">
           <div class="flex items-bottom">
             <div class="flex-1 form-control" style="position: relative;">
               <textarea
