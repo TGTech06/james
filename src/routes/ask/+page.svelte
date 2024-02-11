@@ -917,25 +917,82 @@
       }`}
     >
       <div class="overflow-y-auto">
-        <div class="w-full md:w-3/4 mt-14">
-          <div class="mb-4">
-            <label class="block text-lg font-semibold" for="temperature">
-              Temperature
-            </label>
-            <input
-              type="range"
-              id="temperature"
-              min="0.1"
-              max="1.0"
-              step="0.2"
-              bind:value={temperature}
-              class="input input-sm input-primary"
-            />
-            <span class="text-sm ml-2">{temperature}</span>
-          </div>
-        </div>
+        <h2 class="text-l sm:text-l font-semibold mr-3 mt-20 mb-4">
+          Custom Instructions:
+        </h2>
 
-        <h2 class="text-2xl font-bold mb-4">Chat History</h2>
+        <section class="relative">
+          <div class="textarea-wrapper relative flex">
+            <div class="textarea-container relative flex-grow">
+              <textarea
+                rows="3"
+                bind:value={instructions}
+                id="instructions"
+                class="textarea textarea-accent resize-none w-full"
+                placeholder="Enter personalized instructions..."
+                style="font-size: small;"
+              ></textarea>
+              <!-- svelte-ignore a11y-no-static-element-interactions -->
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <div
+                class="dropdown-toggle-btn"
+                on:click={() => {
+                  if (menuOpen === true) {
+                    menuOpen = false;
+                    document.removeEventListener("click", handleOutsideClick);
+                  } else {
+                    menuOpen = true;
+                    setTimeout(() => {
+                      document.addEventListener("click", handleOutsideClick);
+                    }, 500);
+                  }
+                }}
+                aria-haspopup="true"
+                aria-controls="promptOptions"
+              >
+                {#if menuOpen}
+                  <i
+                    class="chevron fas fa-chevron-down text-l"
+                    style="color: #333;"
+                  />
+                {:else}
+                  <i
+                    class="chevron fas fa-chevron-left text-l"
+                    style="color: #333;"
+                  />
+                {/if}
+              </div>
+              {#if menuOpen && savedPrompts.length > 0}
+                <div
+                  id="promptOptions"
+                  class="dropdown-options dark-bg rounded w-full max-h-[40vh] overflow-auto"
+                >
+                  {#each savedPrompts as item}
+                    {#if item !== instructions}
+                      <!-- svelte-ignore a11y-click-events-have-key-events -->
+                      <!-- svelte-ignore a11y-no-static-element-interactions -->
+                      <div
+                        on:click={() => selectPrompt(item)}
+                        class="dropdown-item cursor-pointer"
+                      >
+                        {item}
+                      </div>
+                    {/if}
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
+        </section>
+        <button
+          class="btn btn-primary btn-xs mt-3"
+          style=" font-size: xs; text-transform: none;"
+          on:click={() => setInstructions(selectedThreadId)}
+          disabled={selectedThreadId === null}
+        >
+          Save Changes
+        </button>
+        <h2 class="text-2xl font-bold mt-5 mb-4">Chat History</h2>
         <button class="btn btn-primary btn-sm mb-5" on:click={createNewChat}>
           <i class="fas fa-plus" /> New Chat
         </button>
@@ -1130,79 +1187,6 @@
             </div>
           </div>
         </div>
-        <h2 class="text-l sm:text-xl font-semibold mb-2">
-          Custom Instructions (overrides everything else)
-        </h2>
-
-        <section class="relative">
-          <div class="textarea-wrapper relative flex">
-            <div class="textarea-container relative flex-grow">
-              <textarea
-                rows="1"
-                bind:value={instructions}
-                id="instructions"
-                class="textarea textarea-accent resize-none w-full"
-                placeholder="Enter personalized instructions... (overriding all other instructions)"
-              ></textarea>
-              <!-- svelte-ignore a11y-no-static-element-interactions -->
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <div
-                class="dropdown-toggle-btn"
-                on:click={() => {
-                  if (menuOpen === true) {
-                    menuOpen = false;
-                    document.removeEventListener("click", handleOutsideClick);
-                  } else {
-                    menuOpen = true;
-                    setTimeout(() => {
-                      document.addEventListener("click", handleOutsideClick);
-                    }, 500);
-                  }
-                }}
-                aria-haspopup="true"
-                aria-controls="promptOptions"
-              >
-                {#if menuOpen}
-                  <i
-                    class="chevron fas fa-chevron-down text-l"
-                    style="color: #333;"
-                  />
-                {:else}
-                  <i
-                    class="chevron fas fa-chevron-left text-l"
-                    style="color: #333;"
-                  />
-                {/if}
-              </div>
-              {#if menuOpen && savedPrompts.length > 0}
-                <div
-                  id="promptOptions"
-                  class="dropdown-options dark-bg rounded w-full max-h-[40vh] overflow-auto"
-                >
-                  {#each savedPrompts as item}
-                    {#if item !== instructions}
-                      <!-- svelte-ignore a11y-click-events-have-key-events -->
-                      <!-- svelte-ignore a11y-no-static-element-interactions -->
-                      <div
-                        on:click={() => selectPrompt(item)}
-                        class="dropdown-item cursor-pointer"
-                      >
-                        {item}
-                      </div>
-                    {/if}
-                  {/each}
-                </div>
-              {/if}
-            </div>
-            <button
-              class="btn btn-primary ml-4"
-              on:click={() => setInstructions(selectedThreadId)}
-              disabled={selectedThreadId === null}
-            >
-              Save
-            </button>
-          </div>
-        </section>
 
         <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
         <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8 mt-5">
