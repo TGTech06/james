@@ -539,11 +539,14 @@
   }
 
   function formatMessage(message) {
+    console.log("message", message);
     let formattedMessage = [];
     let codeLanguage = "";
     message.split("```").forEach((segment, index) => {
+      console.log("segment", segment);
+      console.log("index", index);
       if (index % 2 === 0) {
-        message = replaceMathDelimiters(message);
+        message = replaceMathDelimiters(segment);
         let messageWithMaths = "";
         message.split("$$").forEach((segment, index) => {
           if (index % 2 === 0) {
@@ -557,6 +560,7 @@
           }
         });
         let messageWithMarkdown = marked(messageWithMaths);
+        console.log("messageWithMarkdown", messageWithMarkdown);
         formattedMessage.push({
           type: "markdown",
           content: messageWithMarkdown,
@@ -567,6 +571,7 @@
         const highlightedCode = hljs.highlightAuto(codeWithoutFirstLine, [
           codeLanguage,
         ]);
+        console.log("highlightedCode", highlightedCode);
         formattedMessage.push({
           type: "code",
           content: highlightedCode.value,
@@ -985,7 +990,7 @@
           </div>
         </section>
         <button
-          class="btn btn-primary btn-xs mt-3"
+          class="btn btn-primary btn-xs mt-2"
           style=" font-size: xs; text-transform: none;"
           on:click={() => setInstructions(selectedThreadId)}
           disabled={selectedThreadId === null}
@@ -1216,6 +1221,7 @@
                   {:else}
                     {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
                       {#if type === "markdown"}
+                        <div>Helo</div>
                         <span>{@html content}</span>
                       {/if}
                       {#if type === "code"}
