@@ -1211,7 +1211,7 @@
         <!-- <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8 mt-5">
           Chat Messages
         </h1> -->
-        {#if selectedThreadId === null || selectedThreadId === undefined}
+        {#if selectedThreadId === null || selectedThreadId === undefined || $selectedChatMessages.length === 0}
           <div
             style="overflow-y: auto; flex: 1; height: 100%; width:100%; display: flex; flex-direction: column; justify-content: center; align-items: center;"
           >
@@ -1243,7 +1243,6 @@
                   {:else}
                     {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
                       {#if type === "markdown"}
-                        <div>Helo</div>
                         <span>{@html content}</span>
                       {/if}
                       {#if type === "code"}
