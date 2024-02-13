@@ -912,12 +912,12 @@
 />
 <AuthCheck>
   <div
-    class=" bg-gray-900 text-white w-full flex p-4"
+    class="  bg-white text-black w-full flex p-4"
     style=" postion: relative;  overflow: scroll; height:100vh"
   >
     <!-- Combined Sidebar - Chat History and Configuration -->
     <div
-      class={`absolute left-0 top-0 bg-black rounded-lg p-4 sidebar ${
+      class={`absolute left-0 top-0 bg-black text-white rounded-lg rounded-tl-none rounded-bl-none p-4 sidebar ${
         isChatHistorySidebarOpen ? "sidebar-open" : ""
       }`}
     >
@@ -949,8 +949,9 @@
                 id="instructions"
                 class="textarea textarea-accent resize-none w-full"
                 placeholder="Enter personalized instructions..."
-                style="font-size: small;"
+                style="font-size: small; background-color: #222; outline: none;"
               ></textarea>
+
               <!-- svelte-ignore a11y-no-static-element-interactions -->
               <!-- svelte-ignore a11y-click-events-have-key-events -->
               <div
@@ -1005,14 +1006,18 @@
         </section>
         <button
           class="btn btn-primary btn-xs mt-2"
-          style=" font-size: xs; text-transform: none;"
+          style=" font-size: xs; text-transform: none; color: white;"
           on:click={() => setInstructions(selectedThreadId)}
           disabled={selectedThreadId === null}
         >
           Save Changes
         </button>
         <h2 class="text-2xl font-bold mt-5 mb-4">Chat History</h2>
-        <button class="btn btn-primary btn-sm mb-5" on:click={createNewChat}>
+        <button
+          class="btn btn-primary btn-sm mb-5"
+          style="color: white;"
+          on:click={createNewChat}
+        >
           <i class="fas fa-plus" /> New Chat
         </button>
         {#if $userChats.length > 0}
@@ -1301,9 +1306,10 @@
         <!-- Bottom Section - Textarea and Send Button -->
         <div class="flex flex-row">
           <!-- Toggle 1 -->
-          <div class="form-control mr-5">
+          <div class="form-control mr-5" style="background-color: white;">
             <label class="cursor-pointer label">
-              <span class="label-text mr-5">Retrieval</span>
+              <span class="label-text mr-5" style="color: #666;">Retrieval</span
+              >
               <input
                 type="checkbox"
                 class="toggle toggle-sm toggle-accent"
@@ -1313,9 +1319,11 @@
             </label>
           </div>
           <!-- Toggle 2 -->
-          <div class="form-control">
+          <div class="form-control" style="background-color: white;">
             <label class="cursor-pointer label">
-              <span class="label-text mr-5">Code Interpreter</span>
+              <span class="label-text mr-5" style="color: #666;"
+                >Code Interpreter</span
+              >
               <input
                 type="checkbox"
                 class="toggle toggle-sm toggle-accent"
@@ -1326,6 +1334,7 @@
             </label>
           </div>
         </div>
+
         <div class="mx-30" style="position: relative; width: 100%;">
           <div class="flex items-bottom">
             <div class="flex-1 form-control" style="position: relative;">
@@ -1337,7 +1346,7 @@
                 disabled={selectedThreadId === null || loading}
                 on:input={handleTextareaInput}
                 on:keydown={handleTextareaKeyDown}
-                style="padding-right: 100px; padding-left: 10px; padding-top: 10px; max-height: 200px; overflow-y: auto;"
+                style="padding-right: 100px; padding-left: 10px; padding-top: 10px; max-height: 200px; overflow-y: auto; background-color: white; border-color: #3498db; outline-color: #3498db;"
               ></textarea>
 
               {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
@@ -1651,7 +1660,10 @@
     border-radius: 0px 0px 8px 8px;
     overflow-x: auto;
     word-wrap: break-word; /* Add this line to prevent overflow of long words */
+    color: white; /* Set font color to white */
   }
+
+  /* Remaining CSS rules */
   .code-block-container {
     overflow-x: auto;
     margin-top: 10px;
@@ -1665,6 +1677,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: white;
   }
 
   .copy-button {
@@ -1705,7 +1718,7 @@
   }
 
   .chat-message.is-user-message {
-    color: #ffcc00; /* Customize the user message color */
+    color: #0000ff; /* Set blue color for user message */
   }
 
   /* Responsive layout using media queries */
