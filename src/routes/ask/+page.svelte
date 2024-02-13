@@ -922,7 +922,21 @@
       }`}
     >
       <div class="overflow-y-auto">
-        <h2 class="text-l sm:text-l font-semibold mr-3 mt-20 mb-4">
+        <div
+          style="overflow-y: auto; flex: 1; height: 100%; width:100%; display: flex; justify-content: space-between; align-items: center; padding-top: 60px;"
+        >
+          <a
+            href="/"
+            class="text-xl font-bold hover:text-blue-400 cursor-pointer"
+          >
+            🧠 James 🧠
+          </a>
+          <a href="/profile" class="text-xl hover:text-blue-400 cursor-pointer">
+            <i style="font-size:15px" class="fa">&#xf013;</i>
+          </a>
+        </div>
+
+        <h2 class="text-l sm:text-l font-semibold mt-5 mr-3 mb-4">
           Custom Instructions:
         </h2>
 
@@ -1095,7 +1109,7 @@
         {/if}
       </div>
 
-      <NavBar />
+      <!-- <NavBar /> -->
 
       <!-- Middle Section - Chat Messages -->
       <div
@@ -1194,12 +1208,20 @@
         </div>
 
         <!-- <h1 class="text-4xl font-bold mb-8">Chat Messages</h1> -->
-        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8 mt-5">
+        <!-- <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mb-8 mt-5">
           Chat Messages
-        </h1>
+        </h1> -->
         {#if selectedThreadId === null || selectedThreadId === undefined}
-          <div style="overflow-y: auto; flex: 1; height: 100%; width:100%">
-            <p class="text-gray-500 h-[80%]">
+          <div
+            style="overflow-y: auto; flex: 1; height: 100%; width:100%; display: flex; flex-direction: column; justify-content: center; align-items: center;"
+          >
+            <a
+              href="/"
+              class="text-4xl font-bold hover:text-blue-400 cursor-pointer"
+            >
+              🧠 James 🧠
+            </a>
+            <p class="text-sm text-gray-500 mt-2 text-center">
               Select a chat from the history to view messages.
             </p>
           </div>
@@ -1622,7 +1644,9 @@
     margin-top: 8px;
     font-size: small;
   }
+
   .code-block {
+    font-size: 14px;
     background-color: black;
     padding: 10px;
     border-radius: 0px 0px 8px 8px;
