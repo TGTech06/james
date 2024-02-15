@@ -543,8 +543,6 @@
     let formattedMessage = [];
     let codeLanguage = "";
     message.split("```").forEach((segment, index) => {
-      console.log("segment", segment);
-      console.log("index", index);
       if (index % 2 === 0) {
         message = replaceMathDelimiters(segment);
         let messageWithMaths = "";
@@ -560,7 +558,6 @@
           }
         });
         let messageWithMarkdown = marked(messageWithMaths);
-        console.log("messageWithMarkdown", messageWithMarkdown);
         formattedMessage.push({
           type: "markdown",
           content: messageWithMarkdown,
@@ -571,7 +568,6 @@
         const highlightedCode = hljs.highlightAuto(codeWithoutFirstLine, [
           codeLanguage,
         ]);
-        console.log("highlightedCode", highlightedCode);
         formattedMessage.push({
           type: "code",
           content: highlightedCode.value,
@@ -1222,7 +1218,7 @@
           >
             <a
               href="/"
-              class="text-4xl font-bold hover:text-blue-400 cursor-pointer"
+              class="text-4xl font-bold hover:text-blue-600 cursor-pointer"
             >
               🧠 James 🧠
             </a>
@@ -1405,9 +1401,7 @@
           </div>
         </div>
         {#if errorText !== null}
-          <div
-            class="absolute top-4 left-4 right-4 bg-red-600 text-white p-2 rounded"
-          >
+          <div class="absolute top-4 right-4 bg-red-600 text-white p-2 rounded">
             {errorText}
           </div>
         {/if}

@@ -4,7 +4,6 @@
   import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
   import { getDocuments, deleteDocument } from "$lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
-  import NavBar from "$lib/NavBar.svelte";
   import { goto } from "$app/navigation";
   import { OpenAI } from "openai";
   // Initialize the Supabase client and other variables
@@ -190,33 +189,14 @@
 </script>
 
 <AuthCheck>
-  <div class="flex flex-col min-h-screen min-w-full bg-gray-900 text-white p-4">
+  <div class="flex flex-col min-h-screen min-w-full bg-white text-black p-4">
+    <div class="flex flex-1 mt-2 ml-5 items-center">
+      <a href="/" class="text-xl font-bold hover:text-blue-600 cursor-pointer">
+        James
+      </a>
+      <a href="/ask" class="text-lg hover:text-blue-600 ml-10"> Chat </a>
+    </div>
     <div class="flex flex-col items-center">
-      <NavBar />
-      {#if userIsPremium}
-        <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
-          I'm proud of you, you made the right choice!
-        </h1>
-        <button
-          class="btn btn-primary w-full py-3 rounded-lg"
-          on:click={() =>
-            goto("https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288")}
-          >Manage Subscription</button
-        >
-        <href>
-          https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288
-        </href>
-      {/if}
-
-      {#if !userIsPremium}
-        <script async src="https://js.stripe.com/v3/buy-button.js">
-        </script>
-        <stripe-buy-button
-          buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
-          client-reference-id={userID}
-          publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
-        />
-      {/if}
       <div class="mt-6">
         {#if errorMessage}
           <div class="text-red-500 mb-4">{errorMessage}</div>
@@ -235,7 +215,7 @@
             class="btn btn-secondary btn-md flex items-center"
             on:click={() => signOutUser()}
           >
-            <i class="fas fa-sign-out-alt" />
+            <i class="fas fa-sign-out-alt text-white" />
           </button>
         </div>
         <div class="mt-8">
@@ -253,7 +233,10 @@
         </div>
 
         <!-- Button for customization -->
-        <button class="btn btn-primary mb-4" on:click={() => customizeJames()}>
+        <button
+          class="btn btn-primary mb-4 text-white"
+          on:click={() => customizeJames()}
+        >
           Customize James
         </button>
         <h2 class="text-2xl font-semibold mt-4 mb-4">
@@ -266,7 +249,7 @@
           <div class="space-y-4">
             {#each documents as document}
               <div
-                class="bg-gray-800 p-4 rounded-lg flex items-center justify-between"
+                class="border border-gray-600 p-4 rounded-lg flex items-center justify-between"
               >
                 <div>
                   <p class="text-lg">
@@ -309,6 +292,32 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="flex flex-col items-center">
+      {#if userIsPremium}
+        <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
+          I'm proud of you, you made the right choice!
+        </h1>
+        <button
+          class="btn btn-primary w-full py-3 rounded-lg"
+          on:click={() =>
+            goto("https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288")}
+          >Manage Subscription</button
+        >
+        <href>
+          https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288
+        </href>
+      {/if}
+
+      {#if !userIsPremium}
+        <script async src="https://js.stripe.com/v3/buy-button.js">
+        </script>
+        <stripe-buy-button
+          buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
+          client-reference-id={userID}
+          publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
+        />
+      {/if}
     </div>
   </div>
 </AuthCheck>
