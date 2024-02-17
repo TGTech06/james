@@ -32,7 +32,9 @@
   let statusMessage = "";
   let retrievalEnabled = true;
   let codeInterpreterEnabled = false;
-  let uploadPopupOpen = false;const highlightedChatIDs = writable([]);
+  let uploadPopupOpen = false;
+
+  const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
   // Store to hold selected chat messages
@@ -541,10 +543,7 @@
     console.log("message", message);
     let formattedMessage = [];
     let codeLanguage = "";
-<<<<<<< HEAD
-=======
     message = message.message;
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
     message.split("```").forEach((segment, index) => {
       if (index % 2 === 0) {
         message = replaceMathDelimiters(segment);
@@ -602,17 +601,9 @@
   }
 
   function handleTextareaKeyDown(event: KeyboardEvent) {
-<<<<<<< HEAD
-    // Check if the pressed key is Enter (key code 13)
     if (event.key === "Enter" && !event.shiftKey) {
       // Prevent the default behavior (e.g., adding a new line)
       event.preventDefault();
-      // Call the sendUserMessageAndAIResponse function
-=======
-    if (event.key === "Enter" && !event.shiftKey) {
-      // Prevent the default behavior (e.g., adding a new line)
-      event.preventDefault();
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
       sendUserMessageAndAIResponse();
     }
   }
@@ -909,8 +900,6 @@
       document.removeEventListener("click", handleOutsideClick);
     }
   };
-<<<<<<< HEAD
-=======
   async function download(fileId) {
     console.log("fileId", fileId);
     let fileResponse = await fetch("/api/ask/downloadFile", {
@@ -960,7 +949,6 @@
       setInstructions(selectedThreadId);
     }
   }
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
 </script>
 
 <link
@@ -974,11 +962,7 @@
   >
     <!-- Combined Sidebar - Chat History and Configuration -->
     <div
-<<<<<<< HEAD
-      class={`absolute left-0 top-0 bg-black text-white rounded-lg rounded-tl-none rounded-bl-none p-4 sidebar ${
-=======
       class={`absolute left-0 top-0 bg-black text-white p-4 sidebar ${
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
         isChatHistorySidebarOpen ? "sidebar-open" : ""
       }`}
     >
@@ -1007,10 +991,7 @@
               <textarea
                 rows="3"
                 bind:value={instructions}
-<<<<<<< HEAD
-=======
                 on:keydown={handleTextareaKeyDownInstructions}
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
                 id="instructions"
                 class="textarea textarea-accent resize-none w-full"
                 placeholder="Enter personalized instructions..."
@@ -1164,13 +1145,10 @@
       style="display: flex;
       flex-direction: column;"
     >
-<<<<<<< HEAD
-=======
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <!-- svelte-ignore a11y-click-events-have-key-events -->
 
       <Upload />
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
       {#if isChatHistorySidebarOpen && screenWidth >= 300 && screenWidth <= 768}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -1203,86 +1181,6 @@
           class="popup-overlay"
           on:click={() => closePopup()}
         >
-<<<<<<< HEAD
-          <div id="popupContainer" class="dark-mode-popup-container">
-            <button class="close-btn" on:click={() => closePopup()}
-              >&times;</button
-            >
-            <div style="padding-left: 20px">
-              <h2 class="popup-title">Your Uploaded Files</h2>
-              {#if statusMessage !== "" || successMessage !== "" || errorMessage !== ""}
-                <div
-                  style="margin-bottom: 10px; font-size: 16px; padding: 5px; text-align: center; border-radius: 8px; font-weight:700"
-                >
-                  <div id="statusMessage" style="color: white;">
-                    {statusMessage}
-                  </div>
-                  <div id="successMessage" style="color: green;">
-                    {successMessage}
-                  </div>
-                  <div id="errorMessage" style="color: red;">
-                    {errorMessage}
-                  </div>
-                </div>
-              {/if}
-              <ul id="fileList" class="file-list">
-                {#each allFiles as file}
-                  <li style="margin-bottom: 10px">
-                    <div class="file-info">
-                      <span>{file.filename}</span>
-                      <button
-                        class="btn btn-square"
-                        on:click={() => {
-                          if (addedFileIds.includes(file.id)) {
-                            removeFileFromAssistant(file.id, file.filename);
-                          } else {
-                            addFileToAssistant(file.id, file.filename);
-                          }
-                        }}
-                      >
-                        {#if addedFileIds.includes(file.id)}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="red"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        {:else}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="green"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M12 6v12M6 12h12"
-                            />
-                          </svg>
-                        {/if}
-                      </button>
-                    </div>
-                  </li>
-                {/each}
-              </ul>
-              <button
-                class="btn btn-primary"
-                on:click={() => (window.location.href = "/upload")}
-                >Upload More Files</button
-              >
-            </div>
-=======
           <div id="popupContainer" class="popup-container">
             <button
               class="close-btn text-black"
@@ -1371,7 +1269,6 @@
                 showUpload();
               }}>Upload More Files</button
             >
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
           </div>
         </div>
 
@@ -1409,11 +1306,7 @@
                     <pre
                       style="text-wrap:wrap; word-wrap:break-word; overflow-wrap:break-word; width:100%">{message.message}</pre>
                   {:else}
-<<<<<<< HEAD
-                    {#each formatMessage(message.message) as { type, content, language, originalCode }, i (i)}
-=======
                     {#each formatMessage(message) as { type, content, language, originalCode }, i (i)}
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
                       {#if type === "markdown"}
                         <span>{@html content}</span>
                       {/if}
@@ -1442,17 +1335,6 @@
                     {#if message.annotations !== undefined}
                       <div class="file-citations">
                         {#each message.annotations as annotation}
-<<<<<<< HEAD
-                          <!-- {#if annotation.file_citation} -->
-                          <p class="file-citation">
-                            <span class="annotation-index"
-                              >{annotation.text}</span
-                            >
-                            Lines {annotation.start_index} to {annotation.end_index}
-                          </p>
-                          <pre>
-                            "{annotation.file_citation.quote.substring(
-=======
                           {#if annotation.file_citation}
                             <p class="file-citation">
                               <span class="annotation-index"
@@ -1462,20 +1344,11 @@
                             </p>
                             <!-- <pre>
                   "{annotation.file_citation.quote.substring(
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
                               0,
                               30
                             )}..." from {message.file_names[
                               message.annotations.indexOf(annotation)
                             ]}
-<<<<<<< HEAD
-                            </pre>
-
-                          <!-- {/if} -->
-                        {/each}
-                      </div>
-                    {/if}
-=======
                   </pre> -->
                           {/if}
                           {#if annotation.file_path}
@@ -1511,7 +1384,6 @@
                         </ul>
                       </div>
                     {/if}
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
                   {/if}
                 </div>
               {/each}
@@ -1743,10 +1615,6 @@
   .close-btn {
     border: none;
     background: none;
-<<<<<<< HEAD
-    color: white;
-=======
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
     cursor: pointer;
     padding: 0;
     outline: none;
@@ -1767,17 +1635,6 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-<<<<<<< HEAD
-    z-index: 1;
-  }
-
-  .dark-mode-popup-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #2c3e50;
-=======
     z-index: 6;
   }
 
@@ -1788,7 +1645,6 @@
     transform: translate(-50%, -50%);
     /* background: #2c3e50; */
     background: white;
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
     color: white;
     padding-right: 20px;
     padding-bottom: 20px;
@@ -1799,10 +1655,6 @@
     max-width: 400px;
     width: 100%;
     max-height: 80vh;
-<<<<<<< HEAD
-    overflow-y: auto;
-    z-index: 2;
-=======
     overflow: hidden;
     z-index: 7;
     display: flex;
@@ -1817,18 +1669,13 @@
     padding: 10px;
     overflow-y: scroll;
     margin-bottom: 5px;
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
   }
 
   .file-info {
     display: flex;
-<<<<<<< HEAD
-    align-items: center;
-=======
     /* align-items: center; */
     word-wrap: break-word;
     white-space: normal;
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
     justify-content: space-between;
   }
 
@@ -1838,15 +1685,6 @@
     color: green;
   }
 
-<<<<<<< HEAD
-  .file-list {
-    list-style: none;
-    padding: 0;
-    margin-bottom: 5px;
-  }
-
-=======
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
   /* .chat-box:hover {
     background-color: #f2f2f242;
   } */
@@ -2054,10 +1892,7 @@
       height: 100%;
       background: rgba(0, 0, 0, 0.5); /* Semi-transparent black overlay */
       display: block;
-<<<<<<< HEAD
-=======
       z-index: 3;
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
     }
   }
 
@@ -2066,12 +1901,9 @@
     .main-content.main-content-shifted {
       margin-left: 300px; /* Set to 300px when the sidebar is open on screens larger than 800px */
     }
-<<<<<<< HEAD
-=======
     /* .popup-container.main-content-shifted {
       margin-left: 300px;
     } */
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
   }
   /* Additional global styles go here */
 </style>
