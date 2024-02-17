@@ -11,11 +11,7 @@
   import { marked } from "marked";
   import { supabaseClient } from "$lib/supabase.js";
   import { getDocuments } from "$lib/brain";
-<<<<<<< HEAD
-
-=======
   import Upload from "$lib/Upload.svelte";
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
   let temperature = 0.2;
   let question = "";
   let loading = false;
