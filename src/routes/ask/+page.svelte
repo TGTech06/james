@@ -32,12 +32,7 @@
   let statusMessage = "";
   let retrievalEnabled = true;
   let codeInterpreterEnabled = false;
-<<<<<<< HEAD
-=======
-  let uploadPopupOpen = false;
->>>>>>> a7c339f (Moved upload screen into chat screen, fixed formatting when adding files to chat, added logic for downloading files)
-
-  const highlightedChatIDs = writable([]);
+  let uploadPopupOpen = false;const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
   // Store to hold selected chat messages
