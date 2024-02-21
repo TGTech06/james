@@ -31,7 +31,8 @@
   let successMessage = "";
   let statusMessage = "";
   let retrievalEnabled = true;
-  let codeInterpreterEnabled = false;
+  let codeInterpreterEnabledDatabase = false;
+  let codeInterpreterToggle = false;
   let uploadPopupOpen = false;
 
   const highlightedChatIDs = writable([]);
@@ -84,6 +85,8 @@
         selectedThreadId = thread.id;
         $highlightedChatIDs = [thread.id];
         selectedChatMessages.set([]);
+        codeInterpreterEnabledDatabase = false;
+        codeInterpreterToggle = false;
       } else {
         selectedThreadId = $userChats[0].chat_id;
         $highlightedChatIDs = [$userChats[0].chat_id];
@@ -275,7 +278,7 @@
       //   }
       // );
       console.log("retrievalEnabled", retrievalEnabled);
-      console.log("codeInterpreterEnabled", codeInterpreterEnabled);
+      console.log("codeInterpreterEnabled", codeInterpreterToggle);
       let jsonRun = await fetch("/api/ask/runThread", {
         method: "POST",
         headers: {
@@ -286,10 +289,14 @@
           assistantId: assistantId,
           instructions: instructions,
           enableRetrieval: retrievalEnabled,
-          enableCodeInterpreter: codeInterpreterEnabled,
+          enableCodeInterpreter: codeInterpreterToggle,
         }),
       });
       let run = await jsonRun.json();
+      if (codeInterpreterToggle === true) {
+        codeInterpreterEnabledDatabase =
+          await setCodeInterpreterTrue(selectedThreadId);
+      }
 
       // Check the status of the run instead of using a fixed timeout
       while (
@@ -356,6 +363,8 @@
     scrollToBottom();
     await getFilesForAssistant(chatId);
     instructions = await getCurrentInstructions(chatId);
+    codeInterpreterEnabledDatabase = await getCodeInterpreterStatus(chatId);
+    codeInterpreterToggle = codeInterpreterEnabledDatabase;
   }
 
   async function deleteChat(chatId) {
@@ -472,6 +481,26 @@
       return "";
     }
   }
+
+  async function getCodeInterpreterStatus(chatId) {
+    try {
+      // Get the current chat record
+      const { data: currentChat } = await supabaseClient
+        .from("chats")
+        .select("code_interpreter_enabled")
+        .eq("user_id", userId)
+        .eq("chat_id", chatId)
+        .single();
+      const codeInterpreterEnbled = currentChat
+        ? currentChat.code_interpreter_enabled || false
+        : false;
+      console.log("codeInterpreterEnbled", codeInterpreterEnbled);
+      return codeInterpreterEnbled;
+    } catch (error) {
+      console.error(`Error getting instructions for chat: ${error.message}`);
+      return "";
+    }
+  }
   onMount(async () => {
     // Fetch and load user chats on component mount
     try {
@@ -482,6 +511,9 @@
       // const addedFiles = await client.beta.assistants.files.list(assistantId);
       await getFilesForAssistant(selectedThreadId);
       instructions = await getCurrentInstructions(selectedThreadId);
+      codeInterpreterEnabledDatabase =
+        await getCodeInterpreterStatus(selectedThreadId);
+      codeInterpreterToggle = codeInterpreterEnabledDatabase;
       savedPrompts = await getSavedPrompts(selectedThreadId);
       // const addedFiles = await getCurrentFilesFromAssistant();
       // addedFileIds = addedFiles.data.map((file) => file.id);
@@ -658,6 +690,26 @@
     } catch (error) {
       console.error(`Error getting file ids for chat: ${error.message}`);
       return [];
+    }
+  }
+
+  async function setCodeInterpreterTrue(chatId) {
+    console.log("called");
+    try {
+      const { data: updateData, error: updateError } = await supabaseClient
+        .from("chats")
+        .update({ code_interpreter_enabled: true })
+        .eq("chat_id", chatId);
+      if (updateError) {
+        console.error("Error updating user data:", updateError);
+        return false;
+      } else {
+        console.log("success");
+        return true;
+      }
+    } catch (error) {
+      console.error(`Error adding file to chat: ${error.message}`);
+      return false;
     }
   }
 
@@ -1416,9 +1468,11 @@
               <input
                 type="checkbox"
                 class="toggle toggle-sm toggle-accent"
-                checked={codeInterpreterEnabled}
-                on:click={() =>
-                  (codeInterpreterEnabled = !codeInterpreterEnabled)}
+                checked={codeInterpreterToggle}
+                disabled={codeInterpreterEnabledDatabase}
+                on:click={async () => {
+                  codeInterpreterToggle = !codeInterpreterToggle;
+                }}
               />
             </label>
           </div>
