@@ -33,7 +33,6 @@
     "@huggingface/inference": "^1.8.0",
     "cheerio": "1.0.0-rc.12",
     "esbuild": "^0.19.10",
-    "fs": "^0.0.1-security",
     "highlight": "^0.2.4",
     "highlight.js": "^11.9.0",
     "html2pdf.js": "^0.10.1",
