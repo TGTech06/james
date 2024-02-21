@@ -12,6 +12,7 @@
   import { supabaseClient } from "$lib/supabase.js";
   import { getDocuments } from "$lib/brain";
   import Upload from "$lib/Upload.svelte";
+  import type { formatPostcssSourceMap } from "vite";
   let temperature = 0.2;
   let question = "";
   let loading = false;
@@ -953,42 +954,92 @@
     }
   };
   async function download(fileId) {
-    console.log("fileId", fileId);
-    let fileResponse = await fetch("/api/ask/downloadFile", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fileId: fileId, // Replace with your actual assistant ID
-      }),
-    });
-    let bufferView = await fileResponse.json();
-    // const bufferView = new Uint8Array(await file.arrayBuffer());
-    // const fs = require("fs");
+    try {
+      let fileResponse = await fetch("/api/ask/downloadFile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileId: fileId, // Replace with your actual assistant ID
+        }),
+      });
 
-    // const blob = new Blob([bufferView]);
-    // console.log("blob", blob);
-    // saveAs(blob, "filename");
+      // Check if the response is successful
+      if (!fileResponse.ok) {
+        throw new Error("Failed to download file");
+      }
+      console.log("fileResponse", fileResponse);
+      let bufferView = await fileResponse.blob();
+      // Convert Uint8Array to Blob
+      const blob = new Blob([bufferView]);
 
-    // var blob = new Blob(["Hello, world!"], {
-    //   type: "text/plain;charset=utf-8",
-    // });
-    // saveAs(blob, "hello world.txt");
-    // const blob = new Blob([file], { type: file.type });
-    // const url = URL.createObjectURL(blob);
+      // Create a temporary anchor element
+      const a = document.createElement("a");
+      a.style.display = "none";
+      let fileName = await retrieveFileName(fileId);
+      // Set the download attribute and the href to Blob URL
+      a.download = fileName;
+      a.href = window.URL.createObjectURL(blob);
 
-    // // Create a link element to trigger the download
-    // const link = document.createElement("a");
-    // link.href = url;
-    // link.download = "filename.png";
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
-    // console.log("file", file);
-    console.log("bufferView", bufferView);
-    // return file;
+      // Append the anchor element to the body and simulate a click
+      document.body.appendChild(a);
+      a.click();
+
+      // Remove the anchor element after download
+      document.body.removeChild(a);
+      // const blob = new Blob([await fileResponse.blob()]);
+      // console.log("blob", blob);
+      // // Create a temporary link element to trigger the download
+      // const link = document.createElement("a");
+      // link.href = URL.createObjectURL(blob);
+      // link.download = fileId; // Set the filename
+      // document.body.appendChild(link);
+      // link.click();
+      // document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Handle error if needed
+    }
   }
+  // async function download(fileId) {
+  //   try {
+  //     let fileResponse = await fetch("/api/ask/downloadFile", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         fileId: fileId,
+  //       }),
+  //     });
+
+  //     // Check if the response is successful
+  //     if (!fileResponse.ok) {
+  //       throw new Error("Failed to download file");
+  //     }
+
+  //     // Get the content type from the response headers
+  //     const contentType = fileResponse.headers.get("Content-Type");
+
+  //     // Create a blob from the response data
+  //     const blob = await fileResponse.blob();
+
+  //     // Create a temporary link element to trigger the download
+  //     const link = document.createElement("a");
+  //     link.href = URL.createObjectURL(blob);
+
+  //     // Set the download attribute and filename based on the content type
+  //     link.download = fileId + "." + contentType.split("/")[1];
+
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //   } catch (error) {
+  //     console.error("Error downloading file:", error);
+  //     // Handle error if needed
+  //   }
+  // }
 
   function showUpload() {
     const popupContainer = document.getElementById("upload");
@@ -1009,12 +1060,12 @@
 />
 <AuthCheck>
   <div
-    class="  bg-white text-black w-full flex p-4"
+    class="  flex w-full bg-white p-4 text-black"
     style=" postion: relative;  overflow: scroll; height:100vh"
   >
     <!-- Combined Sidebar - Chat History and Configuration -->
     <div
-      class={`absolute left-0 top-0 bg-black text-white p-4 sidebar ${
+      class={`sidebar absolute left-0 top-0 bg-black p-4 text-white ${
         isChatHistorySidebarOpen ? "sidebar-open" : ""
       }`}
     >
@@ -1024,16 +1075,16 @@
         >
           <a
             href="/"
-            class="text-xl font-bold hover:text-blue-400 cursor-pointer"
+            class="cursor-pointer text-xl font-bold hover:text-blue-400"
           >
             🧠 James 🧠
           </a>
-          <a href="/profile" class="text-xl hover:text-blue-400 cursor-pointer">
+          <a href="/profile" class="cursor-pointer text-xl hover:text-blue-400">
             <i style="font-size:15px" class="fa">&#xf013;</i>
           </a>
         </div>
 
-        <h2 class="text-l sm:text-l font-semibold mt-5 mr-3 mb-4">
+        <h2 class="text-l sm:text-l mb-4 mr-3 mt-5 font-semibold">
           Custom Instructions:
         </h2>
 
@@ -1045,7 +1096,7 @@
                 bind:value={instructions}
                 on:keydown={handleTextareaKeyDownInstructions}
                 id="instructions"
-                class="textarea textarea-accent resize-none w-full"
+                class="textarea textarea-accent w-full resize-none"
                 placeholder="Enter personalized instructions..."
                 style="font-size: small; background-color: #222; outline: none;"
               ></textarea>
@@ -1083,7 +1134,7 @@
               {#if menuOpen && savedPrompts.length > 0}
                 <div
                   id="promptOptions"
-                  class="dropdown-options dark-bg rounded w-full max-h-[40vh] overflow-auto"
+                  class="dropdown-options dark-bg max-h-[40vh] w-full overflow-auto rounded"
                 >
                   {#each savedPrompts as item}
                     {#if item !== instructions}
@@ -1110,7 +1161,7 @@
         >
           Save Changes
         </button>
-        <h2 class="text-2xl font-bold mt-5 mb-4">Chat History</h2>
+        <h2 class="mb-4 mt-5 text-2xl font-bold">Chat History</h2>
         <button
           class="btn btn-primary btn-sm mb-5"
           style="color: white;"
@@ -1125,7 +1176,7 @@
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <!-- svelte-ignore a11y-mouse-events-have-key-events -->
             <div
-              class="flex items-center justify-between mb-2 chat-box"
+              class="chat-box mb-2 flex items-center justify-between"
               style="{$highlightedChatIDs.includes(chat.chat_id)
                 ? 'background-color: #f2f2f242'
                 : ''} "
@@ -1183,7 +1234,7 @@
           {/each}
         {:else}
           <!-- Loading indicator when there are no chats -->
-          <div class="text-left text-gray-500 mt-5 ml-2">
+          <div class="ml-2 mt-5 text-left text-gray-500">
             <i class="fas fa-spinner fa-spin mr-3"></i> Loading Chats...
           </div>
         {/if}
@@ -1191,7 +1242,7 @@
     </div>
 
     <div
-      class={`w-full h-full main-content ${
+      class={`main-content h-full w-full ${
         isChatHistorySidebarOpen ? "main-content-shifted" : ""
       }`}
       style="display: flex;
@@ -1220,7 +1271,7 @@
 
       <!-- Middle Section - Chat Messages -->
       <div
-        class={`w-full h-full chat-container  ${
+        class={`chat-container h-full w-full  ${
           isChatHistorySidebarOpen ? "main-content-shifted" : ""
         }`}
         style="display: flex;
@@ -1239,7 +1290,7 @@
               style="position: absolute; top: 10px; left: 25px;"
               on:click={() => closePopup()}>&times;</button
             >
-            <h2 class="popup-title text-black pl-20 mt-5">
+            <h2 class="popup-title mt-5 pl-20 text-black">
               Your Uploaded Files
             </h2>
             {#if statusMessage !== "" || successMessage !== "" || errorMessage !== ""}
@@ -1334,11 +1385,11 @@
           >
             <a
               href="/"
-              class="text-4xl font-bold hover:text-blue-600 cursor-pointer"
+              class="cursor-pointer text-4xl font-bold hover:text-blue-600"
             >
               🧠 James 🧠
             </a>
-            <p class="text-sm text-gray-500 mt-2 text-center">
+            <p class="mt-2 text-center text-sm text-gray-500">
               Select a chat from the history to view messages.
             </p>
           </div>
@@ -1392,7 +1443,8 @@
                               <span class="annotation-index"
                                 >{annotation.text}</span
                               >
-                              Lines {annotation.start_index} to {annotation.end_index}
+                              Lines {annotation.start_index}
+                              to {annotation.end_index}
                             </p>
                             <!-- <pre>
                   "{annotation.file_citation.quote.substring(
@@ -1448,7 +1500,7 @@
         <div class="flex flex-row">
           <!-- Toggle 1 -->
           <div class="form-control mr-5" style="background-color: white;">
-            <label class="cursor-pointer label">
+            <label class="label cursor-pointer">
               <span class="label-text mr-5" style="color: #666;">Retrieval</span
               >
               <input
@@ -1461,7 +1513,7 @@
           </div>
           <!-- Toggle 2 -->
           <div class="form-control" style="background-color: white;">
-            <label class="cursor-pointer label">
+            <label class="label cursor-pointer">
               <span class="label-text mr-5" style="color: #666;"
                 >Code Interpreter</span
               >
@@ -1479,8 +1531,8 @@
         </div>
 
         <div class="mx-30" style="position: relative; width: 100%;">
-          <div class="flex items-bottom">
-            <div class="flex-1 form-control" style="position: relative;">
+          <div class="items-bottom flex">
+            <div class="form-control flex-1" style="position: relative;">
               <textarea
                 bind:value={question}
                 id="question"
@@ -1499,12 +1551,14 @@
                 >
                   {#each addedFileNames as filename, index (index)}
                     <div
-                      class="bg-gray-800 rounded-lg flex items-center relative mr-2 ml-2 mb-1 mt-1"
+                      class="relative mb-1 ml-2 mr-2 mt-1 flex items-center rounded-lg bg-gray-800"
                       style="overflow-x: visible; white-space: nowrap;"
                     >
-                      <p class="text-sm text-white m-2">{filename}</p>
+                      <p class="m-2 text-sm text-white">
+                        {filename}
+                      </p>
                       <button
-                        class="remove-file-btn bg-red-500 absolute top-0 right-0 transform"
+                        class="remove-file-btn absolute right-0 top-0 transform bg-red-500"
                         on:click={() =>
                           removeFileFromAssistant(
                             addedFileIds[index],
@@ -1512,7 +1566,7 @@
                           )}
                       >
                         <i
-                          class="fa fa-times absolute top-0.5 right-1 transform text-white text-xs"
+                          class="fa fa-times absolute right-1 top-0.5 transform text-xs text-white"
                         ></i>
                       </button>
                     </div>
@@ -1548,7 +1602,7 @@
           </div>
         </div>
         {#if errorText !== null}
-          <div class="absolute top-4 right-4 bg-red-600 text-white p-2 rounded">
+          <div class="absolute right-4 top-4 rounded bg-red-600 p-2 text-white">
             {errorText}
           </div>
         {/if}
