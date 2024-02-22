@@ -96,6 +96,11 @@
         selectedThreadId = $userChats[0].chat_id;
         $highlightedChatIDs = [$userChats[0].chat_id];
         selectedChatMessages.set([]);
+        codeInterpreterEnabledDatabase =
+          await getCodeInterpreterStatus(selectedThreadId);
+        codeInterpreterToggle = codeInterpreterEnabledDatabase;
+        await getFilesForAssistant(selectedThreadId);
+        instructions = await getCurrentInstructions(selectedThreadId);
       }
     }
   }
