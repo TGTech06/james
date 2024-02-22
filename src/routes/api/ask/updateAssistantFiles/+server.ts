@@ -2,11 +2,30 @@ import { _openaiClient} from '../../+server.js';
 
 export async function POST({ request }){
   try {
-    const { assistantId, files } = await request.json(); 
+    const { assistantId, files, enableCodeInterpreter, enableRetrieval } = await request.json(); 
     // const fileDetails = await _openaiClient.files.retrieve(fileId);
-    const response = await _openaiClient.beta.assistants.update(assistantId, {
-      file_ids: files,
-    });
+    if (enableCodeInterpreter && enableRetrieval) {
+      _openaiClient.beta.assistants.update(assistantId, {
+        file_ids: files,
+        tools: [{ "type": "retrieval" }, { "type": "code_interpreter" }]
+      });
+    } else if (enableCodeInterpreter) {
+      _openaiClient.beta.assistants.update(assistantId, {
+        file_ids: files,
+        tools: [{ "type": "code_interpreter" }]
+      });
+    } else if (enableRetrieval) {
+      _openaiClient.beta.assistants.update(assistantId, {
+        file_ids: files,
+        tools: [{ "type": "retrieval" }]
+      });
+    } else {
+      _openaiClient.beta.assistants.update(assistantId, {
+        file_ids: files,
+        tools: []
+      });
+    }
+
     const addedFiles = await _openaiClient.beta.assistants.files.list(assistantId);
     return new Response(JSON.stringify(addedFiles), {
         status: 200,

@@ -21,7 +21,6 @@
   const authorizedExtensions = [
     ".c",
     ".cpp",
-    // ".csv",
     ".docx",
     ".html",
     ".java",
@@ -34,17 +33,19 @@
     ".rb",
     ".tex",
     ".txt",
-    // ".css",
-    // ".jpeg",
-    // ".jpg",
-    // ".js",
-    // ".gif",
-    // ".png",
-    // ".tar",
-    // ".ts",
-    // ".xlsx",
-    // ".xml",
-    // ".zip",
+    //code interpreter
+    ".csv",
+    ".css",
+    ".jpeg",
+    ".jpg",
+    ".js",
+    ".gif",
+    ".png",
+    ".tar",
+    ".ts",
+    ".xlsx",
+    ".xml",
+    ".zip",
   ];
 
   async function handleFileUpload() {

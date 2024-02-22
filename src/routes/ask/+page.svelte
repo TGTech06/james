@@ -13,6 +13,7 @@
   import { getDocuments } from "$lib/brain";
   import Upload from "$lib/Upload.svelte";
   import type { formatPostcssSourceMap } from "vite";
+  import LogoHuggingFaceBorderless from "$lib/components/icons/LogoHuggingFaceBorderless.svelte";
   let temperature = 0.2;
   let question = "";
   let loading = false;
@@ -31,10 +32,9 @@
   let errorMessage = "";
   let successMessage = "";
   let statusMessage = "";
-  let retrievalEnabled = true;
+  let retrievalEnabled = false;
   let codeInterpreterEnabledDatabase = false;
   let codeInterpreterToggle = false;
-  let uploadPopupOpen = false;
 
   const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
@@ -63,6 +63,8 @@
       selectedThreadId = thread.id;
       $highlightedChatIDs = [thread.id];
       selectedChatMessages.set([]);
+      addedFileIds = [];
+      addedFileNames = [];
       return;
     } else {
       const isFirstChatNotEmpty =
@@ -88,6 +90,8 @@
         selectedChatMessages.set([]);
         codeInterpreterEnabledDatabase = false;
         codeInterpreterToggle = false;
+        addedFileIds = [];
+        addedFileNames = [];
       } else {
         selectedThreadId = $userChats[0].chat_id;
         $highlightedChatIDs = [$userChats[0].chat_id];
@@ -362,10 +366,10 @@
     $highlightedChatIDs = [chatId];
     await loadChatMessages(selectedThreadId);
     scrollToBottom();
-    await getFilesForAssistant(chatId);
-    instructions = await getCurrentInstructions(chatId);
     codeInterpreterEnabledDatabase = await getCodeInterpreterStatus(chatId);
     codeInterpreterToggle = codeInterpreterEnabledDatabase;
+    await getFilesForAssistant(chatId);
+    instructions = await getCurrentInstructions(chatId);
   }
 
   async function deleteChat(chatId) {
@@ -452,12 +456,17 @@
         body: JSON.stringify({
           assistantId: assistantId, // Replace with your actual assistant ID
           files: addedFileIds,
+          enableCodeInterpreter: codeInterpreterToggle,
+          enableRetrieval: retrievalEnabled,
         }),
       });
       const addedFiles = await addFilesResponse.json();
       // console.log("addedFiles", addedFiles);
       addedFileIds = addedFiles.data.map((file) => file.id);
       addedFileNames = await getFileNames(addedFileIds);
+      if (addedFileIds.length === 0) {
+        retrievalEnabled = false;
+      }
     } catch (e) {
       addedFileIds = [];
       addedFileNames = [];
@@ -510,11 +519,11 @@
       await loadUserChats();
       await createNewChat();
       // const addedFiles = await client.beta.assistants.files.list(assistantId);
-      await getFilesForAssistant(selectedThreadId);
-      instructions = await getCurrentInstructions(selectedThreadId);
       codeInterpreterEnabledDatabase =
         await getCodeInterpreterStatus(selectedThreadId);
       codeInterpreterToggle = codeInterpreterEnabledDatabase;
+      await getFilesForAssistant(selectedThreadId);
+      instructions = await getCurrentInstructions(selectedThreadId);
       savedPrompts = await getSavedPrompts(selectedThreadId);
       // const addedFiles = await getCurrentFilesFromAssistant();
       // addedFileIds = addedFiles.data.map((file) => file.id);
@@ -695,21 +704,19 @@
   }
 
   async function setCodeInterpreterTrue(chatId) {
-    console.log("called");
     try {
       const { data: updateData, error: updateError } = await supabaseClient
         .from("chats")
         .update({ code_interpreter_enabled: true })
         .eq("chat_id", chatId);
       if (updateError) {
-        console.error("Error updating user data:", updateError);
+        console.error("Error:", updateError);
         return false;
       } else {
-        console.log("success");
         return true;
       }
     } catch (error) {
-      console.error(`Error adding file to chat: ${error.message}`);
+      console.error(`Error: ${error.message}`);
       return false;
     }
   }
@@ -727,7 +734,7 @@
         console.error("Error updating user data:", updateError);
       }
     } catch (error) {
-      console.error(`Error adding file to chat: ${error.message}`);
+      console.error(`Error: ${error.message}`);
     }
   }
 
@@ -796,17 +803,75 @@
       console.error(`Error removing file from chat: ${error.message}`);
     }
   }
+
+  function checkFileExtensionForCodeInterpreter(filename) {
+    const allowedExtensions = [
+      ".csv",
+      ".css",
+      ".jpeg",
+      ".jpg",
+      ".js",
+      ".gif",
+      ".png",
+      ".tar",
+      ".ts",
+      ".xlsx",
+      ".xml",
+      ".zip",
+    ];
+    const fileExtension = filename
+      .slice(filename.lastIndexOf("."))
+      .toLowerCase();
+    return allowedExtensions.includes(fileExtension);
+  }
+
+  function checkFileExtensionForRetrieval(filename) {
+    const allowedExtensions = [
+      ".c",
+      ".cpp",
+      ".docx",
+      ".html",
+      ".java",
+      ".json",
+      ".md",
+      ".pdf",
+      ".php",
+      ".pptxt",
+      ".py",
+      ".rb",
+      ".tex",
+      ".txt",
+    ];
+    const fileExtension = filename
+      .slice(filename.lastIndexOf("."))
+      .toLowerCase();
+    return allowedExtensions.includes(fileExtension);
+  }
+
   async function addFileToAssistant(fileId, filename) {
     if (isProcessing) return;
     try {
       isProcessing = true;
+      retrievalEnabled = true;
       displayStatusMessage(`Adding "${filename}" to this chat...`);
       await addFileToChat(userId, selectedThreadId, fileId);
       //gets the current files
       let currentFiles = await getCurrentFilesFromAssistant();
       let file_ids = currentFiles.data.map((file) => file.id);
+      console.log("adding file id", fileId);
       file_ids.push(fileId);
 
+      let requiresCodeInterpreter =
+        checkFileExtensionForCodeInterpreter(filename);
+      let requiresRetrieval = checkFileExtensionForRetrieval(filename);
+      if (requiresCodeInterpreter) {
+        codeInterpreterEnabledDatabase = true;
+        codeInterpreterToggle = true;
+        await setCodeInterpreterTrue(selectedThreadId);
+      }
+      if (requiresRetrieval) {
+        retrievalEnabled = true;
+      }
       // await client.beta.assistants.update(assistantId, {
       //   file_ids: file_ids,
       // });
@@ -821,6 +886,8 @@
         body: JSON.stringify({
           assistantId: assistantId, // Replace with your actual assistant ID
           files: file_ids,
+          enableCodeInterpreter: codeInterpreterToggle,
+          enableRetrieval: retrievalEnabled,
         }),
       });
       const addedFiles = await addFilesResponse.json();
@@ -851,6 +918,9 @@
         .map((file) => file.id)
         .filter((id) => id !== fileId);
 
+      if (file_ids.length === 0) {
+        retrievalEnabled = false;
+      }
       // await client.beta.assistants.update(assistantId, {
       //   file_ids: file_ids,
       // });
@@ -865,6 +935,8 @@
         body: JSON.stringify({
           assistantId: assistantId,
           files: file_ids,
+          enableCodeInterpreter: codeInterpreterToggle,
+          enableRetrieval: retrievalEnabled,
         }),
       });
       const addedFiles = await addFilesResponse.json();
@@ -1463,8 +1535,8 @@
                               <button
                                 on:click={() =>
                                   download(annotation.file_path.file_id)}
-                                >Download File</button
-                              >
+                                ><i class="fas fa-download"></i>
+                              </button>
                               <!-- <a
                                 href="/files/{annotation.file_path.file_id}"
                                 target="_blank">Download File</a

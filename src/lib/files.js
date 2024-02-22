@@ -60,7 +60,6 @@ async function getAssistantID() {
 }
 
 export async function upload_file(files) {
-  let assistantId = await getAssistantID();
   if (files) {
     try {
       // const client = new OpenAI({

@@ -23,7 +23,6 @@
   const authorizedExtensions = [
     ".c",
     ".cpp",
-    // ".csv",
     ".docx",
     ".html",
     ".java",
@@ -36,17 +35,19 @@
     ".rb",
     ".tex",
     ".txt",
-    // ".css",
-    // ".jpeg",
-    // ".jpg",
-    // ".js",
-    // ".gif",
-    // ".png",
-    // ".tar",
-    // ".ts",
-    // ".xlsx",
-    // ".xml",
-    // ".zip",
+    //code interpreter
+    ".csv",
+    ".css",
+    ".jpeg",
+    ".jpg",
+    ".js",
+    ".gif",
+    ".png",
+    ".tar",
+    ".ts",
+    ".xlsx",
+    ".xml",
+    ".zip",
   ];
 
   async function handleFileUpload() {
@@ -161,7 +162,10 @@
               Upload Files
             </button>
           </div>
-          <p class=" text-gray-500 mt-2" style="font-size: xx-small;">
+          <p
+            class=" text-gray-500 mt-2"
+            style="font-size: xx-small; overflow:scroll;"
+          >
             Accepts: {authorizedExtensions.join(", ")}
           </p>
         </div>
