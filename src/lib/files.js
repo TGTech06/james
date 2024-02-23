@@ -1,6 +1,6 @@
 import { getHtml, convertHtmlToTxt } from "./loaders/html";
 import { supabaseClient } from "./supabase";
-let userID;
+// let userID;
 export async function create_file_and_upload(title, text) {
   try {
     const txtFile = new File([text], title, { type: "text/plain" });
@@ -31,7 +31,7 @@ export async function url_uploader(url) {
 async function getUserID() {
   try {
     let user = await supabaseClient.auth.getUser();
-    userID = await user.data.user.id;
+    let userID = await user.data.user.id;
     return userID;
   } catch (e) {
     console.log(e);
@@ -39,25 +39,25 @@ async function getUserID() {
   }
 }
 
-async function getAssistantID() {
-  await getUserID();
-  const { data: userData, error: userError } = await supabaseClient
-    .from("user_data")
-    .select("assistant_id")
-    .eq("user_id", userID)
-    .single();
+// async function getAssistantID() {
+//   await getUserID();
+//   const { data: userData, error: userError } = await supabaseClient
+//     .from("user_data")
+//     .select("assistant_id")
+//     .eq("user_id", userID)
+//     .single();
 
-  if (userError) {
-    console.error("Error fetching user data:", userError);
-  } else {
-    if (userData) {
-      const assistantId = userData.assistant_id;
-      return assistantId;
-    } else {
-      console.log("User not found");
-    }
-  }
-}
+//   if (userError) {
+//     console.error("Error fetching user data:", userError);
+//   } else {
+//     if (userData) {
+//       const assistantId = userData.assistant_id;
+//       return assistantId;
+//     } else {
+//       console.log("User not found");
+//     }
+//   }
+// }
 
 export async function upload_file(files) {
   if (files) {
@@ -66,6 +66,7 @@ export async function upload_file(files) {
       //   apiKey: PUBLIC_OPENAI_API_KEY,
       //   dangerouslyAllowBrowser: true,
       // });
+      let userID = await getUserID();
 
       // Fetch the current list of files from the user_data table
       const { data: userData, error: userError } = await supabaseClient
