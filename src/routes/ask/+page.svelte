@@ -1154,7 +1154,7 @@
             href="/"
             class="cursor-pointer text-xl font-bold hover:text-blue-400"
           >
-            🧠 James 🧠
+            James
           </a>
           <a href="/profile" class="cursor-pointer text-xl hover:text-blue-400">
             <i style="font-size:15px" class="fa">&#xf013;</i>
@@ -1162,7 +1162,7 @@
         </div>
 
         <h2 class="text-l sm:text-l mb-4 mr-3 mt-5 font-semibold">
-          Custom Instructions:
+          Personalise James:
         </h2>
 
         <section class="relative">
@@ -1464,7 +1464,7 @@
               href="/"
               class="cursor-pointer text-4xl font-bold hover:text-blue-600"
             >
-              🧠 James 🧠
+              James
             </a>
             <p class="mt-2 text-center text-sm text-gray-500">
               Select a chat from the history to view messages.

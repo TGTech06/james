@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import NavBar from "$lib/NavBar.svelte";
   import { supabaseClient } from "$lib/supabase.js";
   /**
    * @type {null}
@@ -46,7 +45,7 @@
   <div class="flex flex-col items-center">
     <!-- Daisy UI Navbar -->
     <!-- <NavBar /> -->
-    <h1 class="text-5xl font-bold my-8">Welcome to 🧠 James 🧠</h1>
+    <h1 class="text-5xl font-bold my-8">Welcome to James</h1>
 
     <div class="max-w-3xl mx-auto space-y-4">
       <p class="text-xl text-center mb-6">

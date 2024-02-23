@@ -5,7 +5,6 @@
   import { getDocuments, deleteDocument } from "$lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
   import { goto } from "$app/navigation";
-  import { OpenAI } from "openai";
   // Initialize the Supabase client and other variables
   let supabase;
   let documents = [];
@@ -190,7 +189,7 @@
 
 <AuthCheck>
   <div class="flex flex-col min-h-screen min-w-full bg-white text-black p-4">
-    <div class="flex flex-1 mt-2 ml-5 items-center">
+    <div class="flex flex-1 mt-2 ml-5 items-start">
       <a href="/" class="text-xl font-bold hover:text-blue-600 cursor-pointer">
         James
       </a>
@@ -209,19 +208,21 @@
         {/if}
       </div>
       <div class="p-8">
-        <div class="flex items-center justify-between">
+        <div class="flex items-start justify-between">
           <h1 class="text-4xl font-bold mb-8">Your James</h1>
           <button
-            class="btn btn-secondary btn-md flex items-center"
+            class="btn btn-md btn-outline btn-error flex items-center"
             on:click={() => signOutUser()}
           >
-            <i class="fas fa-sign-out-alt text-white" />
+            Log out
+            <i class="fas fa-sign-out-alt" />
           </button>
         </div>
         <div class="mt-8">
           <p>
-            Customize your James. Give him personalized instructions that he HAS
-            to follow.
+            Customise James. Give him personalized instructions that he has
+            follow (unless you override this by specifying instructions in the
+            chat)
           </p>
           <textarea
             rows="3"
@@ -237,63 +238,63 @@
           class="btn btn-primary mb-4 text-white"
           on:click={() => customizeJames()}
         >
-          Customize James
+          Customise James
         </button>
         <h2 class="text-2xl font-semibold mt-4 mb-4">
           Total File Size: {formatBytes(totalFileSize)}
         </h2>
-        <div class="files-container">
-          <h2 class="text-2xl font-semibold mt-4 mb-4">
-            Files your James has access to:
-          </h2>
-          <div class="space-y-4">
-            {#each documents as document}
-              <div
-                class="border border-gray-600 p-4 rounded-lg flex items-center justify-between"
-              >
-                <div>
-                  <p class="text-lg">
-                    <strong class="text-l">{document.filename}</strong>
-                    <br />
-                    <span class="text-sm">{formatBytes(document.bytes)}</span>
-                    <span class="text-sm"
-                      >Created: {formatDate(document.created_at)}</span
-                    >
-                  </p>
-                </div>
-                <button
-                  class="btn btn-error"
-                  on:click={async () => {
-                    if (deleting) return;
-                    deleting = true;
-                    successMessage = "";
-                    errorMessage = "";
-                    let filename = document.filename;
-                    let outcome = await deleteDocument(
-                      supabase,
-                      document.id,
-                      userID
-                    );
-                    if (outcome === "success") {
-                      documents = await getDocuments(supabase, userID);
-                      successMessage =
-                        "Successfully deleted " + filename + " from your James";
-                      calculateTotalFileSize();
-                    } else {
-                      errorMessage = outcome;
-                    }
-                    deleting = false;
-                  }}
-                >
-                  <i class="fas fa-trash white-icon" />
-                </button>
+        <!-- <div class="files-container"> -->
+        <h2 class="text-2xl font-semibold mt-4 mb-4">
+          Files your James has access to:
+        </h2>
+        <div class="space-y-4">
+          {#each documents as document}
+            <div
+              class="border border-gray-600 p-4 rounded-lg flex items-center justify-between"
+            >
+              <div>
+                <p class="text-lg">
+                  <strong class="text-l">{document.filename}</strong>
+                  <br />
+                  <span class="text-sm">{formatBytes(document.bytes)}</span>
+                  <span class="text-sm"
+                    >Created: {formatDate(document.created_at)}</span
+                  >
+                </p>
               </div>
-            {/each}
-          </div>
+              <button
+                class="btn btn-error"
+                on:click={async () => {
+                  if (deleting) return;
+                  deleting = true;
+                  successMessage = "";
+                  errorMessage = "";
+                  let filename = document.filename;
+                  let outcome = await deleteDocument(
+                    supabase,
+                    document.id,
+                    userID
+                  );
+                  if (outcome === "success") {
+                    documents = await getDocuments(supabase, userID);
+                    successMessage =
+                      "Successfully deleted " + filename + " from your James";
+                    calculateTotalFileSize();
+                  } else {
+                    errorMessage = outcome;
+                  }
+                  deleting = false;
+                }}
+              >
+                <i class="fas fa-trash white-icon" />
+              </button>
+            </div>
+          {/each}
         </div>
       </div>
     </div>
-    <div class="flex flex-col items-center">
+    <!-- </div> -->
+    <!-- <div class="flex flex-col items-center">
       {#if userIsPremium}
         <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
           I'm proud of you, you made the right choice!
@@ -318,15 +319,11 @@
           publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
         />
       {/if}
-    </div>
+    </div> -->
   </div>
 </AuthCheck>
 
 <style>
-  .files-container {
-    max-height: 80vh; /* Adjust the value based on your layout */
-    overflow: auto;
-  }
   .btn-md {
     padding: 12px 24px; /* Adjust the padding to make the button larger */
     font-size: 16px; /* Adjust the font size to make the icon larger */
