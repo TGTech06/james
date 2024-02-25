@@ -45,6 +45,12 @@
   <div class="flex flex-col items-center">
     <!-- Daisy UI Navbar -->
     <!-- <NavBar /> -->
+    <img
+      loading="lazy"
+      src="logo.png"
+      class="aspect-[1] object-contain object-center overflow-hidden self-center my-auto"
+      style="height: 50vh"
+    />
     <h1 class="text-5xl font-bold my-8">Welcome to James</h1>
 
     <div class="max-w-3xl mx-auto space-y-4">

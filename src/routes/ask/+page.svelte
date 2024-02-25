@@ -1466,9 +1466,15 @@
             >
               James
             </a>
-            <p class="mt-2 text-center text-sm text-gray-500">
+            <p class="mt-2 mb-10 text-center text-sm text-gray-500">
               Select a chat from the history to view messages.
             </p>
+            <img
+              loading="lazy"
+              src="logo.png"
+              class="aspect-[1] object-contain object-center overflow-hidden self-center"
+              style="height: 50vh"
+            />
           </div>
         {:else}
           <div
