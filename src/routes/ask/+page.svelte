@@ -1630,12 +1630,12 @@
               {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
                 <div
                   class="file-box mt-2"
-                  style="position: relative; left: 0; right: 0; z-index: 2;"
+                  style="position: relative; left: 0; right: 0; z-index: 2; max-width: 65vw; overflow-x: auto; "
                 >
                   {#each addedFileNames as filename, index (index)}
                     <div
                       class="relative mb-1 ml-2 mr-2 mt-1 flex items-center rounded-lg bg-gray-800"
-                      style="overflow-x: visible; white-space: nowrap;"
+                      style="white-space: nowrap;"
                     >
                       <p class="m-2 text-sm text-white">
                         {filename}
