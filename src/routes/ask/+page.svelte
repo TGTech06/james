@@ -414,6 +414,7 @@
     scrollToBottom();
     codeInterpreterEnabledDatabase = await getCodeInterpreterStatus(chatId);
     codeInterpreterToggle = codeInterpreterEnabledDatabase;
+
     await getFilesForAssistant(chatId);
     instructions = await getCurrentInstructions(chatId);
   }
@@ -489,10 +490,16 @@
       addedFileIds = [];
       addedFileNames = [];
       let existingFileIds = await getFileIdsForChat(userId, chatId);
+
       for (const fileId of existingFileIds) {
         if (!addedFileIds.includes(fileId)) {
           addedFileIds.push(fileId);
         }
+      }
+      if (addedFileIds.length === 0) {
+        retrievalEnabled = false;
+      } else {
+        retrievalEnabled = true;
       }
       const addFilesResponse = await fetch("/api/ask/updateAssistantFiles", {
         method: "POST",
@@ -510,9 +517,6 @@
       // console.log("addedFiles", addedFiles);
       addedFileIds = addedFiles.data.map((file) => file.id);
       addedFileNames = await getFileNames(addedFileIds);
-      if (addedFileIds.length === 0) {
-        retrievalEnabled = false;
-      }
     } catch (e) {
       addedFileIds = [];
       addedFileNames = [];
@@ -1578,7 +1582,7 @@
             </label>
           </div>
           <!-- Toggle 2 -->
-          <div class="form-control" style="background-color: white;">
+          <div class="form-control mr-5" style="background-color: white;">
             <label class="label cursor-pointer">
               <span class="label-text mr-5" style="color: #666;"
                 >Code Interpreter</span
@@ -1592,6 +1596,21 @@
                   codeInterpreterToggle = !codeInterpreterToggle;
                 }}
               />
+            </label>
+          </div>
+          <div class="form-control" style="background-color: white;">
+            <label class="label cursor-pointer">
+              <span class="label-text mr-5" style="color: #666;"
+                >Reload Chat</span
+              >
+              <button
+                style=" color: #666; border: none;"
+                on:click={async () => {
+                  await selectChat(selectedThreadId);
+                }}
+              >
+                <i class="fas fa-sync-alt"></i>
+              </button>
             </label>
           </div>
         </div>
