@@ -2067,7 +2067,7 @@
       top: 0;
       left: 0;
       height: 100%;
-      z-index: 3;
+      z-index: 4;
     }
 
     .sidebar-open {
