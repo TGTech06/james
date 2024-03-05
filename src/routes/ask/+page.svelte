@@ -15,7 +15,8 @@
   import type { formatPostcssSourceMap } from "vite";
   import LogoHuggingFaceBorderless from "$lib/components/icons/LogoHuggingFaceBorderless.svelte";
   let temperature = 0.2;
-  let question = "";
+  let questionTextArea = "";
+  let questionSent = "";
   let loading = false;
   let errorText = null;
   let instructions = "";
@@ -166,6 +167,7 @@
         if (!uniqueChatIds.has(chat.chat_id)) {
           uniqueChatIds.add(chat.chat_id);
 
+          // const firstUserMessage = "Chat";
           const firstUserMessage = await getFirstUserMessage(chat.chat_id);
 
           // Add the chat with the first user message to the processedChats array
@@ -240,9 +242,12 @@
   async function sendUserMessageAndAIResponse() {
     if (loading) return; // Prevent sending the message if a previous message is still being sent
     loading = true;
+    questionSent = questionTextArea;
+    questionTextArea = "";
+    const textarea = document.getElementById("question");
+    textarea.style.height = "auto";
     await getAIResponse(userId);
     loading = false;
-    question = "";
   }
 
   async function getAssistantID(userID) {
@@ -273,7 +278,7 @@
         },
         body: JSON.stringify({
           selectedThreadId: selectedThreadId,
-          question: question,
+          question: questionSent,
         }),
       });
 
@@ -287,8 +292,6 @@
       //     instructions: instructions,
       //   }
       // );
-      console.log("retrievalEnabled", retrievalEnabled);
-      console.log("codeInterpreterEnabled", codeInterpreterToggle);
       let jsonRun = await fetch("/api/ask/runThread", {
         method: "POST",
         headers: {
@@ -344,21 +347,8 @@
       }
     } catch (e) {
       console.error("Error getting AI response:", e);
-      // Handle error as needed
     }
   }
-
-  // async function setInstructions() {
-  //   client.beta.threads.update(selectedThreadId, {
-  //     instructions: instructions,
-  //   });
-  // }
-
-  // async function getInstructions() {
-  //   let thread = await client.beta.threads.retrieve(selectedThreadId);
-  //   console.log("thread", thread);
-  //   return thread.instructions;
-  // }
 
   async function getCurrentUserId() {
     const user = await supabaseClient.auth.getUser();
@@ -530,9 +520,6 @@
       await getFilesForAssistant(selectedThreadId);
       instructions = await getCurrentInstructions(selectedThreadId);
       savedPrompts = await getSavedPrompts(selectedThreadId);
-      // const addedFiles = await getCurrentFilesFromAssistant();
-      // addedFileIds = addedFiles.data.map((file) => file.id);
-      // addedFileNames = await getFileNames(addedFileIds);
       document
         .getElementById("popupContainer")
         .addEventListener("click", function (event) {
@@ -558,10 +545,6 @@
 
     window.addEventListener("resize", updateScreenWidth);
 
-    return () => {
-      window.removeEventListener("resize", updateScreenWidth);
-    };
-
     const updateScreenHeight = () => {
       screenHeight = window.innerHeight;
     };
@@ -569,6 +552,7 @@
     window.addEventListener("resize", updateScreenHeight);
 
     return () => {
+      window.removeEventListener("resize", updateScreenWidth);
       window.removeEventListener("resize", updateScreenHeight);
     };
   });
@@ -603,7 +587,6 @@
               throwOnError: false,
             });
             messageWithMaths += latex;
-            // formattedMessage.push({ type: "latex", content: latex });
           }
         });
         let messageWithMarkdown = marked(messageWithMaths);
@@ -982,29 +965,13 @@
     allFiles = await getDocuments(supabaseClient, userId);
   }
 
-  let textareaRows = 1;
-
   function handleTextareaInput() {
     const textarea = document.getElementById("question");
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(
       textarea.scrollHeight,
-      5 * parseFloat(getComputedStyle(textarea).lineHeight)
+      30 * parseFloat(getComputedStyle(textarea).lineHeight)
     )}px`;
-
-    // Get height difference
-    const origHeight = 400; // original height
-    const newHeight = textarea.style.height.replace("px", "");
-    const heightDiff = parseInt(newHeight) - origHeight;
-    // Update messages section height
-    const spacing = document.getElementById("spacing");
-    spacing.style.height = `${heightDiff}px`;
-
-    // Manually set rows
-    const newRows = Math.ceil(
-      textarea.scrollHeight / parseFloat(getComputedStyle(textarea).lineHeight)
-    );
-    textareaRows = newRows;
   }
 
   let menuOpen = false;
@@ -1062,62 +1029,13 @@
       // Append the anchor element to the body and simulate a click
       document.body.appendChild(a);
       a.click();
-
       // Remove the anchor element after download
       document.body.removeChild(a);
-      // const blob = new Blob([await fileResponse.blob()]);
-      // console.log("blob", blob);
-      // // Create a temporary link element to trigger the download
-      // const link = document.createElement("a");
-      // link.href = URL.createObjectURL(blob);
-      // link.download = fileId; // Set the filename
-      // document.body.appendChild(link);
-      // link.click();
-      // document.body.removeChild(link);
     } catch (error) {
       console.error("Error downloading file:", error);
       // Handle error if needed
     }
   }
-  // async function download(fileId) {
-  //   try {
-  //     let fileResponse = await fetch("/api/ask/downloadFile", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         fileId: fileId,
-  //       }),
-  //     });
-
-  //     // Check if the response is successful
-  //     if (!fileResponse.ok) {
-  //       throw new Error("Failed to download file");
-  //     }
-
-  //     // Get the content type from the response headers
-  //     const contentType = fileResponse.headers.get("Content-Type");
-
-  //     // Create a blob from the response data
-  //     const blob = await fileResponse.blob();
-
-  //     // Create a temporary link element to trigger the download
-  //     const link = document.createElement("a");
-  //     link.href = URL.createObjectURL(blob);
-
-  //     // Set the download attribute and filename based on the content type
-  //     link.download = fileId + "." + contentType.split("/")[1];
-
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     document.body.removeChild(link);
-  //   } catch (error) {
-  //     console.error("Error downloading file:", error);
-  //     // Handle error if needed
-  //   }
-  // }
-
   function showUpload() {
     const popupContainer = document.getElementById("upload");
     popupContainer.style.display = "flex";
@@ -1574,10 +1492,19 @@
                   {/if}
                 </div>
               {/each}
-              <div id="spacing"></div>
+              <!-- <div id="spacing" style="height: 200px"></div> -->
             </div>
           </div>
         {/if}
+        <!-- <button
+          class="refresh-btn"
+          on:click={async () => {
+            console.log("selected thread id", $highlightedChatIDs);
+            await loadChatMessages($highlightedChatIDs);
+          }}
+        >
+          Refresh Chat
+        </button> -->
 
         <!-- Bottom Section - Textarea and Send Button -->
         <div class="flex flex-row">
@@ -1617,14 +1544,13 @@
           <div class="items-bottom flex">
             <div class="form-control flex-1" style="position: relative;">
               <textarea
-                bind:value={question}
+                bind:value={questionTextArea}
                 id="question"
                 class="textarea textarea-primary resizeable-textarea"
                 placeholder="Ask James anything..."
-                disabled={selectedThreadId === null || loading}
+                disabled={selectedThreadId === null}
                 on:input={handleTextareaInput}
                 on:keydown={handleTextareaKeyDown}
-                style="padding-right: 100px; padding-left: 10px; padding-top: 10px; max-height: 200px; overflow-y: auto; background-color: white; border-color: #3498db; outline-color: #3498db;"
               ></textarea>
 
               {#if addedFileIds && addedFileIds.length > 0 && addedFileNames && addedFileNames.length > 0}
@@ -1676,7 +1602,7 @@
                   on:click={() => sendUserMessageAndAIResponse()}
                   disabled={selectedThreadId === null ||
                     loading ||
-                    question === ""}
+                    questionTextArea === ""}
                 >
                   <i class="fa fa-paper-plane"></i>
                 </button>
@@ -1742,6 +1668,17 @@
     z-index: 2;
     width: 100%;
     resize: none;
+    border-radius: 15px; /* Adjust the value for the desired corner roundness */
+    border-width: 1px; /* Increase thickness of the border */
+    height: auto;
+    padding-right: 100px;
+    padding-left: 10px;
+    padding-top: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: white;
+    border-color: #3498db;
+    outline: none;
   }
 
   .no-files-text {

@@ -10,7 +10,6 @@
   let documents = [];
   let userID = "";
   let userIsPremium = false;
-  let openAIClient;
   let assistantId;
   let successMessage = "";
   let deleting = false;

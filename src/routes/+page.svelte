@@ -4,16 +4,8 @@
   /**
    * @type {null}
    */
-  let supabase;
   let userLoggedIn = false;
-  async function signOutUser() {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.log(error);
-    } else {
-      window.location.reload();
-    }
-  }
+
   const getSessionData = async () => {
     const {
       data: { session },
