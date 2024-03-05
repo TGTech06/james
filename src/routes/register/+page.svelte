@@ -21,6 +21,7 @@
       return null;
     }
   }
+
   async function createUserDataIfNotExists(userId) {
     try {
       // Check if user data already exists
@@ -48,10 +49,6 @@
               assistant_id: assistantID,
             },
           ]);
-
-        // if (insertError) {
-        //   console.error("Error creating user data:", insertError);
-        // }
       } else {
         console.log("User data already exists");
       }
@@ -61,6 +58,7 @@
       return e.message;
     }
   }
+
   const createUser = async (event: Event) => {
     errorMessage = "";
     loggingIn = true;
@@ -95,32 +93,35 @@
   };
 
   const toggleView = () => {
+    event.preventDefault();
     window.location.href = "/login"; // Redirect to the login page
   };
 </script>
 
-<main class="min-h-screen flex items-center justify-center bg-gray-800">
-  <div class="bg-gray-900 p-8 rounded-lg shadow-md w-full max-w-md">
-    <h1 class="text-3xl font-semibold text-white text-center mb-6">Register</h1>
+<main class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+    <h1 class="text-3xl font-semibold text-gray-800 text-center mb-6">
+      Register
+    </h1>
     <form on:submit|preventDefault={createUser}>
       <div class="mb-4">
-        <label for="email" class="block text-gray-300 text-sm font-bold"
+        <label for="email" class="block text-gray-600 text-sm font-bold"
           >Email</label
         >
         <input
           type="text"
           name="email"
-          class="form-input mt-1 block w-full py-2 px-4 rounded-md bg-gray-700 text-white"
+          class="form-input mt-1 block w-full py-2 px-4 rounded-md bg-gray-200 text-gray-800"
         />
       </div>
       <div class="mb-4">
-        <label for="password" class="block text-gray-300 text-sm font-bold"
+        <label for="password" class="block text-gray-600 text-sm font-bold"
           >Password</label
         >
         <input
           type="password"
           name="password"
-          class="form-input mt-1 block w-full py-2 px-4 rounded-md bg-gray-700 text-white"
+          class="form-input mt-1 block w-full py-2 px-4 rounded-md bg-gray-200 text-gray-800"
         />
       </div>
       <div class="text-center">
@@ -131,23 +132,19 @@
           <div class="text-green-500 mb-4">{successMessage}</div>
         {/if}
         {#if loggingIn}
-          <div class="text-grey-500 mb-4">Logging you in...</div>
+          <div class="text-gray-600 mb-4">Creating your account...</div>
         {/if}
       </div>
-      <button class="btn btn-primary w-full py-3 rounded-lg">Register</button>
-      <div class="mt-4 text-gray-300 text-sm text-center">
-        Already have an account? <a on:click={toggleView} class="underline"
-          >Login</a
+      <button
+        class="btn w-full py-3 rounded-lg bg-black text-white hover:bg-gray-800"
+        >Register</button
+      >
+      <div class="mt-4 text-gray-600 text-sm text-center">
+        Already have an account? <button
+          on:click={toggleView}
+          class="hover:underline">Login</button
         >
       </div>
     </form>
   </div>
 </main>
-
-<style>
-  /* Custom styles for centering the form */
-  main {
-    display: flex;
-    align-items: center;
-  }
-</style>
