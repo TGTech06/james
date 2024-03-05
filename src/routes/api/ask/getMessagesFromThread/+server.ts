@@ -5,7 +5,7 @@ export async function POST({ request }) {
     //await client.beta.assistants.files.list(assistantId);
         try {
             const { threadID } = await request.json(); // Assuming you send JSON data in the request body
-            const response = await _openaiClient.beta.threads.messages.list(threadID);
+            const response = await _openaiClient.beta.threads.messages.list(threadID, {limit: 100});
             return new Response(JSON.stringify(response), {
                 status: 200,
                 headers: {
