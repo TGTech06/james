@@ -40,6 +40,7 @@
   const highlightedChatIDs = writable([]);
   // Store to hold list of user chats
   const userChats = writable([]);
+  const userChatsRemaining = writable([]);
   // Store to hold selected chat messages
   const selectedChatMessages = writable([]);
   // Store to hold the currently selected chat ID
@@ -118,65 +119,116 @@
   }
 
   async function getFirstUserMessage(threadID) {
+    const jsonResponse = await fetch("/api/ask/getFirstMessage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        threadID: threadID,
+      }),
+    });
+
+    const response = await jsonResponse.json();
     try {
-      //let response = await client.beta.threads.messages.list(threadID);
-      let response = await getMessagesFromThread(threadID);
-      // Find the first user message
-      for (const message of response.data.reverse()) {
-        if (
-          message.role === "user" &&
-          message.content &&
-          message.content.length > 0 &&
-          message.content[0].type === "text"
-        ) {
-          // Return the first user message
-          return message.content[0].text.value;
-        }
+      if (response.data.length > 0) {
+        return response.data[0].content[0].text.value;
       }
-      // Return an empty string if no user message is found
-      return "";
     } catch (e) {
-      console.error("Error fetching first user message:", e);
-      // Handle error as needed
-      return "";
+      return "New Chat";
     }
   }
+
   // Function to load user chats with the first user message
+  // async function loadUserChats() {
+  //   const userId = await getCurrentUserId();
+
+  //   // Fetch user chats from Supabase based on the user ID
+  //   const { data: chats, error } = await supabaseClient
+  //     .from("chats") // Specify the type of the data
+  //     .select("chat_id") // Specify the columns as separate arguments
+  //     .eq("user_id", userId)
+  //     .order("timestamp", { ascending: false }); // Order the results by timestamp in descending order
+
+  //   if (error) {
+  //     console.error("Error fetching user chats:", error.message);
+  //     errorText = error.message;
+  //   } else {
+  //     // Create a Set to keep track of unique chat IDs
+  //     const uniqueChatIds = new Set();
+
+  //     // Create an array to store the processed user chats
+  //     const processedChats = [];
+
+  //     // Loop through each chat and add it to the processedChats array only if it's unique
+  //     for (const chat of chats) {
+  //       if (!uniqueChatIds.has(chat.chat_id)) {
+  //         uniqueChatIds.add(chat.chat_id);
+
+  //         // const firstUserMessage = "Chat";
+  //         const firstUserMessage = await getFirstUserMessage(chat.chat_id);
+
+  //         // Add the chat with the first user message to the processedChats array
+  //         processedChats.push({ ...chat, firstUserMessage });
+  //       }
+  //     }
+  //     // Update the userChats store with the processed chats
+  //     userChats.set(processedChats);
+  //   }
+  // }
   async function loadUserChats() {
     const userId = await getCurrentUserId();
 
-    // Fetch user chats from Supabase based on the user ID
     const { data: chats, error } = await supabaseClient
-      .from("chats") // Specify the type of the data
-      .select("chat_id") // Specify the columns as separate arguments
+      .from("chats")
+      .select("chat_id")
       .eq("user_id", userId)
-      .order("timestamp", { ascending: false }); // Order the results by timestamp in descending order
+      .order("timestamp", { ascending: false });
 
     if (error) {
       console.error("Error fetching user chats:", error.message);
       errorText = error.message;
     } else {
-      // Create a Set to keep track of unique chat IDs
       const uniqueChatIds = new Set();
-
-      // Create an array to store the processed user chats
       const processedChats = [];
+      let remainingChats = [];
 
-      // Loop through each chat and add it to the processedChats array only if it's unique
       for (const chat of chats) {
         if (!uniqueChatIds.has(chat.chat_id)) {
           uniqueChatIds.add(chat.chat_id);
 
-          // const firstUserMessage = "Chat";
-          const firstUserMessage = await getFirstUserMessage(chat.chat_id);
+          const firstUserMessage =
+            processedChats.length < 10
+              ? await getFirstUserMessage(chat.chat_id)
+              : null;
 
-          // Add the chat with the first user message to the processedChats array
-          processedChats.push({ ...chat, firstUserMessage });
+          if (processedChats.length < 10) {
+            processedChats.push({ ...chat, firstUserMessage });
+          } else {
+            remainingChats.push({ ...chat, firstUserMessage });
+          }
         }
       }
-      // Update the userChats store with the processed chats
+
       userChats.set(processedChats);
+      userChatsRemaining.set(remainingChats);
     }
+  }
+
+  function loadMoreChats() {
+    const nextChats = $userChatsRemaining.slice(0, 20);
+
+    Promise.all(
+      nextChats.map((chat) => getFirstUserMessage(chat.chat_id))
+    ).then((firstMessages) => {
+      const nextChatsWithMessages = nextChats.map((chat, index) => ({
+        ...chat,
+        firstUserMessage: firstMessages[index],
+      }));
+
+      userChats.update((chats) => [...chats, ...nextChatsWithMessages]);
+      userChatsRemaining.update((chats) => chats.slice(20));
+    });
   }
 
   async function getMessagesFromThread(threadID) {
@@ -190,7 +242,6 @@
       }),
     });
     let response = await jsonResponse.json();
-    // console.log("response", response);
     return response;
   }
   async function loadChatMessages(threadID) {
@@ -499,7 +550,6 @@
       const codeInterpreterEnbled = currentChat
         ? currentChat.code_interpreter_enabled || false
         : false;
-      console.log("codeInterpreterEnbled", codeInterpreterEnbled);
       return codeInterpreterEnbled;
     } catch (error) {
       console.error(`Error getting instructions for chat: ${error.message}`);
@@ -571,7 +621,6 @@
   }
 
   function formatMessage(message) {
-    console.log("message", message);
     let formattedMessage = [];
     let codeLanguage = "";
     message = message.message;
@@ -846,7 +895,6 @@
       //gets the current files
       let currentFiles = await getCurrentFilesFromAssistant();
       let file_ids = currentFiles.data.map((file) => file.id);
-      console.log("adding file id", fileId);
       file_ids.push(fileId);
 
       let requiresCodeInterpreter =
@@ -1013,7 +1061,6 @@
       if (!fileResponse.ok) {
         throw new Error("Failed to download file");
       }
-      console.log("fileResponse", fileResponse);
       let bufferView = await fileResponse.blob();
       // Convert Uint8Array to Blob
       const blob = new Blob([bufferView]);
@@ -1227,6 +1274,15 @@
               </button>
             </div>
           {/each}
+          {#if $userChatsRemaining.length > 0}
+            <button
+              class="btn btn-primary btn-sm mb-5"
+              style="color: white;"
+              on:click={loadMoreChats}
+            >
+              Load More Chats
+            </button>
+          {/if}
         {:else}
           <!-- Loading indicator when there are no chats -->
           <div class="ml-2 mt-5 text-left text-gray-500">
