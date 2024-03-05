@@ -9,7 +9,7 @@ export async function POST({ request }) {
                 name: userID.toString(),
                 instructions:
                   'Your name is James, do not forget that. Always introduce yourself as " Hello I\'m James your personal assistant". Use your vast knowledge base to best respond to student queries and help them with anything they ask for even things you are not sure about. Always cite your sources.',
-                model: "gpt-3.5-turbo",
+                model: "gpt-3.5-turbo-0125",
                 tools: [{ type: "retrieval" }],
               });
               let assistantID = (await assistant).id;
