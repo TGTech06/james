@@ -14,6 +14,7 @@
   import Upload from "$lib/Upload.svelte";
   import type { formatPostcssSourceMap } from "vite";
   import LogoHuggingFaceBorderless from "$lib/components/icons/LogoHuggingFaceBorderless.svelte";
+  import { load } from "cheerio";
   let temperature = 0.2;
   let questionTextArea = "";
   let questionSent = "";
@@ -33,6 +34,7 @@
   let errorMessage = "";
   let successMessage = "";
   let statusMessage = "";
+  let currentRun;
   let retrievalEnabled = false;
   let codeInterpreterEnabledDatabase = false;
   let codeInterpreterToggle = false;
@@ -320,53 +322,72 @@
     }
   }
 
+  async function stopRun() {
+    if (currentRun === undefined || loading === false) {
+      return;
+    }
+    try {
+      if (
+        currentRun.status === "in_progress" ||
+        currentRun.status === "queued"
+      ) {
+        let jsonRun = await fetch("/api/ask/cancelRun", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            selectedThreadId: selectedThreadId,
+            runID: currentRun.id,
+          }),
+        });
+      }
+    } catch (e) {}
+    loading = false;
+  }
+
   async function getAIResponse(userId) {
     try {
+      let threadBeingRun = selectedThreadId;
       let sendMessage = await fetch("/api/ask/sendMessage", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          selectedThreadId: selectedThreadId,
+          selectedThreadId: threadBeingRun,
           question: questionSent,
         }),
       });
 
-      await loadChatMessages(selectedThreadId);
+      await loadChatMessages(threadBeingRun);
       scrollToBottom();
 
-      // let run = await client.beta.threads.runs.create(
-      //   selectedThreadId, // threadId
-      //   {
-      //     assistant_id: assistantId,
-      //     instructions: instructions,
-      //   }
-      // );
       let jsonRun = await fetch("/api/ask/runThread", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          selectedThreadId: selectedThreadId,
+          selectedThreadId: threadBeingRun,
           assistantId: assistantId,
           instructions: instructions,
           enableRetrieval: retrievalEnabled,
           enableCodeInterpreter: codeInterpreterToggle,
         }),
       });
-      let run = await jsonRun.json();
+      currentRun = await jsonRun.json();
       if (codeInterpreterToggle === true) {
         codeInterpreterEnabledDatabase =
-          await setCodeInterpreterTrue(selectedThreadId);
+          await setCodeInterpreterTrue(threadBeingRun);
       }
 
       // Check the status of the run instead of using a fixed timeout
       while (
-        run.status === "in_progress" ||
-        run.status === "queued" ||
-        run.status === "cancelling"
+        (currentRun.status === "in_progress" ||
+          currentRun.status === "queued" ||
+          currentRun.status === "cancelling") &&
+        loading === true
       ) {
         // Wait for a short interval before checking again
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -377,15 +398,18 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            selectedThreadId: selectedThreadId,
-            runID: run.id,
+            selectedThreadId: threadBeingRun,
+            runID: currentRun.id,
           }),
         });
-        run = await jsonRun.json();
-        console.log("new run status", run.status);
+        currentRun = await jsonRun.json();
+        console.log("new run status", currentRun.status);
       }
 
-      if (run.status === "completed") {
+      if (currentRun.status === "completed") {
+        if (selectedThreadId !== threadBeingRun) {
+          return;
+        }
         await loadChatMessages(selectedThreadId);
         scrollToBottom();
         if ($selectedChatMessages.length === 2) {
@@ -393,11 +417,15 @@
         }
         return;
       } else {
-        errorText = "Run failed";
-        console.error("Run failed:");
+        if (loading === true) {
+          errorText = "Run failed";
+          console.error("Run failed:");
+        }
+        return;
       }
     } catch (e) {
       console.error("Error getting AI response:", e);
+      return;
     }
   }
 
@@ -1556,23 +1584,26 @@
             </div>
           </div>
         {/if}
-        <!-- <button
-          class="refresh-btn"
-          on:click={async () => {
-            console.log("selected thread id", $highlightedChatIDs);
-            await loadChatMessages($highlightedChatIDs);
-          }}
-        >
-          Refresh Chat
-        </button> -->
-
+        {#if loading}
+          <div class="mt-3" style="display: flex; justify-content: center;">
+            <div
+              style="font-size: 16px; text-align: center; margin-bottom: 10px;"
+              class="text-gray-600"
+            >
+              James is thinking...
+            </div>
+            <button
+              class="btn btn-xs btn-outline btn-error ml-5"
+              on:click={stopRun}>Stop</button
+            >
+          </div>
+        {/if}
         <!-- Bottom Section - Textarea and Send Button -->
-        <div class="flex flex-row">
+        <div class="flex flex-row" style="display: flex; align-items: center;">
           <!-- Toggle 1 -->
           <div class="form-control mr-5" style="background-color: white;">
             <label class="label cursor-pointer">
-              <span class="label-text mr-5" style="color: #666;">Retrieval</span
-              >
+              <span class="label-text mr-3" style="color: #666">Retrieval</span>
               <input
                 type="checkbox"
                 class="toggle toggle-sm toggle-accent"
@@ -1581,10 +1612,11 @@
               />
             </label>
           </div>
+
           <!-- Toggle 2 -->
           <div class="form-control mr-5" style="background-color: white;">
             <label class="label cursor-pointer">
-              <span class="label-text mr-5" style="color: #666;"
+              <span class="label-text mr-3" style="color: #666;"
                 >Code Interpreter</span
               >
               <input
@@ -1598,9 +1630,10 @@
               />
             </label>
           </div>
+
           <div class="form-control" style="background-color: white;">
             <label class="label cursor-pointer">
-              <span class="label-text mr-5" style="color: #666;"
+              <span class="label-text mr-3" style="color: #666;"
                 >Reload Chat</span
               >
               <button
