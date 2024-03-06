@@ -51,10 +51,11 @@
         him and answer your questions. He is a smart and curious AI, constantly
         learning and improving with every interaction.
       </p>
+
       <p class="text-xl text-center mb-6">
         Whether you need help with research, have questions about various
         topics, or simply want to chat, James should be here to assist you.
-        PLEASE provide feedback and suggestions to help him become even better!
+        please provide feedback and suggestions to help him become even better!
       </p>
     </div>
 
@@ -74,6 +75,12 @@
       </button>
     {/if}
 
+    <a
+      href="https://docs.google.com/forms/d/e/1FAIpQLSfQ7PzxsJTkTPiQp9HAU4v4hLWhN-2H-i5rNyWlH3hc-m1JcQ/viewform?usp=sf_link
+"
+    >
+      <button class="btn btn-active btn-neutral m-4">Give feedback</button>
+    </a>
     <p class="text-xl text-center mt-8 mb-6">
       What James can help you with (when he feels like it):
     </p>
