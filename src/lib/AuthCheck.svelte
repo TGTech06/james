@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { createClient } from "@supabase/supabase-js";
-  import type { Session } from "@supabase/supabase-js";
+  import { supabaseClient } from "$lib/supabase.js";
   import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
   import { onMount, setContext } from "svelte";
-
-  const supabaseClient = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
 
   let isLoggedIn = true;
 

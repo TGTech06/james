@@ -35,7 +35,7 @@ export async function getDocuments(supabaseClient, userId) {
   }
 }
 
-// export async function getFileText(openaiClient, fileId) {
+// export async function getFileContent(openaiClient, fileId) {
 //   try {
 //     // Use the OpenAI API client to retrieve file content
 //     const file = await openaiClient.files.retrieveContent(fileId);

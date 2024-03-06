@@ -1,12 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createClient } from "@supabase/supabase-js";
-  import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from "$env/static/public";
+  import { supabaseClient } from "$lib/supabase.js";
   import { getDocuments, deleteDocument } from "$lib/brain.js";
   import AuthCheck from "$lib/AuthCheck.svelte";
-  import { goto } from "$app/navigation";
   // Initialize the Supabase client and other variables
-  let supabase;
   let documents = [];
   let userID = "";
   let userIsPremium = false;
@@ -17,13 +14,12 @@
   let instructions = "";
   let totalFileSize = 0;
   onMount(async () => {
-    supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY);
     await getUserID();
     await getUserData();
     await createUserDataIfNotExists(userID);
     assistantId = await getAssistantID(userID);
     instructions = await getAssistantInstructions();
-    documents = await getDocuments(supabase, userID);
+    documents = await getDocuments(supabaseClient, userID);
     calculateTotalFileSize();
   });
 
@@ -35,7 +31,7 @@
   }
 
   async function getAssistantID(userID) {
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabaseClient
       .from("user_data")
       .select("assistant_id")
       .eq("user_id", userID)
@@ -62,11 +58,11 @@
   }
 
   async function signOutUser() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabaseClient.auth.signOut();
     if (error) {
       console.log(error);
     } else {
-      window.location.reload();
+      window.location.href = "/";
     }
   }
 
@@ -87,7 +83,7 @@
 
   async function getUserID() {
     try {
-      let user = await supabase.auth.getUser();
+      let user = await supabaseClient.auth.getUser();
       userID = user.data.user.id;
     } catch (e) {
       userID = "";
@@ -135,7 +131,7 @@
   async function getUserData() {
     try {
       // Fetch user data from Supabase
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("user_data")
         .select("is_premium")
         .eq("user_id", userID)
@@ -155,7 +151,7 @@
   async function createUserDataIfNotExists(userId) {
     try {
       // Check if user data already exists
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("user_data")
         .select("*")
         .eq("user_id", userId)
@@ -168,7 +164,7 @@
           return "Error creating assistant";
         }
         // User data doesn't exist; create a new row
-        const { data: insertedData, error: insertError } = await supabase
+        const { data: insertedData, error: insertError } = await supabaseClient
           .from("user_data")
           .upsert([
             {
@@ -192,7 +188,7 @@
       <a href="/" class="text-xl font-bold hover:text-blue-600 cursor-pointer">
         James
       </a>
-      <a href="/ask" class="text-lg hover:text-blue-600 ml-10"> Chat </a>
+      <a href="/chat" class="text-lg hover:text-blue-600 ml-10"> Chat </a>
     </div>
     <div class="flex flex-col items-center">
       <div class="mt-6">
@@ -270,12 +266,12 @@
                   errorMessage = "";
                   let filename = document.filename;
                   let outcome = await deleteDocument(
-                    supabase,
+                    supabaseClient,
                     document.id,
                     userID
                   );
                   if (outcome === "success") {
-                    documents = await getDocuments(supabase, userID);
+                    documents = await getDocuments(supabaseClient, userID);
                     successMessage =
                       "Successfully deleted " + filename + " from your James";
                     calculateTotalFileSize();
@@ -292,33 +288,6 @@
         </div>
       </div>
     </div>
-    <!-- </div> -->
-    <!-- <div class="flex flex-col items-center">
-      {#if userIsPremium}
-        <h1 class="text-2xl md:text-4xl font-bold mb-4 md:mb-8">
-          I'm proud of you, you made the right choice!
-        </h1>
-        <button
-          class="btn btn-primary w-full py-3 rounded-lg"
-          on:click={() =>
-            goto("https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288")}
-          >Manage Subscription</button
-        >
-        <href>
-          https://billing.stripe.com/p/login/test_00gcNe78dfAkfh6288
-        </href>
-      {/if}
-
-      {#if !userIsPremium}
-        <script async src="https://js.stripe.com/v3/buy-button.js">
-        </script>
-        <stripe-buy-button
-          buy-button-id="buy_btn_1O1RagKva3oXMh3VCbLlg4oU"
-          client-reference-id={userID}
-          publishable-key="pk_test_51NZ025Kva3oXMh3Vgrnd7JRPcg1oaHj1A6jJUI5mLFw0sHVGdjxXmpKnR2S2KBbuBSsyBETbh3a0wJJoh2uCU3RK00QGpC68Ga"
-        />
-      {/if}
-    </div> -->
   </div>
 </AuthCheck>
 

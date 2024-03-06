@@ -1,21 +1,15 @@
 <script lang="ts">
-  // Import necessary functions from your existing script
   import AuthCheck from "$lib/AuthCheck.svelte";
-  import NavBar from "$lib/NavBar.svelte";
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
   import hljs from "highlight.js";
-  import "highlight.js/styles/panda-syntax-dark.css"; // choose a style that fits your app
+  import "highlight.js/styles/panda-syntax-dark.css"; // code highlighting style
   import katex from "katex";
   import "katex/dist/katex.min.css";
   import { marked } from "marked";
   import { supabaseClient } from "$lib/supabase.js";
   import { getDocuments } from "$lib/brain";
   import Upload from "$lib/Upload.svelte";
-  import type { formatPostcssSourceMap } from "vite";
-  import LogoHuggingFaceBorderless from "$lib/components/icons/LogoHuggingFaceBorderless.svelte";
-  import { load } from "cheerio";
-  let temperature = 0.2;
   let questionTextArea = "";
   let questionSent = "";
   let loading = false;
@@ -30,7 +24,6 @@
   let savedPrompts = [];
   let isProcessing = false;
   let screenWidth = window.innerWidth;
-  let screenHeight = window.innerHeight;
   let errorMessage = "";
   let successMessage = "";
   let statusMessage = "";
@@ -51,15 +44,14 @@
   async function createNewChat() {
     // Check if the first chat in the list is not an empty chat
     if ($userChats.length === 0) {
-      // let thread = await client.beta.threads.create();
       let thread = await createThread();
       const userId = await getCurrentUserId();
       await supabaseClient.from("chats").upsert([
         {
           user_id: userId,
           chat_id: thread.id,
-          message: "New chat created", // Your default or initial message
-          is_user_message: false, // Indicate that it's not a user message
+          message: "New chat created",
+          is_user_message: false,
           timestamp: new Date().toISOString(),
         },
       ]);
@@ -258,10 +250,6 @@
           message.content[0].type === "text"
         ) {
           let annotations = message.content[0].text.annotations;
-          // console.log("annotations", annotations);
-          // if (annotations !== undefined)  {
-          //   console.log("file citation", annotations[0].file_citation);
-          // }
           let fileNames = [];
           for (const annotation of annotations) {
             if (annotation.file_citation !== undefined) {
@@ -613,9 +601,7 @@
         .addEventListener("click", function () {
           closePopup();
         });
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
 
     // instructions = await getInstructions();
   });
@@ -627,15 +613,8 @@
 
     window.addEventListener("resize", updateScreenWidth);
 
-    const updateScreenHeight = () => {
-      screenHeight = window.innerHeight;
-    };
-
-    window.addEventListener("resize", updateScreenHeight);
-
     return () => {
       window.removeEventListener("resize", updateScreenWidth);
-      window.removeEventListener("resize", updateScreenHeight);
     };
   });
   let isChatHistorySidebarOpen = false;

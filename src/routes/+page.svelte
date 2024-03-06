@@ -62,7 +62,7 @@
     {#if userLoggedIn}
       <button
         class="btn btn-primary btn-lg mt-8 rounded-md uppercase text-white"
-        on:click={() => (window.location.href = "/ask")}
+        on:click={() => (window.location.href = "/chat")}
       >
         Get Started
       </button>

@@ -1,6 +1,6 @@
-import { getHtml, convertHtmlToTxt } from "./loaders/html";
+import { getHtml, convertHtmlToTxt } from "./html";
 import { supabaseClient } from "./supabase";
-// let userID;
+
 export async function create_file_and_upload(title, text) {
   try {
     const txtFile = new File([text], title, { type: "text/plain" });
@@ -39,33 +39,9 @@ async function getUserID() {
   }
 }
 
-// async function getAssistantID() {
-//   await getUserID();
-//   const { data: userData, error: userError } = await supabaseClient
-//     .from("user_data")
-//     .select("assistant_id")
-//     .eq("user_id", userID)
-//     .single();
-
-//   if (userError) {
-//     console.error("Error fetching user data:", userError);
-//   } else {
-//     if (userData) {
-//       const assistantId = userData.assistant_id;
-//       return assistantId;
-//     } else {
-//       console.log("User not found");
-//     }
-//   }
-// }
-
 export async function upload_file(files) {
   if (files) {
     try {
-      // const client = new OpenAI({
-      //   apiKey: PUBLIC_OPENAI_API_KEY,
-      //   dangerouslyAllowBrowser: true,
-      // });
       let userID = await getUserID();
 
       // Fetch the current list of files from the user_data table
@@ -114,22 +90,3 @@ export async function upload_file(files) {
     return "files is null";
   }
 }
-
-// export async function upload_file(file) {
-//   try {
-//     const formData = new FormData();
-//     formData.append("files", file);
-//     console.log("formData", formData);
-//     let response = await fetch("/api/upload/uploadFile", {
-//       method: "POST",
-//       body: formData,
-//     });
-
-//     let data = await response.text();
-//     return data;
-//     // let uid = await getUserID();
-//     // return uid;
-//   } catch (error) {
-//     return error.message;
-//   }
-// }
