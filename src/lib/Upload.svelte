@@ -59,7 +59,8 @@
         files = "";
         fileInput.value = "";
         error = "";
-        successMessage = "File uploaded successfully!";
+        successMessage =
+          "File uploaded successfully! You can now add it to the chat by clicking the paperclip icon again.";
       } else {
         if (outcome === "" || outcome === undefined || outcome === null) {
           error =
@@ -83,7 +84,8 @@
       let outcome = await url_uploader(url);
       if (outcome === "success") {
         url = "";
-        successMessage = "URL added successfully!";
+        successMessage =
+          "URL added successfully! You can now add it to the chat by clicking the paperclip icon again.";
       } else {
         if (outcome === "" || outcome === undefined || outcome === null) {
           error =
@@ -110,7 +112,8 @@
       }
       // Add your implementation here to call the function and pass title and content
       await create_file_and_upload(textTitle, textContent);
-      successMessage = "Text uploaded successfully!";
+      successMessage =
+        "Text uploaded successfully! You can now add it to the chat by clicking the paperclip icon again.";
       // Clear the input fields after successful upload
       textTitle = "";
       textContent = "";

@@ -55,7 +55,7 @@
       <p class="text-xl text-center mb-6">
         Whether you need help with research, have questions about various
         topics, or simply want to chat, James should be here to assist you.
-        please provide feedback and suggestions to help him become even better!
+        Please provide feedback and suggestions to help him become even better!
       </p>
     </div>
 
@@ -95,23 +95,23 @@
         </div>
         <h3 class="text-2xl font-bold text-center">Research</h3>
         <p class="text-lg text-center">
-          James can read and remember entire books, articles, and web pages. He
-          can also answer your questions about what he has read, but don't try
-          to trick him, he's smarter than you.
+          You can upload your research papers and James will help you with your
+          research. He can make a summary of the findings of the paper, comment
+          on the reliability and help you with the citations.
         </p>
       </div>
       <div
         class="bg-white p-6 rounded-lg border border-blue-600 space-y-4 text-black"
       >
         <div class="flex items-center justify-center mb-4">
-          <span class="text-8xl" role="img" aria-label="Study">📚</span>
+          <span class="text-8xl" role="img" aria-label="Study">🧠</span>
         </div>
         <h3 class="text-2xl font-bold text-center">Studying</h3>
         <p class="text-lg text-center">
-          With James by your side, you will probably never need to study again,
-          but if you do, he can help you with that too. He can make flashcards,
-          answer questions, and even help you with your homework (but don't tell
-          your teacher).
+          With James by your side, you can study more effectively. You can give
+          him your specification and he will go through it with you. Making
+          flashcards, answering questions, and even helping you with your
+          homework.
         </p>
       </div>
       <div
@@ -123,22 +123,24 @@
         <h3 class="text-2xl font-bold text-center">Programming</h3>
         <p class="text-lg text-center">
           James can swallow up entire documentation pages so you don't have to.
-          If you have a question about a programming language or framework, he
-          can hopefully answer it. He can also help you with your code, but he's
-          not very good at it yet.
+          If you are working with python he can actually run the code in a
+          virtual environment so he is far more reliable when he gives you an
+          answer.
         </p>
       </div>
       <div
         class="bg-white p-6 rounded-lg border border-blue-600 space-y-4 text-black"
       >
         <div class="flex items-center justify-center mb-4">
-          <span class="text-8xl" role="img" aria-label="Chat">💬</span>
+          <span class="text-8xl" role="img" aria-label="Mindmapping">💬</span>
         </div>
-        <h3 class="text-2xl font-bold text-center">Chat with Your Notes</h3>
+        <h3 class="text-2xl font-bold text-center">Mindmapping</h3>
         <p class="text-lg text-center">
-          Please let James read all your personal notes and thoughts. He
-          promises he won't tell anyone. He can also answer your questions and
-          have a conversation with you.
+          You can ask James to make a mindmap on the topic you want to learn. He
+          can make it with the Python library Graphviz if you allow him to use
+          code interpreter, or he can make it in any format to import into your
+          favorite mindmapping software. If you upload files he can use them to
+          make the mindmap.
         </p>
       </div>
     </div>
