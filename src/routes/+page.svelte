@@ -45,7 +45,7 @@
     />
     <h1 class="text-5xl font-bold my-8">Welcome to James</h1>
 
-    <div class="max-w-3xl mx-auto space-y-4">
+    <div class="max-w-3xl mx-auto space-y-4 mb-5">
       <p class="text-xl text-center mb-6">
         James is an AI-powered assistant that can remember everything you tell
         him and answer your questions. He is a smart and curious AI, constantly
@@ -61,18 +61,26 @@
 
     {#if userLoggedIn}
       <button
-        class="btn btn-primary btn-lg mt-8 rounded-md uppercase text-white"
+        class="btn btn-primary btn-lg px-6 py-3 rounded-lg uppercase text-white"
         on:click={() => (window.location.href = "/chat")}
+        style="max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
       >
         Get Started
       </button>
     {:else}
       <button
-        class="btn btn-primary btn-lg mt-8 rounded-md uppercase text-white"
-        on:click={() => (window.location.href = "/login")}
+        class="btn btn-primary btn-lg px-6 py-3 text-lg rounded-lg uppercase text-white"
+        on:click={() => (window.location.href = "/register")}
+        style="max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
       >
-        Log In
+        Sign up
       </button>
+      <div class="text-center mt-2">
+        <span class="text-xs">Already have an account?</span>
+        <a href="/login" class="text-blue-500 hover:text-blue-700 text-sm"
+          >Login</a
+        >
+      </div>
     {/if}
 
     <a
